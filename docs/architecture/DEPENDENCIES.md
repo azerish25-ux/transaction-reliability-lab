@@ -1,32 +1,25 @@
-# Dependency decision record — 2026-09-26
+# Dependency and image decisions
 
-| Component | Selected/observed version | Evidence and status |
+This file records the exact P01 foundation selections. Versions are pinned rather than floating so a reviewer can reproduce the same dependency boundary.
+
+| Component | Selected version/tag | Reason and boundary |
 |---|---|---|
-| Java | 21 baseline; local OpenJDK 21.0.11 | `java -version`; standalone modules compile with `--release 21` |
-| Spring Boot parent | 3.5.16 | Official release announcement and 3.5 dependency table verified; Maven resolution NOT performed |
-| JUnit Jupiter | 5.12.2 | Managed by that parent; source adapter written; Jupiter engine NOT run |
-| Testcontainers | 1.21.4 | Managed by that parent; PostgreSQL suite written; NOT run |
-| REST Assured | 5.5.7 | Managed dependency only; no live HTTP suite implemented |
-| Flyway | 11.7.2 | Managed dependency; four migrations written; NOT run |
-| PostgreSQL test image | postgres:17.11-bookworm | Tag is listed in official docker-library/official-images manifest; registry pull/digest NOT verified |
-| Node/npm | 22.16.0 / 10.9.2 | Installed tools; Node client-unit tests actually run |
-| TypeScript | 5.8.3 | Installed global compiler; strict compilation actually run |
-| React / Vite | Not installed or integrated | Official React 19.2.4 and Vite 7.3.2 releases inspected as candidates only; no package-lock or build claim |
+| Java | 21 | Mandated baseline and current LTS language/runtime target |
+| Apache Maven | 3.9.16 | Current stable Maven 3 line; downloaded through committed wrapper URL and SHA-256 |
+| Maven wrapper bootstrap | 3.3.4-compatible only-script layout | No wrapper JAR is committed; bootstrap authenticates the Maven distribution |
+| Spring Boot | 3.5.16 | Preserves the required Boot 3.5/JUnit Jupiter 5-compatible line already selected by the repository |
+| PostgreSQL | `postgres:17.11-bookworm` | Exact server image used by Compose and existing Testcontainers tests |
+| RabbitMQ | `rabbitmq:4.3.5-management-alpine` | Exact broker/management image; business consumers are a later phase |
+| Build container | `maven:3.9.16-eclipse-temurin-21-noble` | Exact Maven/JDK build environment |
+| Runtime container | `eclipse-temurin:21.0.12.1_1-jre-noble` | Exact Java 21 runtime image; runs as uid/gid 10001 |
+| Node.js CI | 22 | Matches the available/current project baseline |
+| TypeScript | 5.8.3 | Exact package and committed npm integrity lock |
 
-## Compatibility and maintenance risk
+## Maintenance and verification policy
 
-Spring's June 25, 2026 announcement states 3.5.16 is the final open-source-supported 3.5 release. It retains the mandated Jupiter 5 stack but is outside OSS maintenance at execution time. No commercial support is assumed. This is a release blocker requiring an explicit compatibility/support decision and fresh vulnerability verification, not a claim of a supported secure production stack.
-
-The Maven parent provides pinned managed coordinates, but an effective POM, resolved dependency tree, SBOM and vulnerability report were NOT generated. The test image has an exact patch/OS tag rather than `latest`, but its immutable registry digest was not retrieved. Actions are not pinned because no workflow was written/published. No frontend lockfile or Maven Wrapper was fabricated.
-
-Primary references consulted:
-- https://spring.io/blog/2026/06/25/spring-boot-3-5-16-available-now/
-- https://docs.spring.io/spring-boot/3.5/appendix/dependency-versions/coordinates.html
-- https://docs.spring.io/spring-boot/3.5/system-requirements.html
-- https://raw.githubusercontent.com/docker-library/official-images/master/library/postgres
-- https://github.com/react/react/releases/tag/v19.2.4
-- https://github.com/vitejs/vite/releases/tag/v7.3.2
-- https://www.postgresql.org/docs/current/sql-createfunction.html
-- https://www.rabbitmq.com/docs/confirms
-- https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/time/ZonedDateTime.html
-- https://docs.spring.io/spring-security/reference/servlet/exploits/csrf.html
+- Spring dependencies are managed by the pinned Boot parent; changing the Boot patch requires a complete fast-lane rerun and review of its managed JUnit/Testcontainers/Flyway versions.
+- Maven distribution integrity is checked before extraction. Container tags are exact release tags rather than `latest`.
+- GitHub Actions are pinned to immutable commit SHAs in workflow source.
+- The API image installs only `curl` for an actual readiness probe and runs non-root with a read-only root filesystem.
+- PostgreSQL migrations use `ledger_owner`; normal JDBC connections use `ledger_runtime`. A readiness check fails when the runtime role is not restricted or the ledger schema is absent.
+- No dependency inclusion alone is counted as exercising a required boundary. RabbitMQ, OAuth resource-server, Toxiproxy and other later-phase libraries remain unclaimed until their real behavior is implemented and tested.

@@ -1,9 +1,10 @@
 .git
-.runtime
+.github
+.ledgerguard
 .evidence
+.env
 **/node_modules
 **/target
 **/test-results
 **/playwright-report
-lab-support
 docs/evidence/raw

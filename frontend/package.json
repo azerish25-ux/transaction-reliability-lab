@@ -1,0 +1,14 @@
+{
+  "name": "ledgerguard-client-core",
+  "version": "0.2.0",
+  "private": true,
+  "type": "commonjs",
+  "scripts": {
+    "typecheck": "tsc --project tsconfig.core.json",
+    "test": "node ../tests/contracts/client.test.cjs",
+    "verify": "npm run typecheck && npm test"
+  },
+  "devDependencies": {
+    "typescript": "5.8.3"
+  }
+}

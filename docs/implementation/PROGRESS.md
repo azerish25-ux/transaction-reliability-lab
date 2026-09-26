@@ -1,51 +1,53 @@
-# Execution checkpoint — INCOMPLETE / NO_GO
+# Execution checkpoint — P01/P02 FOUNDATION CANDIDATE
 
-## P00: observed environment and delivery
+Overall product status remains **INCOMPLETE / NO_GO**. This checkpoint implements the next coherent milestone without relabeling later product phases as complete.
 
-- Intended repository: `azerish25-ux/transaction-reliability-lab`; intended branch `main`.
-- Observed remote commit `b2e85ee6a1330efc9c4737f7e1f6ad693753b6ae`, tree `47476259c6014879ddde4deb9be795f91b86c8a5`: original `README.md` only, no AGENTS.md or workflows.
-- Branch response reported `protected=false`; accessible rulesets list was empty. These observations do not authorize bypassing later protection changes.
-- Owner's connected account was used. Repository metadata reported push/admin permissions, but an actual ordinary source-file create returned HTTP 403 `Resource not accessible by integration`. The distinct Git-data create-tree API returned the same 403. Neither created a remote checkpoint. Workflow/ref/release writes therefore remain unverified, not assumed available.
-- Git HTTPS transport failed DNS resolution for github.com. Maven/npm/Debian dependency host resolution also failed. No authorized shell credential helper was available; no private credential files were searched.
-- Java 21.0.11, Node 22.16.0, npm 10.9.2, TypeScript 5.8.3, Git 2.47.3, Chromium and FFmpeg present. Maven, Docker CLI/daemon/Compose, PostgreSQL and RabbitMQ absent. Approximately 5.8 GiB host memory, 30 GiB filesystem available at initial inspection.
-- Reconstructed the remote's original README blob, tree and signed commit from API-returned public Git objects. All three SHA-1 object identities match the remote exactly. One local checkout on main preserves the original ancestor. This is not a successful remote push.
+## Repository and delivery
 
-## Implemented locally
+- Repository: `azerish25-ux/transaction-reliability-lab`.
+- Target branch: `main`.
+- Observed parent before this milestone: `1c2aaf42d66d176edbf5e3306a9dbfadc90db32e`.
+- The owner-linked GitHub integration now exposes ordinary Git-data writes. Publication and final remote/Actions identities are recorded in `DELIVERY.md` after verification.
+- No force push, branch bypass, unrelated repository, worktree or history replacement is used.
 
-P02 includes exact Java money/holds/state policies, four SQL migrations, secured posting/command/settlement functions, independent reconciliation SQL and a JDBC transaction adapter. The adapter compiles with Java 21; the PostgreSQL SQL is written but has NOT executed.
+## P01 — IMPLEMENTED_UNVERIFIED at source checkpoint
 
-Implemented TypeScript exact-money utilities, same-origin cookie/CSRF client and owner-scoped persisted uncertain-intent store. No JWT is stored in browser storage. The client has no React interface yet and tests use injected Fetch responses, not a live API.
+Implemented:
 
-The shared Java test bodies have an actual JUnit 5 DynamicTest adapter. Offline execution uses a distinctly labeled standalone runner because Jupiter cannot be downloaded. The PostgreSQL Testcontainers suite has 11 source-written tests with explicit commits and independent entry sums; it has NOT compiled/resolved or executed.
+- Checked Maven 3.9.16 bootstrap with committed distribution SHA-256 and Java 21 baseline.
+- Executable Spring Boot application with restricted default endpoint surface.
+- Correlation IDs, structured console context, liveness/readiness and explicit database-role health.
+- Pinned PostgreSQL 17.11, RabbitMQ 4.3.5 and Temurin 21.0.12.1 container tags.
+- Docker Compose role separation, internal database/broker networking, real health checks, loopback-only HTTP/management ports and non-root/read-only API runtime.
+- Runtime-generated ignored sandbox secrets; no committed live credentials.
+- Idempotent balanced fictional fixture seeding through the protected posting function.
+- Locked TypeScript 5.8.3 dependency.
+- Permanent pull-request/push/manual fast workflow with an aggregate gate and retained reports.
+- Working `lab up/down/status/logs/test/reconcile` foundation commands.
 
-Seven component-level mutation probes cover fingerprint intent, stale projection, reversal after refund, lossy decimal parsing, overflow error behavior, signature binding and Halifax recurrence. They are NOT substitutes for D01–D24's required real HTTP/database/broker/browser demonstrations and do not count toward G07.
+Verification is promoted to VERIFIED_PASS only after the candidate's actual GitHub Actions run completes successfully.
 
-## Observed corrections
+## P02 — IMPLEMENTED_UNVERIFIED at source checkpoint
 
-1. The initial standalone runner had Java string-escaping compilation errors; fixed the source and reran. This setup failure is not a detected financial defect.
-2. Static SQL review found a durable idempotency claim could lack a deferred completeness check. Added V4; PostgreSQL verification remains blocked.
-3. Static SQL review found balancing a journal alone did not prove its business-operation amount/accounts matched. Added deferred transfer/payment/adjustment identity and entry checks in V4; unexecuted.
-4. Static review found database command inputs allowed numerical JSON amounts and incidental extra fields. Added explicit JSON-string money/type/UUID/reference validation and normalization before fingerprinting; unexecuted.
-5. Restoring the signed initial Git object initially had a signature-header whitespace mismatch. No false ancestor was accepted: the corrected object was installed only after exact remote SHA verification.
+Preserved and integrated:
 
-## Hard boundaries and missing work
+- Exact integer-minor-unit money policies for CAD/USD/JPY/KWD.
+- Protected PostgreSQL posting/financial command functions and restricted runtime grants.
+- Deferred journal, balance/hold, payment/adjustment and idempotency consistency checks.
+- Eleven committed-transaction PostgreSQL tests, including role bypass prevention, commit-time journal rejection, replay/conflict, synchronized overspending, duplicate settlement and concurrent refund limits.
+- Independent reconciliation that now exits nonzero on any discrepancy.
+- Existing Java and TypeScript component/unit evidence remains distinct from full-boundary proof.
 
-G01–G16 are not all satisfied. There is no running Spring API, JWT session implementation, React UI, RabbitMQ publisher/consumer, durable webhook sender/receiver, scheduler, lab console, Compose startup, Maven Wrapper, frontend lockfile, full contract/security/a11y/performance/resilience suites, upgrade/restore proof, video or published CI. The build manifest is not an application implementation. Pure policy tests do not prove database concurrency or financial safety.
+## Open phases
 
-## Recovery actions for an implementation agent
+- P03 authentication, revocable sessions, roles, ownership-safe accounts and OpenAPI: NOT_STARTED.
+- P04 live transfer HTTP/idempotency/uncertain-response boundary: NOT_STARTED.
+- P05 RabbitMQ publisher/consumer, worker and projection: NOT_STARTED.
+- P06 cancellation/refund/reversal product APIs: NOT_STARTED.
+- P07 schedules and webhook dispatcher/receiver: NOT_STARTED.
+- P08 React interface and browser/accessibility journeys: NOT_STARTED.
+- P09 complete F01–F08 and D01–D24 isolated laboratory: NOT_STARTED.
+- P10 contracts/security/performance/migration/restore and all CI lanes: NOT_STARTED beyond the fast foundation lane.
+- P11 complete portfolio evidence and video: NOT_STARTED.
 
-1. Restore the preserved local commits/bundle in the same repository; inspect current remote head and authorizations, preserve concurrent legitimate changes; never force push.
-2. Obtain a genuinely authorized source/workflow write route and working dependency/Docker execution environment. Retest write capability with a useful checkpoint rather than trusting metadata permissions.
-3. Resolve the pinned Maven manifest, install the Maven Wrapper with authentic distribution hashes, execute PostgreSQL tests, inspect and repair SQL errors before adding more business paths.
-4. Wire the verified database commands to authenticated Spring endpoints; implement and verify the remaining product and infrastructure with the supplied MASTER_SPEC unchanged.
-5. Execute actual multi-process, browser, all 24 defect and eight fault, migration/restore, scanner, contract and reference-load lanes; build evidence and a real video. No release until mandatory gates pass.
-
-No user laptop work is assumed or required to preserve these artifacts.
-
-## Final executed checkpoint
-
-On the clean local code commit `a74d930987639f3bcfaf03038947537412599fda`, the unit command passed 120 standalone Java cases and 44 TypeScript client-unit cases, with no failures/errors/skips. All seven implemented component probes were detected and restored, each with one passing baseline, one expected failed assertion and one passing restoration; they contribute zero completed full-stack Dxx detections.
-
-One genuine client regression found during review was fixed: a 503 (or other potentially ambiguous keyed 5xx/408) must preserve uncertainty, not become a definitive business rejection. The pre-fix run had one failure of 44; the post-fix client run had 44 passing cases. Three suspected final-newline validation issues were disproved by already passing cases, not misreported as bugs.
-
-There are eight scoped component reports, five unexecuted exploratory charters and six decision records. The requirement file preserves 591 source statements but remains a preliminary conservative source index; some compound obligations still require finer decomposition. PostgreSQL integration and all missing mandatory gates remain open. CLI doctor, database-test entry and up explicitly report blockers instead of success.
+No release, public application, authentication claim, complete test-lab claim or production-readiness claim is made.

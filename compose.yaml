@@ -1,0 +1,123 @@
+name: ${COMPOSE_PROJECT_NAME:-ledgerguard}
+
+services:
+  postgres:
+    image: postgres:17.11-bookworm
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-ledgerguard}
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${POSTGRES_SUPERUSER_PASSWORD:?POSTGRES_SUPERUSER_PASSWORD is required}
+      LEDGER_OWNER_PASSWORD: ${LEDGER_OWNER_PASSWORD:?LEDGER_OWNER_PASSWORD is required}
+      LEDGER_RUNTIME_PASSWORD: ${LEDGER_RUNTIME_PASSWORD:?LEDGER_RUNTIME_PASSWORD is required}
+    volumes:
+      - ledgerguard-postgres:/var/lib/postgresql/data
+      - ./infra/docker/postgres/00-roles.sh:/docker-entrypoint-initdb.d/00-roles.sh:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d $${POSTGRES_DB}"]
+      interval: 3s
+      timeout: 3s
+      retries: 30
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    tmpfs:
+      - /tmp
+    networks:
+      - ledgerguard
+
+  rabbitmq:
+    image: rabbitmq:4.3.5-management-alpine
+    hostname: ledgerguard-rabbitmq
+    environment:
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_DEFAULT_USER:-ledgerguard}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_DEFAULT_PASS:?RABBITMQ_DEFAULT_PASS is required}
+      RABBITMQ_DEFAULT_VHOST: ${RABBITMQ_DEFAULT_VHOST:-/ledgerguard}
+    ports:
+      - "127.0.0.1:${LEDGER_RABBIT_MANAGEMENT_PORT:-15672}:15672"
+    volumes:
+      - ledgerguard-rabbit:/var/lib/rabbitmq
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    networks:
+      - ledgerguard
+
+  api:
+    build:
+      context: .
+      dockerfile: infra/docker/Dockerfile.backend
+    environment:
+      LEDGER_DATABASE_URL: jdbc:postgresql://postgres:5432/${POSTGRES_DB:-ledgerguard}
+      LEDGER_MIGRATION_URL: jdbc:postgresql://postgres:5432/${POSTGRES_DB:-ledgerguard}
+      LEDGER_OWNER_USER: ledger_owner
+      LEDGER_OWNER_PASSWORD: ${LEDGER_OWNER_PASSWORD:?LEDGER_OWNER_PASSWORD is required}
+      LEDGER_RUNTIME_USER: ledger_runtime
+      LEDGER_RUNTIME_PASSWORD: ${LEDGER_RUNTIME_PASSWORD:?LEDGER_RUNTIME_PASSWORD is required}
+      LEDGER_RABBIT_HOST: rabbitmq
+      LEDGER_RABBIT_PORT: 5672
+      LEDGER_RABBIT_USER: ${RABBITMQ_DEFAULT_USER:-ledgerguard}
+      LEDGER_RABBIT_PASSWORD: ${RABBITMQ_DEFAULT_PASS:?RABBITMQ_DEFAULT_PASS is required}
+      LEDGER_RABBIT_VHOST: ${RABBITMQ_DEFAULT_VHOST:-/ledgerguard}
+    ports:
+      - "127.0.0.1:${LEDGER_HTTP_PORT:-8080}:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "--fail", "--silent", "http://localhost:8080/actuator/health/readiness"]
+      interval: 5s
+      timeout: 3s
+      retries: 30
+      start_period: 20s
+    restart: unless-stopped
+    read_only: true
+    tmpfs:
+      - /tmp
+    security_opt:
+      - no-new-privileges:true
+    networks:
+      - ledgerguard
+
+  seed:
+    image: postgres:17.11-bookworm
+    profiles: ["tools"]
+    environment:
+      PGPASSWORD: ${LEDGER_OWNER_PASSWORD:?LEDGER_OWNER_PASSWORD is required}
+    command:
+      - psql
+      - -v
+      - ON_ERROR_STOP=1
+      - -h
+      - postgres
+      - -U
+      - ledger_owner
+      - -d
+      - ${POSTGRES_DB:-ledgerguard}
+      - -f
+      - /seed/seed.sql
+    volumes:
+      - ./infra/docker/postgres/seed.sql:/seed/seed.sql:ro
+    depends_on:
+      api:
+        condition: service_healthy
+    security_opt:
+      - no-new-privileges:true
+    networks:
+      - ledgerguard
+
+volumes:
+  ledgerguard-postgres:
+    name: ${COMPOSE_PROJECT_NAME:-ledgerguard}-postgres
+  ledgerguard-rabbit:
+    name: ${COMPOSE_PROJECT_NAME:-ledgerguard}-rabbit
+
+networks:
+  ledgerguard:
+    name: ${COMPOSE_PROJECT_NAME:-ledgerguard}-network

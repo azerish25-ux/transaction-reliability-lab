@@ -1,0 +1,18 @@
+FROM maven:3.9.16-eclipse-temurin-21-noble AS build
+WORKDIR /workspace
+COPY backend/pom.xml backend/pom.xml
+RUN mvn -B -ntp -f backend/pom.xml dependency:go-offline
+COPY backend backend
+RUN mvn -B -ntp -f backend/pom.xml -DskipTests package
+
+FROM eclipse-temurin:21.0.12.1_1-jre-noble
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends curl \
+    && rm -rf /var/lib/apt/lists/* \
+    && groupadd --gid 10001 ledgerguard \
+    && useradd --uid 10001 --gid 10001 --no-create-home --shell /usr/sbin/nologin ledgerguard
+WORKDIR /app
+COPY --from=build --chown=10001:10001 /workspace/backend/target/ledgerguard.jar /app/ledgerguard.jar
+USER 10001:10001
+EXPOSE 8080
+ENTRYPOINT ["java","-XX:MaxRAMPercentage=75.0","-Djava.security.egd=file:/dev/urandom","-jar","/app/ledgerguard.jar"]

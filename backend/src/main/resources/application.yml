@@ -1,0 +1,78 @@
+spring:
+  application:
+    name: ledgerguard
+  lifecycle:
+    timeout-per-shutdown-phase: 20s
+  datasource:
+    url: ${LEDGER_DATABASE_URL:jdbc:postgresql://localhost:5432/ledgerguard}
+    username: ${LEDGER_RUNTIME_USER:ledger_runtime}
+    password: ${LEDGER_RUNTIME_PASSWORD}
+    hikari:
+      maximum-pool-size: ${LEDGER_DATABASE_POOL_SIZE:12}
+      minimum-idle: 1
+      connection-timeout: 3000
+      validation-timeout: 1000
+      max-lifetime: 900000
+      data-source-properties:
+        ApplicationName: LedgerGuard-API
+  flyway:
+    enabled: true
+    url: ${LEDGER_MIGRATION_URL:jdbc:postgresql://localhost:5432/ledgerguard}
+    user: ${LEDGER_OWNER_USER:ledger_owner}
+    password: ${LEDGER_OWNER_PASSWORD}
+    locations: classpath:db/migration
+    default-schema: public
+    schemas: public
+    connect-retries: 20
+    validate-on-migrate: true
+    clean-disabled: true
+  rabbitmq:
+    host: ${LEDGER_RABBIT_HOST:localhost}
+    port: ${LEDGER_RABBIT_PORT:5672}
+    username: ${LEDGER_RABBIT_USER:ledgerguard}
+    password: ${LEDGER_RABBIT_PASSWORD}
+    virtual-host: ${LEDGER_RABBIT_VHOST:/ledgerguard}
+    connection-timeout: 3s
+    requested-heartbeat: 15s
+    listener:
+      simple:
+        auto-startup: false
+      direct:
+        auto-startup: false
+
+server:
+  port: ${LEDGER_HTTP_PORT:8080}
+  shutdown: graceful
+  error:
+    include-message: never
+    include-binding-errors: never
+    include-stacktrace: never
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
+  endpoint:
+    health:
+      probes:
+        enabled: true
+      show-details: never
+      group:
+        liveness:
+          include: livenessState
+        readiness:
+          include: readinessState,ledgerDatabase,rabbit
+  health:
+    rabbit:
+      enabled: true
+
+info:
+  app:
+    name: LedgerGuard
+    version: 0.2.0-INCOMPLETE
+    boundary: synthetic-money-only
+
+logging:
+  pattern:
+    console: "%d{yyyy-MM-dd'T'HH:mm:ss.SSSXXX} level=%-5level service=ledgerguard correlationId=%X{correlationId:-none} logger=%logger{36} message=%msg%n"

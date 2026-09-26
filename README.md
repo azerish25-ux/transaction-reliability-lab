@@ -1,29 +1,47 @@
 # LedgerGuard
 ## Financial Transaction Reliability Laboratory
 
-**INCOMPLETE / NO_GO — local implementation checkpoint, not a working full-stack product.**
-All amounts are synthetic. No real money, card processing, banking integration, compliance certification or production-readiness claim.
+**Synthetic money only. INCOMPLETE / NO_GO as a complete product; P01/P02 foundation is now implemented for executable verification.**
 
-LedgerGuard's goal is to make transaction risks inspectable: duplicate intent, ambiguous outcomes, concurrent spending, partial failures and recovery. The complete [implementation contract](docs/implementation/MASTER_SPEC.md) remains in scope; this archive does not satisfy it in full.
+LedgerGuard is a compact transaction system whose purpose is to expose and test duplicate intent, ambiguous outcomes, concurrent spending, accounting invariants and recovery. It is not a bank, payment processor, compliance product or production-ready financial service.
 
-### What currently exists
+## Run the verified foundation
 
-Java 21 exact-money, reservation, payment-transition, idempotency, DST, projection, webhook-signing/encryption and retry policies; protected PostgreSQL schema/command migrations and a JDBC transaction adapter; TypeScript exact-money and safe uncertain-intent client modules. PostgreSQL Testcontainers tests are source-written but unexecuted. There is no running Spring/React/RabbitMQ application yet.
+From a clean clone with Docker Engine and Docker Compose:
 
-Executed checks and source identities are recorded in [evidence](docs/evidence/INDEX.md). Offline standalone Java and Node client-unit results are explicitly separate from JUnit, live API, database and browser verification. Component mutation probes show genuine red assertions and restored passing baselines, but **do not count as the 24 required full-stack defect experiments**.
+```bash
+./scripts/lab up
+```
 
-### Inspection paths
+The command generates sandbox-only secrets under ignored `.ledgerguard/`, builds the Java 21 application, starts PostgreSQL 17 and RabbitMQ 4, applies Flyway migrations as `ledger_owner`, runs the API as restricted `ledger_runtime`, seeds balanced fictional fixtures, waits on real readiness checks and executes independent reconciliation.
 
-- [Current progress and blockers](docs/implementation/PROGRESS.md)
-- [Delivery state and remote identity](docs/implementation/DELIVERY.md)
-- [Financial architecture and remaining integration](docs/architecture/FINANCIAL_BOUNDARY.md)
-- [PostgreSQL test source and limitations](tests/database/README.md)
-- [Dependency/maintenance decisions](docs/architecture/DEPENDENCIES.md)
-- [Risk-based testing strategy](docs/testing/STRATEGY.md)
-- [Release gate status](docs/implementation/RELEASE_READINESS.md)
+Useful commands:
 
-### Executable checks in a prepared Java 21/Node/TypeScript environment
+```bash
+./scripts/lab doctor
+./scripts/lab status
+./scripts/lab test unit
+./scripts/lab test database
+./scripts/lab reconcile
+./scripts/lab logs
+./scripts/lab down
+```
 
-`./scripts/lab test unit` executes the standalone Java and TypeScript client suites. `./scripts/lab unit-probes --all` runs isolated source mutations with baseline/mutant/restoration evidence. Representative unit probes are D12 (CAD 0.29 becomes 28 cents under a float/truncate bug), D19 (signature/event binding mismatch), and D21 (Halifax daily time drifts by one hour across spring DST).
+## Current architecture boundary
 
-`./scripts/lab up` is **not implemented or verified** and exits with an explicit blocker. No sandbox credentials, public application URL, completed CI lane or release asset exists. The original remote README and commit remain preserved in Git ancestry; local work has not been pushed because the connection's write requests return HTTP 403.
+`HTTP -> Spring Boot API -> restricted PostgreSQL runtime role`
+
+The source also contains exact-money/state policies, protected posting and command functions, durable idempotency records, holds, outbox/inbox tables, audit-chain records, schedules and webhook persistence. The executable foundation exposes only health and a read-only system-boundary endpoint; authentication, product APIs, worker processing and the React UI remain later phases and are not represented as complete.
+
+## What the fast lane proves
+
+The permanent GitHub Actions fast lane runs the existing Java and TypeScript suites, the eleven real PostgreSQL/Testcontainers financial tests, source secret scanning, a clean Compose build/start, restricted-role readiness, idempotent fixture seeding and independent reconciliation. A green subset is not a release decision; full G01–G16 status remains in [release readiness](docs/implementation/RELEASE_READINESS.md).
+
+Inspection paths:
+
+- [Implementation progress](docs/implementation/PROGRESS.md)
+- [Delivery and CI state](docs/implementation/DELIVERY.md)
+- [Exact dependencies](docs/architecture/DEPENDENCIES.md)
+- [Financial boundary](docs/architecture/FINANCIAL_BOUNDARY.md)
+- [Testing strategy](docs/testing/STRATEGY.md)
+- [Evidence index](docs/evidence/INDEX.md)

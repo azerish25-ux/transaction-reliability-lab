@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
 set -euo pipefail
 cd "$(dirname "$0")/.."
-tsc --project frontend/tsconfig.core.json
+npm --prefix frontend run --silent typecheck
 node tests/contracts/client.test.cjs
