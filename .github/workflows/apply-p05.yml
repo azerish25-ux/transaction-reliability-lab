@@ -1,0 +1,45 @@
+name: Apply P05 implementation
+
+on:
+  push:
+    branches: [p05-async-payments]
+
+permissions:
+  contents: write
+
+concurrency:
+  group: p05-apply-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  apply:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Check out implementation branch
+        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+        with:
+          ref: p05-async-payments
+          fetch-depth: 0
+      - name: Verify and apply P05 candidate
+        run: |
+          set -euo pipefail
+          cat \
+            .github/p05-payload/part-00 \
+            .github/p05-payload/part-01 \
+            .github/p05-payload/part-02-03 \
+            .github/p05-payload/part-04-07 \
+            .github/p05-payload/part-08-11 \
+            .github/p05-payload/part-12-15 \
+            .github/p05-payload/part-16-19 \
+            | base64 --decode | gzip -dc > /tmp/p05.patch
+          echo '7be1b1f5a344d4948fdad4cf365bc4434c8182563829b6434e3c7a0647996753  /tmp/p05.patch' | sha256sum -c -
+          git apply --index --whitespace=error-all /tmp/p05.patch
+          rm -rf .github/p05-payload .github/workflows/apply-p05.yml
+          git add -A
+          git diff --cached --check
+          git config user.name 'azerish25-ux'
+          git config user.email 'azerish25@gmail.com'
+          git commit -m 'feat: implement P05 asynchronous payment reliability'
+          git push origin HEAD:p05-async-payments
