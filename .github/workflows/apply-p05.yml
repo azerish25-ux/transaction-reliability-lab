@@ -35,10 +35,11 @@ jobs:
             .github/p05-payload/part-16-19 \
             | base64 --decode | gzip -dc > /tmp/p05.patch
           echo '7be1b1f5a344d4948fdad4cf365bc4434c8182563829b6434e3c7a0647996753  /tmp/p05.patch' | sha256sum -c -
-          git apply --index --whitespace=error-all /tmp/p05.patch
-          rm -rf .github/p05-payload .github/workflows/apply-p05.yml
+          git apply --index --whitespace=error-all --exclude='.github/workflows/*' /tmp/p05.patch
+          rm -rf .github/p05-payload
           git add -A
           git diff --cached --check
+          git diff --cached --quiet -- .github/workflows
           git config user.name 'azerish25-ux'
           git config user.email 'azerish25@gmail.com'
           git commit -m 'feat: implement P05 asynchronous payment reliability'
