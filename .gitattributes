@@ -1,0 +1,3 @@
+# Raw execution logs retain test-input whitespace (for example a deliberately rejected trailing space).
+# Do not rewrite evidence bytes to satisfy source-code whitespace style checks.
+docs/evidence/**/*.log -whitespace
