@@ -88,7 +88,7 @@ class AuthenticationAccountsIT {
             s.execute("CREATE ROLE ledger_runtime LOGIN NOSUPERUSER NOCREATEDB NOCREATEROLE PASSWORD '"+RUNTIME+"'");
             s.execute("GRANT CREATE ON DATABASE ledgerauth TO ledger_owner");s.execute("GRANT USAGE,CREATE ON SCHEMA public TO ledger_owner");
         }
-        // Exercise a real V5->V6 upgrade rather than only a fresh install.
+        // Exercise a real V5->current upgrade rather than only a fresh install.
         Flyway.configure().dataSource(PG.getJdbcUrl(),"ledger_owner",OWNER).target("5").locations("classpath:db/migration").load().migrate();
         try(Connection c=owner()) {
             historicalUser=uuid(c,"SELECT ledger.register_customer(?,'historical-disabled-password-hash-0000000000000','History')",UUID.randomUUID()+"@example.test");
@@ -345,7 +345,7 @@ class AuthenticationAccountsIT {
     }
     @Test void P0327_v5UpgradePreservesHistoricalAccounts() throws Exception {
         assertEquals(1,count("SELECT count(*) FROM ledger.accounts a JOIN ledger.account_balances b ON b.account_id=a.id WHERE a.id=? AND a.owner_id=? AND a.currency='CAD' AND b.posted_minor=0 AND b.reserved_minor=0",historicalAccount,historicalUser));
-        assertEquals(6,count("SELECT count(*) FROM public.flyway_schema_history WHERE success AND version IS NOT NULL"));
+        assertEquals(7,count("SELECT count(*) FROM public.flyway_schema_history WHERE success AND version IS NOT NULL"));
     }
     @Test void P0328_openApiMatchesAccountWireFieldsAndContainsOnlyImplementedProductGroups() throws Exception {
         Browser b=new Browser(first.port);Response response=b.call("GET","/openapi.json",null);status(200,response);var spec=JSON.readTree(response.asString());
