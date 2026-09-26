@@ -1,0 +1,76 @@
+name: LedgerGuard one-shot recovery publish
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - .github/workflows/ledgerguard-bootstrap.yml
+
+permissions:
+  contents: write
+
+concurrency:
+  group: ledgerguard-one-shot-recovery
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    if: github.repository == 'azerish25-ux/transaction-reliability-lab'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - name: Check out bootstrap commit
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          fetch-depth: 0
+
+      - name: Restore verified LedgerGuard commits
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "${GITHUB_REPOSITORY}" = "azerish25-ux/transaction-reliability-lab"
+          test "${GITHUB_REF_NAME}" = "main"
+          test "$(git rev-parse HEAD^)" = "b2e85ee6a1330efc9c4737f7e1f6ad693753b6ae"
+
+          archive="$RUNNER_TEMP/LedgerGuard-commits.mbox.xz"
+          mailbox="$RUNNER_TEMP/LedgerGuard-commits.mbox"
+          cat \
+            .ledgerguard-bootstrap/part-00.b64 \
+            .ledgerguard-bootstrap/part-01.b64 \
+            .ledgerguard-bootstrap/part-02.b64 \
+            .ledgerguard-bootstrap/part-03.b64 \
+            .ledgerguard-bootstrap/part-04.b64 \
+            .ledgerguard-bootstrap/part-05.b64 \
+            .ledgerguard-bootstrap/part-06.b64 \
+            .ledgerguard-bootstrap/part-07.b64 \
+            .ledgerguard-bootstrap/part-08.b64 \
+            .ledgerguard-bootstrap/part-09a.b64 \
+            .ledgerguard-bootstrap/part-09b.b64 \
+            .ledgerguard-bootstrap/part-09c1.b64 \
+            .ledgerguard-bootstrap/part-09c2.b64 \
+            .ledgerguard-bootstrap/part-09c3.b64 \
+            .ledgerguard-bootstrap/part-09d.b64 \
+            .ledgerguard-bootstrap/part-10a.b64 \
+            .ledgerguard-bootstrap/part-10b.b64 \
+            .ledgerguard-bootstrap/part-10c.b64 \
+            .ledgerguard-bootstrap/part-10d.b64 \
+            .ledgerguard-bootstrap/part-11.b64 \
+            > "$archive.b64"
+          base64 --decode "$archive.b64" > "$archive"
+          rm -f "$archive.b64"
+
+          echo "0226e9cb4b5e838bbfb280a7da090d5d56f4fd2432e683f2bd036cbdf634cf34  $archive" | sha256sum --check --status
+          xz --decompress --stdout "$archive" > "$mailbox"
+
+          git config user.name "LedgerGuard publication workflow"
+          git config user.email "ledgerguard-publication@users.noreply.github.com"
+          git am --committer-date-is-author-date "$mailbox"
+
+          git rm -r .ledgerguard-bootstrap .github/workflows/ledgerguard-bootstrap.yml
+          git commit -m "chore: remove one-shot recovery publication files"
+
+          test "$(git rev-parse HEAD^{tree})" = "20448b305c2b417f5c6d14a04f6cdf12894ff817"
+          test "$(git ls-files | wc -l | tr -d ' ')" = "160"
+          git diff --check b2e85ee6a1330efc9c4737f7e1f6ad693753b6ae..HEAD
+          git fsck --full
+          git push origin HEAD:main
