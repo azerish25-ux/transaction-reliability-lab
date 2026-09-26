@@ -1,18 +1,7 @@
 -- P03 is additive: V1-V5 and their financial posting privileges remain unchanged.
+-- V4 already enforces immutable account identity. Reuse that trigger and its 42501 contract.
+-- The initial P03 candidate V6 rolled back in full because it redeclared that trigger.
 SET search_path = ledger, pg_catalog;
-
-CREATE FUNCTION immutable_account_identity() RETURNS trigger LANGUAGE plpgsql
-SET search_path=pg_catalog,ledger,pg_temp AS $$
-BEGIN
- IF NEW.id IS DISTINCT FROM OLD.id OR NEW.owner_id IS DISTINCT FROM OLD.owner_id
- OR NEW.public_ref IS DISTINCT FROM OLD.public_ref OR NEW.currency IS DISTINCT FROM OLD.currency
- OR NEW.kind IS DISTINCT FROM OLD.kind THEN
-  RAISE EXCEPTION USING ERRCODE='23514',MESSAGE='IMMUTABLE_ACCOUNT_IDENTITY';
- END IF;
- RETURN NEW;
-END $$;
-CREATE TRIGGER account_identity_immutable BEFORE UPDATE ON accounts
-FOR EACH ROW EXECUTE FUNCTION immutable_account_identity();
 
 CREATE FUNCTION immutable_session_identity() RETURNS trigger LANGUAGE plpgsql
 SET search_path=pg_catalog,ledger,pg_temp AS $$
@@ -73,4 +62,4 @@ END $$;
 REVOKE ALL ON auth_budgets FROM PUBLIC,ledger_runtime;
 REVOKE ALL ON FUNCTION consume_auth_budget(text,integer,integer) FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION consume_auth_budget(text,integer,integer) TO ledger_runtime;
-REVOKE ALL ON FUNCTION immutable_account_identity(),immutable_session_identity() FROM PUBLIC;
+REVOKE ALL ON FUNCTION immutable_session_identity() FROM PUBLIC;
