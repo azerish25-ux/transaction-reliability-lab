@@ -1,0 +1,573 @@
+{
+  "scope": "UNIT_COMPONENT_ONLY",
+  "full_stack_defects_detected": 0,
+  "results": [
+    {
+      "id": "D02",
+      "title": "IDEMPOTENCY_PAYLOAD_MISMATCH",
+      "test_id": "IDEMPOTENCY-intent-change",
+      "risk": "R01",
+      "mechanism": "Fingerprint ignores economically meaningful intent values.",
+      "scope": "UNIT_COMPONENT_ONLY",
+      "counts_toward_G07": false,
+      "run_id": "D02-02565596-88e8-41e3-a1b6-706f3dfba345",
+      "started": "2026-09-26T11:45:32.968294+00:00",
+      "source_commit": "a74d930987639f3bcfaf03038947537412599fda",
+      "dirty_tree": false,
+      "source_sha256": "596a093ad30d70a2a0b9460e045608e4aba4d295e298fd79117b287017008369",
+      "source_file": "backend/src/main/java/lab/ledgerguard/core/Idempotency.java",
+      "seed": 74021,
+      "verdict": "DETECTED",
+      "mutation_sha256": "db59a0ce8b09e9a0cd96fc179e9d396e1c048f96339db52db57e4ba2bbb238ea",
+      "baseline": {
+        "command": [
+          "./scripts/test-core",
+          "/mnt/data/transaction-reliability-lab/.evidence/unit-probes/D02-02565596-88e8-41e3-a1b6-706f3dfba345/baseline.xml",
+          "IDEMPOTENCY-intent-change"
+        ],
+        "start": "2026-09-26T11:45:32.972902+00:00",
+        "end": "2026-09-26T11:45:34.141583+00:00",
+        "exit_status": 0,
+        "log": ".evidence/unit-probes/D02-02565596-88e8-41e3-a1b6-706f3dfba345/baseline.log",
+        "report": ".evidence/unit-probes/D02-02565596-88e8-41e3-a1b6-706f3dfba345/baseline.xml",
+        "tests": 1,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "assertion_messages": [],
+        "curated_log": "docs/evidence/unit-probes/D02-02565596-88e8-41e3-a1b6-706f3dfba345/baseline.log",
+        "curated_report": "docs/evidence/unit-probes/D02-02565596-88e8-41e3-a1b6-706f3dfba345/baseline.xml"
+      },
+      "mutant": {
+        "command": [
+          "./scripts/test-core",
+          "/mnt/data/transaction-reliability-lab/.evidence/unit-probes/D02-02565596-88e8-41e3-a1b6-706f3dfba345/mutant.xml",
+          "IDEMPOTENCY-intent-change"
+        ],
+        "start": "2026-09-26T11:45:34.142050+00:00",
+        "end": "2026-09-26T11:45:35.263965+00:00",
+        "exit_status": 1,
+        "log": ".evidence/unit-probes/D02-02565596-88e8-41e3-a1b6-706f3dfba345/mutant.log",
+        "report": ".evidence/unit-probes/D02-02565596-88e8-41e3-a1b6-706f3dfba345/mutant.xml",
+        "tests": 1,
+        "failures": 1,
+        "errors": 0,
+        "skipped": 0,
+        "assertion_messages": [
+          "java.lang.AssertionError: values unexpectedly equal: 9557955382fa8de2f7caeb026303f7ef047660386897aa1a1cf29c77d719e0f1"
+        ],
+        "curated_log": "docs/evidence/unit-probes/D02-02565596-88e8-41e3-a1b6-706f3dfba345/mutant.log",
+        "curated_report": "docs/evidence/unit-probes/D02-02565596-88e8-41e3-a1b6-706f3dfba345/mutant.xml"
+      },
+      "restoration": {
+        "command": [
+          "./scripts/test-core",
+          "/mnt/data/transaction-reliability-lab/.evidence/unit-probes/D02-02565596-88e8-41e3-a1b6-706f3dfba345/restoration.xml",
+          "IDEMPOTENCY-intent-change"
+        ],
+        "start": "2026-09-26T11:45:35.264361+00:00",
+        "end": "2026-09-26T11:45:36.382730+00:00",
+        "exit_status": 0,
+        "log": ".evidence/unit-probes/D02-02565596-88e8-41e3-a1b6-706f3dfba345/restoration.log",
+        "report": ".evidence/unit-probes/D02-02565596-88e8-41e3-a1b6-706f3dfba345/restoration.xml",
+        "tests": 1,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "assertion_messages": [],
+        "curated_log": "docs/evidence/unit-probes/D02-02565596-88e8-41e3-a1b6-706f3dfba345/restoration.log",
+        "curated_report": "docs/evidence/unit-probes/D02-02565596-88e8-41e3-a1b6-706f3dfba345/restoration.xml"
+      },
+      "restored_sha256": "596a093ad30d70a2a0b9460e045608e4aba4d295e298fd79117b287017008369",
+      "ended": "2026-09-26T11:45:36.383019+00:00",
+      "curated_directory": "docs/evidence/unit-probes/D02-02565596-88e8-41e3-a1b6-706f3dfba345"
+    },
+    {
+      "id": "D08",
+      "title": "STALE_EVENT_OVERWRITE",
+      "test_id": "PROJECTION-stale",
+      "risk": "R06",
+      "mechanism": "Remove both version and terminal-state protection; an old full snapshot overwrites SETTLED.",
+      "scope": "UNIT_COMPONENT_ONLY",
+      "counts_toward_G07": false,
+      "run_id": "D08-ff996202-238b-47b1-bc99-4ca6e53978aa",
+      "started": "2026-09-26T11:45:36.383514+00:00",
+      "source_commit": "a74d930987639f3bcfaf03038947537412599fda",
+      "dirty_tree": false,
+      "source_sha256": "c1c0793b31627bec8e6f98e7b25ae99c7a840493090c0ede778d3f3b21abbe3c",
+      "source_file": "backend/src/main/java/lab/ledgerguard/core/Projection.java",
+      "seed": 74021,
+      "verdict": "DETECTED",
+      "mutation_sha256": "c2feed710a55b457b38648fcd0f352cebb5eed051545c13daed93fa016bb3fc1",
+      "baseline": {
+        "command": [
+          "./scripts/test-core",
+          "/mnt/data/transaction-reliability-lab/.evidence/unit-probes/D08-ff996202-238b-47b1-bc99-4ca6e53978aa/baseline.xml",
+          "PROJECTION-stale"
+        ],
+        "start": "2026-09-26T11:45:36.388636+00:00",
+        "end": "2026-09-26T11:45:37.456291+00:00",
+        "exit_status": 0,
+        "log": ".evidence/unit-probes/D08-ff996202-238b-47b1-bc99-4ca6e53978aa/baseline.log",
+        "report": ".evidence/unit-probes/D08-ff996202-238b-47b1-bc99-4ca6e53978aa/baseline.xml",
+        "tests": 1,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "assertion_messages": [],
+        "curated_log": "docs/evidence/unit-probes/D08-ff996202-238b-47b1-bc99-4ca6e53978aa/baseline.log",
+        "curated_report": "docs/evidence/unit-probes/D08-ff996202-238b-47b1-bc99-4ca6e53978aa/baseline.xml"
+      },
+      "mutant": {
+        "command": [
+          "./scripts/test-core",
+          "/mnt/data/transaction-reliability-lab/.evidence/unit-probes/D08-ff996202-238b-47b1-bc99-4ca6e53978aa/mutant.xml",
+          "PROJECTION-stale"
+        ],
+        "start": "2026-09-26T11:45:37.456641+00:00",
+        "end": "2026-09-26T11:45:38.523061+00:00",
+        "exit_status": 1,
+        "log": ".evidence/unit-probes/D08-ff996202-238b-47b1-bc99-4ca6e53978aa/mutant.log",
+        "report": ".evidence/unit-probes/D08-ff996202-238b-47b1-bc99-4ca6e53978aa/mutant.xml",
+        "tests": 1,
+        "failures": 1,
+        "errors": 0,
+        "skipped": 0,
+        "assertion_messages": [
+          "java.lang.AssertionError: expected=SETTLED actual=PENDING"
+        ],
+        "curated_log": "docs/evidence/unit-probes/D08-ff996202-238b-47b1-bc99-4ca6e53978aa/mutant.log",
+        "curated_report": "docs/evidence/unit-probes/D08-ff996202-238b-47b1-bc99-4ca6e53978aa/mutant.xml"
+      },
+      "restoration": {
+        "command": [
+          "./scripts/test-core",
+          "/mnt/data/transaction-reliability-lab/.evidence/unit-probes/D08-ff996202-238b-47b1-bc99-4ca6e53978aa/restoration.xml",
+          "PROJECTION-stale"
+        ],
+        "start": "2026-09-26T11:45:38.523438+00:00",
+        "end": "2026-09-26T11:45:39.692010+00:00",
+        "exit_status": 0,
+        "log": ".evidence/unit-probes/D08-ff996202-238b-47b1-bc99-4ca6e53978aa/restoration.log",
+        "report": ".evidence/unit-probes/D08-ff996202-238b-47b1-bc99-4ca6e53978aa/restoration.xml",
+        "tests": 1,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "assertion_messages": [],
+        "curated_log": "docs/evidence/unit-probes/D08-ff996202-238b-47b1-bc99-4ca6e53978aa/restoration.log",
+        "curated_report": "docs/evidence/unit-probes/D08-ff996202-238b-47b1-bc99-4ca6e53978aa/restoration.xml"
+      },
+      "restored_sha256": "c1c0793b31627bec8e6f98e7b25ae99c7a840493090c0ede778d3f3b21abbe3c",
+      "ended": "2026-09-26T11:45:39.692299+00:00",
+      "curated_directory": "docs/evidence/unit-probes/D08-ff996202-238b-47b1-bc99-4ca6e53978aa"
+    },
+    {
+      "id": "D11",
+      "title": "REVERSAL_AFTER_REFUND",
+      "test_id": "REVERSAL-after-refund",
+      "risk": "R08",
+      "mechanism": "A full reversal forgets a previous successful partial refund.",
+      "scope": "UNIT_COMPONENT_ONLY",
+      "counts_toward_G07": false,
+      "run_id": "D11-0f4d60c6-13ab-46c5-8bd1-d2f5dbc04ad0",
+      "started": "2026-09-26T11:45:39.692714+00:00",
+      "source_commit": "a74d930987639f3bcfaf03038947537412599fda",
+      "dirty_tree": false,
+      "source_sha256": "f9ca472061e766163aa263b1216f524d7bd2b80607e7120a78520947a8d1326f",
+      "source_file": "backend/src/main/java/lab/ledgerguard/core/PaymentRules.java",
+      "seed": 74021,
+      "verdict": "DETECTED",
+      "mutation_sha256": "b9f25115f4bf8e01f8b6b2b40e78cefdc1f9228517b9ec9b510e08b5a24f4f34",
+      "baseline": {
+        "command": [
+          "./scripts/test-core",
+          "/mnt/data/transaction-reliability-lab/.evidence/unit-probes/D11-0f4d60c6-13ab-46c5-8bd1-d2f5dbc04ad0/baseline.xml",
+          "REVERSAL-after-refund"
+        ],
+        "start": "2026-09-26T11:45:39.696702+00:00",
+        "end": "2026-09-26T11:45:40.767104+00:00",
+        "exit_status": 0,
+        "log": ".evidence/unit-probes/D11-0f4d60c6-13ab-46c5-8bd1-d2f5dbc04ad0/baseline.log",
+        "report": ".evidence/unit-probes/D11-0f4d60c6-13ab-46c5-8bd1-d2f5dbc04ad0/baseline.xml",
+        "tests": 1,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "assertion_messages": [],
+        "curated_log": "docs/evidence/unit-probes/D11-0f4d60c6-13ab-46c5-8bd1-d2f5dbc04ad0/baseline.log",
+        "curated_report": "docs/evidence/unit-probes/D11-0f4d60c6-13ab-46c5-8bd1-d2f5dbc04ad0/baseline.xml"
+      },
+      "mutant": {
+        "command": [
+          "./scripts/test-core",
+          "/mnt/data/transaction-reliability-lab/.evidence/unit-probes/D11-0f4d60c6-13ab-46c5-8bd1-d2f5dbc04ad0/mutant.xml",
+          "REVERSAL-after-refund"
+        ],
+        "start": "2026-09-26T11:45:40.767484+00:00",
+        "end": "2026-09-26T11:45:41.886099+00:00",
+        "exit_status": 1,
+        "log": ".evidence/unit-probes/D11-0f4d60c6-13ab-46c5-8bd1-d2f5dbc04ad0/mutant.log",
+        "report": ".evidence/unit-probes/D11-0f4d60c6-13ab-46c5-8bd1-d2f5dbc04ad0/mutant.xml",
+        "tests": 1,
+        "failures": 1,
+        "errors": 0,
+        "skipped": 0,
+        "assertion_messages": [
+          "java.lang.AssertionError: expected DomainFailure REVERSAL_FORBIDDEN"
+        ],
+        "curated_log": "docs/evidence/unit-probes/D11-0f4d60c6-13ab-46c5-8bd1-d2f5dbc04ad0/mutant.log",
+        "curated_report": "docs/evidence/unit-probes/D11-0f4d60c6-13ab-46c5-8bd1-d2f5dbc04ad0/mutant.xml"
+      },
+      "restoration": {
+        "command": [
+          "./scripts/test-core",
+          "/mnt/data/transaction-reliability-lab/.evidence/unit-probes/D11-0f4d60c6-13ab-46c5-8bd1-d2f5dbc04ad0/restoration.xml",
+          "REVERSAL-after-refund"
+        ],
+        "start": "2026-09-26T11:45:41.886530+00:00",
+        "end": "2026-09-26T11:45:42.958609+00:00",
+        "exit_status": 0,
+        "log": ".evidence/unit-probes/D11-0f4d60c6-13ab-46c5-8bd1-d2f5dbc04ad0/restoration.log",
+        "report": ".evidence/unit-probes/D11-0f4d60c6-13ab-46c5-8bd1-d2f5dbc04ad0/restoration.xml",
+        "tests": 1,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "assertion_messages": [],
+        "curated_log": "docs/evidence/unit-probes/D11-0f4d60c6-13ab-46c5-8bd1-d2f5dbc04ad0/restoration.log",
+        "curated_report": "docs/evidence/unit-probes/D11-0f4d60c6-13ab-46c5-8bd1-d2f5dbc04ad0/restoration.xml"
+      },
+      "restored_sha256": "f9ca472061e766163aa263b1216f524d7bd2b80607e7120a78520947a8d1326f",
+      "ended": "2026-09-26T11:45:42.958904+00:00",
+      "curated_directory": "docs/evidence/unit-probes/D11-0f4d60c6-13ab-46c5-8bd1-d2f5dbc04ad0"
+    },
+    {
+      "id": "D12",
+      "title": "FLOATING_POINT_AMOUNT_PARSE",
+      "test_id": "TSMONEY-CAD-29",
+      "risk": "R09",
+      "mechanism": "Float/truncate conversion changes CAD 0.29 into 28 minor units.",
+      "scope": "UNIT_COMPONENT_ONLY",
+      "counts_toward_G07": false,
+      "run_id": "D12-1ee08cc2-c9da-4df0-bd3f-7cba0f75be4c",
+      "started": "2026-09-26T11:45:42.959301+00:00",
+      "source_commit": "a74d930987639f3bcfaf03038947537412599fda",
+      "dirty_tree": false,
+      "source_sha256": "ae7d4efd624a04e113009a29aed063c664a730efa0fcb003c24a2ab0549b0773",
+      "source_file": "frontend/src/money.ts",
+      "seed": 74021,
+      "verdict": "DETECTED",
+      "mutation_sha256": "96a36339d582db88c5bed1a4c6552fdd2ae008dcbbcd016114c9b43a44b6f99b",
+      "baseline": {
+        "command": [
+          "bash",
+          "-c",
+          "tsc --project frontend/tsconfig.core.json && node tests/contracts/client.test.cjs \"$1\"",
+          "client-probe",
+          "TSMONEY-CAD-29"
+        ],
+        "start": "2026-09-26T11:45:42.962993+00:00",
+        "end": "2026-09-26T11:45:43.780392+00:00",
+        "exit_status": 0,
+        "log": ".evidence/unit-probes/D12-1ee08cc2-c9da-4df0-bd3f-7cba0f75be4c/baseline.log",
+        "report": ".evidence/unit-probes/D12-1ee08cc2-c9da-4df0-bd3f-7cba0f75be4c/baseline.xml",
+        "tests": 1,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "assertion_messages": [],
+        "curated_log": "docs/evidence/unit-probes/D12-1ee08cc2-c9da-4df0-bd3f-7cba0f75be4c/baseline.log",
+        "curated_report": "docs/evidence/unit-probes/D12-1ee08cc2-c9da-4df0-bd3f-7cba0f75be4c/baseline.xml"
+      },
+      "mutant": {
+        "command": [
+          "bash",
+          "-c",
+          "tsc --project frontend/tsconfig.core.json && node tests/contracts/client.test.cjs \"$1\"",
+          "client-probe",
+          "TSMONEY-CAD-29"
+        ],
+        "start": "2026-09-26T11:45:43.780752+00:00",
+        "end": "2026-09-26T11:45:44.647728+00:00",
+        "exit_status": 1,
+        "log": ".evidence/unit-probes/D12-1ee08cc2-c9da-4df0-bd3f-7cba0f75be4c/mutant.log",
+        "report": ".evidence/unit-probes/D12-1ee08cc2-c9da-4df0-bd3f-7cba0f75be4c/mutant.xml",
+        "tests": 1,
+        "failures": 1,
+        "errors": 0,
+        "skipped": 0,
+        "assertion_messages": [
+          "Expected values to be strictly equal:  '28' !== '29' "
+        ],
+        "curated_log": "docs/evidence/unit-probes/D12-1ee08cc2-c9da-4df0-bd3f-7cba0f75be4c/mutant.log",
+        "curated_report": "docs/evidence/unit-probes/D12-1ee08cc2-c9da-4df0-bd3f-7cba0f75be4c/mutant.xml"
+      },
+      "restoration": {
+        "command": [
+          "bash",
+          "-c",
+          "tsc --project frontend/tsconfig.core.json && node tests/contracts/client.test.cjs \"$1\"",
+          "client-probe",
+          "TSMONEY-CAD-29"
+        ],
+        "start": "2026-09-26T11:45:44.648034+00:00",
+        "end": "2026-09-26T11:45:45.475329+00:00",
+        "exit_status": 0,
+        "log": ".evidence/unit-probes/D12-1ee08cc2-c9da-4df0-bd3f-7cba0f75be4c/restoration.log",
+        "report": ".evidence/unit-probes/D12-1ee08cc2-c9da-4df0-bd3f-7cba0f75be4c/restoration.xml",
+        "tests": 1,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "assertion_messages": [],
+        "curated_log": "docs/evidence/unit-probes/D12-1ee08cc2-c9da-4df0-bd3f-7cba0f75be4c/restoration.log",
+        "curated_report": "docs/evidence/unit-probes/D12-1ee08cc2-c9da-4df0-bd3f-7cba0f75be4c/restoration.xml"
+      },
+      "restored_sha256": "ae7d4efd624a04e113009a29aed063c664a730efa0fcb003c24a2ab0549b0773",
+      "ended": "2026-09-26T11:45:45.475543+00:00",
+      "curated_directory": "docs/evidence/unit-probes/D12-1ee08cc2-c9da-4df0-bd3f-7cba0f75be4c"
+    },
+    {
+      "id": "D13",
+      "title": "UNCHECKED_MONEY_OVERFLOW",
+      "test_id": "WALLET-overflow",
+      "risk": "R09",
+      "mechanism": "Unchecked addition wraps; the secondary constructor defense prevents corruption but the controlled overflow error contract regresses.",
+      "scope": "UNIT_COMPONENT_ONLY",
+      "counts_toward_G07": false,
+      "run_id": "D13-5d0db6c9-d372-464e-b850-05e1dd5910e5",
+      "started": "2026-09-26T11:45:45.476022+00:00",
+      "source_commit": "a74d930987639f3bcfaf03038947537412599fda",
+      "dirty_tree": false,
+      "source_sha256": "1bd77de511546334a3a0e1fda1fb310662c6c7d26b55e5e367982b742323ea7f",
+      "source_file": "backend/src/main/java/lab/ledgerguard/core/WalletBalance.java",
+      "seed": 74021,
+      "verdict": "DETECTED",
+      "mutation_sha256": "269358651f180d1c6891776e505d9bbfb59531f105df50ea3c3cef4b6d49cb88",
+      "baseline": {
+        "command": [
+          "./scripts/test-core",
+          "/mnt/data/transaction-reliability-lab/.evidence/unit-probes/D13-5d0db6c9-d372-464e-b850-05e1dd5910e5/baseline.xml",
+          "WALLET-overflow"
+        ],
+        "start": "2026-09-26T11:45:45.480112+00:00",
+        "end": "2026-09-26T11:45:46.548842+00:00",
+        "exit_status": 0,
+        "log": ".evidence/unit-probes/D13-5d0db6c9-d372-464e-b850-05e1dd5910e5/baseline.log",
+        "report": ".evidence/unit-probes/D13-5d0db6c9-d372-464e-b850-05e1dd5910e5/baseline.xml",
+        "tests": 1,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "assertion_messages": [],
+        "curated_log": "docs/evidence/unit-probes/D13-5d0db6c9-d372-464e-b850-05e1dd5910e5/baseline.log",
+        "curated_report": "docs/evidence/unit-probes/D13-5d0db6c9-d372-464e-b850-05e1dd5910e5/baseline.xml"
+      },
+      "mutant": {
+        "command": [
+          "./scripts/test-core",
+          "/mnt/data/transaction-reliability-lab/.evidence/unit-probes/D13-5d0db6c9-d372-464e-b850-05e1dd5910e5/mutant.xml",
+          "WALLET-overflow"
+        ],
+        "start": "2026-09-26T11:45:46.549232+00:00",
+        "end": "2026-09-26T11:45:47.621281+00:00",
+        "exit_status": 1,
+        "log": ".evidence/unit-probes/D13-5d0db6c9-d372-464e-b850-05e1dd5910e5/mutant.log",
+        "report": ".evidence/unit-probes/D13-5d0db6c9-d372-464e-b850-05e1dd5910e5/mutant.xml",
+        "tests": 1,
+        "failures": 1,
+        "errors": 0,
+        "skipped": 0,
+        "assertion_messages": [
+          "java.lang.AssertionError: expected=BALANCE_OVERFLOW actual=BALANCE_INVARIANT"
+        ],
+        "curated_log": "docs/evidence/unit-probes/D13-5d0db6c9-d372-464e-b850-05e1dd5910e5/mutant.log",
+        "curated_report": "docs/evidence/unit-probes/D13-5d0db6c9-d372-464e-b850-05e1dd5910e5/mutant.xml"
+      },
+      "restoration": {
+        "command": [
+          "./scripts/test-core",
+          "/mnt/data/transaction-reliability-lab/.evidence/unit-probes/D13-5d0db6c9-d372-464e-b850-05e1dd5910e5/restoration.xml",
+          "WALLET-overflow"
+        ],
+        "start": "2026-09-26T11:45:47.621732+00:00",
+        "end": "2026-09-26T11:45:48.693974+00:00",
+        "exit_status": 0,
+        "log": ".evidence/unit-probes/D13-5d0db6c9-d372-464e-b850-05e1dd5910e5/restoration.log",
+        "report": ".evidence/unit-probes/D13-5d0db6c9-d372-464e-b850-05e1dd5910e5/restoration.xml",
+        "tests": 1,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "assertion_messages": [],
+        "curated_log": "docs/evidence/unit-probes/D13-5d0db6c9-d372-464e-b850-05e1dd5910e5/restoration.log",
+        "curated_report": "docs/evidence/unit-probes/D13-5d0db6c9-d372-464e-b850-05e1dd5910e5/restoration.xml"
+      },
+      "restored_sha256": "1bd77de511546334a3a0e1fda1fb310662c6c7d26b55e5e367982b742323ea7f",
+      "ended": "2026-09-26T11:45:48.694252+00:00",
+      "curated_directory": "docs/evidence/unit-probes/D13-5d0db6c9-d372-464e-b850-05e1dd5910e5"
+    },
+    {
+      "id": "D19",
+      "title": "WEBHOOK_SIGNATURE_MISMATCH",
+      "test_id": "WEBHOOK-independent-vector",
+      "risk": "R13",
+      "mechanism": "Omit the event identity from the signed bytes; receiver interoperability and replay binding break.",
+      "scope": "UNIT_COMPONENT_ONLY",
+      "counts_toward_G07": false,
+      "run_id": "D19-4ee110fa-be27-4598-a974-616ea3d9c469",
+      "started": "2026-09-26T11:45:48.694731+00:00",
+      "source_commit": "a74d930987639f3bcfaf03038947537412599fda",
+      "dirty_tree": false,
+      "source_sha256": "14dd6f17c1dab167dfce1d43a157173b533a71c1d0257c3b14c6d01a34dce960",
+      "source_file": "backend/src/main/java/lab/ledgerguard/core/WebhookSignature.java",
+      "seed": 74021,
+      "verdict": "DETECTED",
+      "mutation_sha256": "e9ddec7b56b4b7d0ddbba649ffdd441dfd724496467467f09a303008c94e4375",
+      "baseline": {
+        "command": [
+          "./scripts/test-core",
+          "/mnt/data/transaction-reliability-lab/.evidence/unit-probes/D19-4ee110fa-be27-4598-a974-616ea3d9c469/baseline.xml",
+          "WEBHOOK-independent-vector"
+        ],
+        "start": "2026-09-26T11:45:48.698396+00:00",
+        "end": "2026-09-26T11:45:49.817885+00:00",
+        "exit_status": 0,
+        "log": ".evidence/unit-probes/D19-4ee110fa-be27-4598-a974-616ea3d9c469/baseline.log",
+        "report": ".evidence/unit-probes/D19-4ee110fa-be27-4598-a974-616ea3d9c469/baseline.xml",
+        "tests": 1,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "assertion_messages": [],
+        "curated_log": "docs/evidence/unit-probes/D19-4ee110fa-be27-4598-a974-616ea3d9c469/baseline.log",
+        "curated_report": "docs/evidence/unit-probes/D19-4ee110fa-be27-4598-a974-616ea3d9c469/baseline.xml"
+      },
+      "mutant": {
+        "command": [
+          "./scripts/test-core",
+          "/mnt/data/transaction-reliability-lab/.evidence/unit-probes/D19-4ee110fa-be27-4598-a974-616ea3d9c469/mutant.xml",
+          "WEBHOOK-independent-vector"
+        ],
+        "start": "2026-09-26T11:45:49.818226+00:00",
+        "end": "2026-09-26T11:45:51.091179+00:00",
+        "exit_status": 1,
+        "log": ".evidence/unit-probes/D19-4ee110fa-be27-4598-a974-616ea3d9c469/mutant.log",
+        "report": ".evidence/unit-probes/D19-4ee110fa-be27-4598-a974-616ea3d9c469/mutant.xml",
+        "tests": 1,
+        "failures": 1,
+        "errors": 0,
+        "skipped": 0,
+        "assertion_messages": [
+          "java.lang.AssertionError: expected=v1=c0f55afd6f8a73978046016f7cc116c9abc47d0a42c8ba0b74c5f166a6da3147 actual=v1=be13bf6bec7ceb031e3d32a55663713438a3a312e882a79bbe44467616d1c6ba"
+        ],
+        "curated_log": "docs/evidence/unit-probes/D19-4ee110fa-be27-4598-a974-616ea3d9c469/mutant.log",
+        "curated_report": "docs/evidence/unit-probes/D19-4ee110fa-be27-4598-a974-616ea3d9c469/mutant.xml"
+      },
+      "restoration": {
+        "command": [
+          "./scripts/test-core",
+          "/mnt/data/transaction-reliability-lab/.evidence/unit-probes/D19-4ee110fa-be27-4598-a974-616ea3d9c469/restoration.xml",
+          "WEBHOOK-independent-vector"
+        ],
+        "start": "2026-09-26T11:45:51.091620+00:00",
+        "end": "2026-09-26T11:45:52.310690+00:00",
+        "exit_status": 0,
+        "log": ".evidence/unit-probes/D19-4ee110fa-be27-4598-a974-616ea3d9c469/restoration.log",
+        "report": ".evidence/unit-probes/D19-4ee110fa-be27-4598-a974-616ea3d9c469/restoration.xml",
+        "tests": 1,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "assertion_messages": [],
+        "curated_log": "docs/evidence/unit-probes/D19-4ee110fa-be27-4598-a974-616ea3d9c469/restoration.log",
+        "curated_report": "docs/evidence/unit-probes/D19-4ee110fa-be27-4598-a974-616ea3d9c469/restoration.xml"
+      },
+      "restored_sha256": "14dd6f17c1dab167dfce1d43a157173b533a71c1d0257c3b14c6d01a34dce960",
+      "ended": "2026-09-26T11:45:52.310987+00:00",
+      "curated_directory": "docs/evidence/unit-probes/D19-4ee110fa-be27-4598-a974-616ea3d9c469"
+    },
+    {
+      "id": "D21",
+      "title": "FIXED_24H_RECURRENCE",
+      "test_id": "SCHEDULE-daily-spring",
+      "risk": "R15",
+      "mechanism": "Add a fixed UTC day instead of preserving the intended Halifax wall-clock time.",
+      "scope": "UNIT_COMPONENT_ONLY",
+      "counts_toward_G07": false,
+      "run_id": "D21-2a4d2ee6-218c-4a1d-8b00-b4dd04a8c41c",
+      "started": "2026-09-26T11:45:52.311413+00:00",
+      "source_commit": "a74d930987639f3bcfaf03038947537412599fda",
+      "dirty_tree": false,
+      "source_sha256": "ba503d13d9625f9cc6152fe2d088e1e1dfa9b875293094196b2fa51729792443",
+      "source_file": "backend/src/main/java/lab/ledgerguard/core/SchedulePolicy.java",
+      "seed": 74021,
+      "verdict": "DETECTED",
+      "mutation_sha256": "6066e0f3bbdd1e7b94f9a1f799209b569cd26b21d842ccabda0e166977963170",
+      "baseline": {
+        "command": [
+          "./scripts/test-core",
+          "/mnt/data/transaction-reliability-lab/.evidence/unit-probes/D21-2a4d2ee6-218c-4a1d-8b00-b4dd04a8c41c/baseline.xml",
+          "SCHEDULE-daily-spring"
+        ],
+        "start": "2026-09-26T11:45:52.315390+00:00",
+        "end": "2026-09-26T11:45:53.439574+00:00",
+        "exit_status": 0,
+        "log": ".evidence/unit-probes/D21-2a4d2ee6-218c-4a1d-8b00-b4dd04a8c41c/baseline.log",
+        "report": ".evidence/unit-probes/D21-2a4d2ee6-218c-4a1d-8b00-b4dd04a8c41c/baseline.xml",
+        "tests": 1,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "assertion_messages": [],
+        "curated_log": "docs/evidence/unit-probes/D21-2a4d2ee6-218c-4a1d-8b00-b4dd04a8c41c/baseline.log",
+        "curated_report": "docs/evidence/unit-probes/D21-2a4d2ee6-218c-4a1d-8b00-b4dd04a8c41c/baseline.xml"
+      },
+      "mutant": {
+        "command": [
+          "./scripts/test-core",
+          "/mnt/data/transaction-reliability-lab/.evidence/unit-probes/D21-2a4d2ee6-218c-4a1d-8b00-b4dd04a8c41c/mutant.xml",
+          "SCHEDULE-daily-spring"
+        ],
+        "start": "2026-09-26T11:45:53.439950+00:00",
+        "end": "2026-09-26T11:45:54.463477+00:00",
+        "exit_status": 1,
+        "log": ".evidence/unit-probes/D21-2a4d2ee6-218c-4a1d-8b00-b4dd04a8c41c/mutant.log",
+        "report": ".evidence/unit-probes/D21-2a4d2ee6-218c-4a1d-8b00-b4dd04a8c41c/mutant.xml",
+        "tests": 1,
+        "failures": 1,
+        "errors": 0,
+        "skipped": 0,
+        "assertion_messages": [
+          "java.lang.AssertionError: expected=2026-03-08T12:00:00Z actual=2026-03-08T13:00:00Z"
+        ],
+        "curated_log": "docs/evidence/unit-probes/D21-2a4d2ee6-218c-4a1d-8b00-b4dd04a8c41c/mutant.log",
+        "curated_report": "docs/evidence/unit-probes/D21-2a4d2ee6-218c-4a1d-8b00-b4dd04a8c41c/mutant.xml"
+      },
+      "restoration": {
+        "command": [
+          "./scripts/test-core",
+          "/mnt/data/transaction-reliability-lab/.evidence/unit-probes/D21-2a4d2ee6-218c-4a1d-8b00-b4dd04a8c41c/restoration.xml",
+          "SCHEDULE-daily-spring"
+        ],
+        "start": "2026-09-26T11:45:54.463862+00:00",
+        "end": "2026-09-26T11:45:55.482768+00:00",
+        "exit_status": 0,
+        "log": ".evidence/unit-probes/D21-2a4d2ee6-218c-4a1d-8b00-b4dd04a8c41c/restoration.log",
+        "report": ".evidence/unit-probes/D21-2a4d2ee6-218c-4a1d-8b00-b4dd04a8c41c/restoration.xml",
+        "tests": 1,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "assertion_messages": [],
+        "curated_log": "docs/evidence/unit-probes/D21-2a4d2ee6-218c-4a1d-8b00-b4dd04a8c41c/restoration.log",
+        "curated_report": "docs/evidence/unit-probes/D21-2a4d2ee6-218c-4a1d-8b00-b4dd04a8c41c/restoration.xml"
+      },
+      "restored_sha256": "ba503d13d9625f9cc6152fe2d088e1e1dfa9b875293094196b2fa51729792443",
+      "ended": "2026-09-26T11:45:55.483050+00:00",
+      "curated_directory": "docs/evidence/unit-probes/D21-2a4d2ee6-218c-4a1d-8b00-b4dd04a8c41c"
+    }
+  ],
+  "notice": "Actual source-component experiments. Zero full-stack Dxx detections; zero activated Fxx faults. Seven probes do not satisfy G07."
+}

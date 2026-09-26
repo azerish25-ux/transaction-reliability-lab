@@ -1,0 +1,73 @@
+{
+  "id": "D11",
+  "title": "REVERSAL_AFTER_REFUND",
+  "test_id": "REVERSAL-after-refund",
+  "risk": "R08",
+  "mechanism": "A full reversal forgets a previous successful partial refund.",
+  "scope": "UNIT_COMPONENT_ONLY",
+  "counts_toward_G07": false,
+  "run_id": "D11-0f4d60c6-13ab-46c5-8bd1-d2f5dbc04ad0",
+  "started": "2026-09-26T11:45:39.692714+00:00",
+  "source_commit": "a74d930987639f3bcfaf03038947537412599fda",
+  "dirty_tree": false,
+  "source_sha256": "f9ca472061e766163aa263b1216f524d7bd2b80607e7120a78520947a8d1326f",
+  "source_file": "backend/src/main/java/lab/ledgerguard/core/PaymentRules.java",
+  "seed": 74021,
+  "verdict": "DETECTED",
+  "mutation_sha256": "b9f25115f4bf8e01f8b6b2b40e78cefdc1f9228517b9ec9b510e08b5a24f4f34",
+  "baseline": {
+    "command": [
+      "./scripts/test-core",
+      "/mnt/data/transaction-reliability-lab/.evidence/unit-probes/D11-0f4d60c6-13ab-46c5-8bd1-d2f5dbc04ad0/baseline.xml",
+      "REVERSAL-after-refund"
+    ],
+    "start": "2026-09-26T11:45:39.696702+00:00",
+    "end": "2026-09-26T11:45:40.767104+00:00",
+    "exit_status": 0,
+    "log": ".evidence/unit-probes/D11-0f4d60c6-13ab-46c5-8bd1-d2f5dbc04ad0/baseline.log",
+    "report": ".evidence/unit-probes/D11-0f4d60c6-13ab-46c5-8bd1-d2f5dbc04ad0/baseline.xml",
+    "tests": 1,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "assertion_messages": []
+  },
+  "mutant": {
+    "command": [
+      "./scripts/test-core",
+      "/mnt/data/transaction-reliability-lab/.evidence/unit-probes/D11-0f4d60c6-13ab-46c5-8bd1-d2f5dbc04ad0/mutant.xml",
+      "REVERSAL-after-refund"
+    ],
+    "start": "2026-09-26T11:45:40.767484+00:00",
+    "end": "2026-09-26T11:45:41.886099+00:00",
+    "exit_status": 1,
+    "log": ".evidence/unit-probes/D11-0f4d60c6-13ab-46c5-8bd1-d2f5dbc04ad0/mutant.log",
+    "report": ".evidence/unit-probes/D11-0f4d60c6-13ab-46c5-8bd1-d2f5dbc04ad0/mutant.xml",
+    "tests": 1,
+    "failures": 1,
+    "errors": 0,
+    "skipped": 0,
+    "assertion_messages": [
+      "java.lang.AssertionError: expected DomainFailure REVERSAL_FORBIDDEN"
+    ]
+  },
+  "restoration": {
+    "command": [
+      "./scripts/test-core",
+      "/mnt/data/transaction-reliability-lab/.evidence/unit-probes/D11-0f4d60c6-13ab-46c5-8bd1-d2f5dbc04ad0/restoration.xml",
+      "REVERSAL-after-refund"
+    ],
+    "start": "2026-09-26T11:45:41.886530+00:00",
+    "end": "2026-09-26T11:45:42.958609+00:00",
+    "exit_status": 0,
+    "log": ".evidence/unit-probes/D11-0f4d60c6-13ab-46c5-8bd1-d2f5dbc04ad0/restoration.log",
+    "report": ".evidence/unit-probes/D11-0f4d60c6-13ab-46c5-8bd1-d2f5dbc04ad0/restoration.xml",
+    "tests": 1,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "assertion_messages": []
+  },
+  "restored_sha256": "f9ca472061e766163aa263b1216f524d7bd2b80607e7120a78520947a8d1326f",
+  "ended": "2026-09-26T11:45:42.958904+00:00"
+}

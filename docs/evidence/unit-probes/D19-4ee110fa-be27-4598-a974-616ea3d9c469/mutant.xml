@@ -1,0 +1,3 @@
+<testsuite name="standalone-not-junit-runtime" timestamp="2026-09-26T11:45:51.020475573Z" tests="1" failures="1" errors="0" skipped="0">
+  <testcase classname="core.Standalone" name="WEBHOOK-independent-vector"><failure message="java.lang.AssertionError: expected=v1=c0f55afd6f8a73978046016f7cc116c9abc47d0a42c8ba0b74c5f166a6da3147 actual=v1=be13bf6bec7ceb031e3d32a55663713438a3a312e882a79bbe44467616d1c6ba"/></testcase>
+</testsuite>

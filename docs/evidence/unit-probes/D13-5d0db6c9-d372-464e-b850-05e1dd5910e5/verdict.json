@@ -1,0 +1,73 @@
+{
+  "id": "D13",
+  "title": "UNCHECKED_MONEY_OVERFLOW",
+  "test_id": "WALLET-overflow",
+  "risk": "R09",
+  "mechanism": "Unchecked addition wraps; the secondary constructor defense prevents corruption but the controlled overflow error contract regresses.",
+  "scope": "UNIT_COMPONENT_ONLY",
+  "counts_toward_G07": false,
+  "run_id": "D13-5d0db6c9-d372-464e-b850-05e1dd5910e5",
+  "started": "2026-09-26T11:45:45.476022+00:00",
+  "source_commit": "a74d930987639f3bcfaf03038947537412599fda",
+  "dirty_tree": false,
+  "source_sha256": "1bd77de511546334a3a0e1fda1fb310662c6c7d26b55e5e367982b742323ea7f",
+  "source_file": "backend/src/main/java/lab/ledgerguard/core/WalletBalance.java",
+  "seed": 74021,
+  "verdict": "DETECTED",
+  "mutation_sha256": "269358651f180d1c6891776e505d9bbfb59531f105df50ea3c3cef4b6d49cb88",
+  "baseline": {
+    "command": [
+      "./scripts/test-core",
+      "/mnt/data/transaction-reliability-lab/.evidence/unit-probes/D13-5d0db6c9-d372-464e-b850-05e1dd5910e5/baseline.xml",
+      "WALLET-overflow"
+    ],
+    "start": "2026-09-26T11:45:45.480112+00:00",
+    "end": "2026-09-26T11:45:46.548842+00:00",
+    "exit_status": 0,
+    "log": ".evidence/unit-probes/D13-5d0db6c9-d372-464e-b850-05e1dd5910e5/baseline.log",
+    "report": ".evidence/unit-probes/D13-5d0db6c9-d372-464e-b850-05e1dd5910e5/baseline.xml",
+    "tests": 1,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "assertion_messages": []
+  },
+  "mutant": {
+    "command": [
+      "./scripts/test-core",
+      "/mnt/data/transaction-reliability-lab/.evidence/unit-probes/D13-5d0db6c9-d372-464e-b850-05e1dd5910e5/mutant.xml",
+      "WALLET-overflow"
+    ],
+    "start": "2026-09-26T11:45:46.549232+00:00",
+    "end": "2026-09-26T11:45:47.621281+00:00",
+    "exit_status": 1,
+    "log": ".evidence/unit-probes/D13-5d0db6c9-d372-464e-b850-05e1dd5910e5/mutant.log",
+    "report": ".evidence/unit-probes/D13-5d0db6c9-d372-464e-b850-05e1dd5910e5/mutant.xml",
+    "tests": 1,
+    "failures": 1,
+    "errors": 0,
+    "skipped": 0,
+    "assertion_messages": [
+      "java.lang.AssertionError: expected=BALANCE_OVERFLOW actual=BALANCE_INVARIANT"
+    ]
+  },
+  "restoration": {
+    "command": [
+      "./scripts/test-core",
+      "/mnt/data/transaction-reliability-lab/.evidence/unit-probes/D13-5d0db6c9-d372-464e-b850-05e1dd5910e5/restoration.xml",
+      "WALLET-overflow"
+    ],
+    "start": "2026-09-26T11:45:47.621732+00:00",
+    "end": "2026-09-26T11:45:48.693974+00:00",
+    "exit_status": 0,
+    "log": ".evidence/unit-probes/D13-5d0db6c9-d372-464e-b850-05e1dd5910e5/restoration.log",
+    "report": ".evidence/unit-probes/D13-5d0db6c9-d372-464e-b850-05e1dd5910e5/restoration.xml",
+    "tests": 1,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "assertion_messages": []
+  },
+  "restored_sha256": "1bd77de511546334a3a0e1fda1fb310662c6c7d26b55e5e367982b742323ea7f",
+  "ended": "2026-09-26T11:45:48.694252+00:00"
+}

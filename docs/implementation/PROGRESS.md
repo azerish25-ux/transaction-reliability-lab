@@ -41,3 +41,11 @@ G01–G16 are not all satisfied. There is no running Spring API, JWT session imp
 5. Execute actual multi-process, browser, all 24 defect and eight fault, migration/restore, scanner, contract and reference-load lanes; build evidence and a real video. No release until mandatory gates pass.
 
 No user laptop work is assumed or required to preserve these artifacts.
+
+## Final executed checkpoint
+
+On the clean local code commit `a74d930987639f3bcfaf03038947537412599fda`, the unit command passed 120 standalone Java cases and 44 TypeScript client-unit cases, with no failures/errors/skips. All seven implemented component probes were detected and restored, each with one passing baseline, one expected failed assertion and one passing restoration; they contribute zero completed full-stack Dxx detections.
+
+One genuine client regression found during review was fixed: a 503 (or other potentially ambiguous keyed 5xx/408) must preserve uncertainty, not become a definitive business rejection. The pre-fix run had one failure of 44; the post-fix client run had 44 passing cases. Three suspected final-newline validation issues were disproved by already passing cases, not misreported as bugs.
+
+There are eight scoped component reports, five unexecuted exploratory charters and six decision records. The requirement file preserves 591 source statements but remains a preliminary conservative source index; some compound obligations still require finer decomposition. PostgreSQL integration and all missing mandatory gates remain open. CLI doctor, database-test entry and up explicitly report blockers instead of success.

@@ -1,0 +1,7 @@
+{
+  "evidence_structure": "PASS",
+  "checks": 2030,
+  "errors": [],
+  "release_decision": "NO_GO",
+  "scope": "Source/result/hash/link validation only; not financial/infrastructure/browser/security certification."
+}

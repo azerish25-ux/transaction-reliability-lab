@@ -1,0 +1,15 @@
+{
+  "source_commit": "956e2acb1a0ad2feb4d83779a1aa3f0679ee8eb6",
+  "source_file": "frontend/src/api.ts",
+  "source_sha256": "356943bfa120fd1b7272a39a847a0cf20b45643f1323ac6f8f2126309d1114e3",
+  "tests_sha256": "a6fc55574f42bee9fb96ad369ef2ec561e75610da144034c0052e169d1707b54",
+  "dirty_tree": true,
+  "dirty_reason": "Four review test cases were added; implementation source was unchanged from the recorded commit.",
+  "command": "./scripts/test-client",
+  "exit_status": 1,
+  "tests": 44,
+  "failed": 1,
+  "failed_test": "TSAPI-5xx-remains-uncertain",
+  "other_review_cases": "Final-newline rejection cases already passed; suspected issue disproved.",
+  "timestamp": "2026-09-26T11:45:02.124603+00:00"
+}

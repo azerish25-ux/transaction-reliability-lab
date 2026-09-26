@@ -1,0 +1,48 @@
+<testsuite name="typescript-client-unit" tests="44" failures="1" errors="0" skipped="0"><testcase name="TSMONEY-CAD-29"/>
+<testcase name="TSMONEY-USD-199"/>
+<testcase name="TSMONEY-JPY-8"/>
+<testcase name="TSMONEY-KWD-1"/>
+<testcase name="TSMONEY-CAD-1000000000000"/>
+<testcase name="TSMONEY-reject-0"/>
+<testcase name="TSMONEY-reject--1"/>
+<testcase name="TSMONEY-reject-+1"/>
+<testcase name="TSMONEY-reject- 1"/>
+<testcase name="TSMONEY-reject-1 "/>
+<testcase name="TSMONEY-reject-01"/>
+<testcase name="TSMONEY-reject-1e2"/>
+<testcase name="TSMONEY-reject-.2"/>
+<testcase name="TSMONEY-reject-1."/>
+<testcase name="TSMONEY-reject-NaN"/>
+<testcase name="TSMONEY-reject-Infinity"/>
+<testcase name="TSMONEY-reject-1.999"/>
+<testcase name="TSMONEY-reject-10000000000.01"/>
+<testcase name="TSMONEY-JPY-precision"/>
+<testcase name="TSMONEY-KWD-precision"/>
+<testcase name="TSMONEY-max-balance"/>
+<testcase name="TSMONEY-bigint-json"/>
+<testcase name="TSMONEY-grouping"/>
+<testcase name="TSMONEY-availability"/>
+<testcase name="TSMONEY-overreserved"/>
+<testcase name="TSMONEY-number-rejected"/>
+<testcase name="TSMONEY-unsupported"/>
+<testcase name="TSMONEY-prototype"/>
+<testcase name="TSMONEY-roundtrip-model"/>
+<testcase name="TSINTENT-persist-before-send"/>
+<testcase name="TSINTENT-uncertain-reload-same-key"/>
+<testcase name="TSINTENT-owner-isolation"/>
+<testcase name="TSINTENT-no-forget-uncertain"/>
+<testcase name="TSINTENT-confirmed-new-instruction"/>
+<testcase name="TSAPI-money-string-cookie-csrf"/>
+<testcase name="TSAPI-unknown-outcome-replay"/>
+<testcase name="TSAPI-malformed-accepted-response-uncertain"/>
+<testcase name="TSAPI-conflict-not-success"/>
+<testcase name="TSAPI-expiry-forgets-csrf-not-intent"/>
+<testcase name="TSAPI-no-cross-origin"/>
+<testcase name="TSAPI-5xx-remains-uncertain"><failure message="The error is expected to be an instance of &quot;OutcomeUnknown&quot;. Received &quot;ApiError&quot;
+
+Error message:
+
+Request could not be completed."/></testcase>
+<testcase name="TSMONEY-final-newline-major-rejected"/>
+<testcase name="TSMONEY-final-newline-minor-rejected"/>
+<testcase name="TSINTENT-final-newline-key-rejected"/></testsuite>

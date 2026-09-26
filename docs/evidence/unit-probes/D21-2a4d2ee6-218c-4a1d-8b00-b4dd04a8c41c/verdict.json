@@ -1,0 +1,73 @@
+{
+  "id": "D21",
+  "title": "FIXED_24H_RECURRENCE",
+  "test_id": "SCHEDULE-daily-spring",
+  "risk": "R15",
+  "mechanism": "Add a fixed UTC day instead of preserving the intended Halifax wall-clock time.",
+  "scope": "UNIT_COMPONENT_ONLY",
+  "counts_toward_G07": false,
+  "run_id": "D21-2a4d2ee6-218c-4a1d-8b00-b4dd04a8c41c",
+  "started": "2026-09-26T11:45:52.311413+00:00",
+  "source_commit": "a74d930987639f3bcfaf03038947537412599fda",
+  "dirty_tree": false,
+  "source_sha256": "ba503d13d9625f9cc6152fe2d088e1e1dfa9b875293094196b2fa51729792443",
+  "source_file": "backend/src/main/java/lab/ledgerguard/core/SchedulePolicy.java",
+  "seed": 74021,
+  "verdict": "DETECTED",
+  "mutation_sha256": "6066e0f3bbdd1e7b94f9a1f799209b569cd26b21d842ccabda0e166977963170",
+  "baseline": {
+    "command": [
+      "./scripts/test-core",
+      "/mnt/data/transaction-reliability-lab/.evidence/unit-probes/D21-2a4d2ee6-218c-4a1d-8b00-b4dd04a8c41c/baseline.xml",
+      "SCHEDULE-daily-spring"
+    ],
+    "start": "2026-09-26T11:45:52.315390+00:00",
+    "end": "2026-09-26T11:45:53.439574+00:00",
+    "exit_status": 0,
+    "log": ".evidence/unit-probes/D21-2a4d2ee6-218c-4a1d-8b00-b4dd04a8c41c/baseline.log",
+    "report": ".evidence/unit-probes/D21-2a4d2ee6-218c-4a1d-8b00-b4dd04a8c41c/baseline.xml",
+    "tests": 1,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "assertion_messages": []
+  },
+  "mutant": {
+    "command": [
+      "./scripts/test-core",
+      "/mnt/data/transaction-reliability-lab/.evidence/unit-probes/D21-2a4d2ee6-218c-4a1d-8b00-b4dd04a8c41c/mutant.xml",
+      "SCHEDULE-daily-spring"
+    ],
+    "start": "2026-09-26T11:45:53.439950+00:00",
+    "end": "2026-09-26T11:45:54.463477+00:00",
+    "exit_status": 1,
+    "log": ".evidence/unit-probes/D21-2a4d2ee6-218c-4a1d-8b00-b4dd04a8c41c/mutant.log",
+    "report": ".evidence/unit-probes/D21-2a4d2ee6-218c-4a1d-8b00-b4dd04a8c41c/mutant.xml",
+    "tests": 1,
+    "failures": 1,
+    "errors": 0,
+    "skipped": 0,
+    "assertion_messages": [
+      "java.lang.AssertionError: expected=2026-03-08T12:00:00Z actual=2026-03-08T13:00:00Z"
+    ]
+  },
+  "restoration": {
+    "command": [
+      "./scripts/test-core",
+      "/mnt/data/transaction-reliability-lab/.evidence/unit-probes/D21-2a4d2ee6-218c-4a1d-8b00-b4dd04a8c41c/restoration.xml",
+      "SCHEDULE-daily-spring"
+    ],
+    "start": "2026-09-26T11:45:54.463862+00:00",
+    "end": "2026-09-26T11:45:55.482768+00:00",
+    "exit_status": 0,
+    "log": ".evidence/unit-probes/D21-2a4d2ee6-218c-4a1d-8b00-b4dd04a8c41c/restoration.log",
+    "report": ".evidence/unit-probes/D21-2a4d2ee6-218c-4a1d-8b00-b4dd04a8c41c/restoration.xml",
+    "tests": 1,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "assertion_messages": []
+  },
+  "restored_sha256": "ba503d13d9625f9cc6152fe2d088e1e1dfa9b875293094196b2fa51729792443",
+  "ended": "2026-09-26T11:45:55.483050+00:00"
+}

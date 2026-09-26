@@ -1,0 +1,3 @@
+<testsuite name="standalone-not-junit-runtime" timestamp="2026-09-26T11:45:41.819454011Z" tests="1" failures="1" errors="0" skipped="0">
+  <testcase classname="core.Standalone" name="REVERSAL-after-refund"><failure message="java.lang.AssertionError: expected DomainFailure REVERSAL_FORBIDDEN"/></testcase>
+</testsuite>

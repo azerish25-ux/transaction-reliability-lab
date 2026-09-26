@@ -1,0 +1,2 @@
+FAIL SCHEDULE-daily-spring java.lang.AssertionError: expected=2026-03-08T12:00:00Z actual=2026-03-08T13:00:00Z
+SUMMARY tests=1 passed=0 failed=1 errors=0 skipped=0 runtime=standalone-java

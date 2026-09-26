@@ -1,0 +1,2 @@
+FAIL WALLET-overflow java.lang.AssertionError: expected=BALANCE_OVERFLOW actual=BALANCE_INVARIANT
+SUMMARY tests=1 passed=0 failed=1 errors=0 skipped=0 runtime=standalone-java

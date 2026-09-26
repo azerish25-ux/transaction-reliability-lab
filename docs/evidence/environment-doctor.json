@@ -1,0 +1,18 @@
+{
+  "status": "INCOMPLETE",
+  "tools": {
+    "java": "/usr/bin/java",
+    "javac": "/usr/bin/javac",
+    "node": "/opt/nvm/versions/node/v22.16.0/bin/node",
+    "npm": "/opt/nvm/versions/node/v22.16.0/bin/npm",
+    "tsc": "/opt/nvm/versions/node/v22.16.0/bin/tsc",
+    "mvn": null,
+    "git": "/usr/bin/git",
+    "docker": null,
+    "psql": null,
+    "chromium": "/usr/bin/chromium",
+    "ffmpeg": "/usr/bin/ffmpeg",
+    "docker_daemon_available": false
+  },
+  "full_application_startup_verified": false
+}

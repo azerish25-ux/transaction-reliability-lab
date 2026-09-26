@@ -1,0 +1,33 @@
+{
+  "source_commit": "a74d930987639f3bcfaf03038947537412599fda",
+  "source_tree": "34cd9ceae4b8e0e1895a96ab6e1030ac5a3cb115",
+  "dirty_tree": false,
+  "start": "2026-09-26T11:45:28.995098+00:00",
+  "environment": {
+    "os": "Linux-6.18.44-x86_64-with-glibc2.41",
+    "java": "openjdk version \"21.0.11\" 2026-04-21\nOpenJDK Runtime Environment (build 21.0.11+10-1-deb13u2-Debian)\nOpenJDK 64-Bit Server VM (build 21.0.11+10-1-deb13u2-Debian, mixed mode, sharing)",
+    "javac": "javac 21.0.11",
+    "node": "v22.16.0",
+    "typescript": "Version 5.8.3",
+    "git": "git version 2.47.3"
+  },
+  "command": [
+    "./scripts/lab",
+    "test",
+    "unit"
+  ],
+  "seed": 74021,
+  "expected": "All discovered standalone Java/component and TypeScript client-unit cases pass; no live database/API/browser claim.",
+  "exit_status": 0,
+  "end": "2026-09-26T11:45:31.955509+00:00",
+  "artifacts": {
+    "java.xml": {
+      "sha256": "e3bfe0beb54172ea32e2129b1fcd7aa9bedb718373aa3f88662610e690c5232a",
+      "bytes": 9602
+    },
+    "client.xml": {
+      "sha256": "6e04c1dc155db49059d8c3ca7175ebf02f53039b4c20d2734ac2b2e2728afe19",
+      "bytes": 1986
+    }
+  }
+}

@@ -1,0 +1,73 @@
+{
+  "id": "D08",
+  "title": "STALE_EVENT_OVERWRITE",
+  "test_id": "PROJECTION-stale",
+  "risk": "R06",
+  "mechanism": "Remove both version and terminal-state protection; an old full snapshot overwrites SETTLED.",
+  "scope": "UNIT_COMPONENT_ONLY",
+  "counts_toward_G07": false,
+  "run_id": "D08-ff996202-238b-47b1-bc99-4ca6e53978aa",
+  "started": "2026-09-26T11:45:36.383514+00:00",
+  "source_commit": "a74d930987639f3bcfaf03038947537412599fda",
+  "dirty_tree": false,
+  "source_sha256": "c1c0793b31627bec8e6f98e7b25ae99c7a840493090c0ede778d3f3b21abbe3c",
+  "source_file": "backend/src/main/java/lab/ledgerguard/core/Projection.java",
+  "seed": 74021,
+  "verdict": "DETECTED",
+  "mutation_sha256": "c2feed710a55b457b38648fcd0f352cebb5eed051545c13daed93fa016bb3fc1",
+  "baseline": {
+    "command": [
+      "./scripts/test-core",
+      "/mnt/data/transaction-reliability-lab/.evidence/unit-probes/D08-ff996202-238b-47b1-bc99-4ca6e53978aa/baseline.xml",
+      "PROJECTION-stale"
+    ],
+    "start": "2026-09-26T11:45:36.388636+00:00",
+    "end": "2026-09-26T11:45:37.456291+00:00",
+    "exit_status": 0,
+    "log": ".evidence/unit-probes/D08-ff996202-238b-47b1-bc99-4ca6e53978aa/baseline.log",
+    "report": ".evidence/unit-probes/D08-ff996202-238b-47b1-bc99-4ca6e53978aa/baseline.xml",
+    "tests": 1,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "assertion_messages": []
+  },
+  "mutant": {
+    "command": [
+      "./scripts/test-core",
+      "/mnt/data/transaction-reliability-lab/.evidence/unit-probes/D08-ff996202-238b-47b1-bc99-4ca6e53978aa/mutant.xml",
+      "PROJECTION-stale"
+    ],
+    "start": "2026-09-26T11:45:37.456641+00:00",
+    "end": "2026-09-26T11:45:38.523061+00:00",
+    "exit_status": 1,
+    "log": ".evidence/unit-probes/D08-ff996202-238b-47b1-bc99-4ca6e53978aa/mutant.log",
+    "report": ".evidence/unit-probes/D08-ff996202-238b-47b1-bc99-4ca6e53978aa/mutant.xml",
+    "tests": 1,
+    "failures": 1,
+    "errors": 0,
+    "skipped": 0,
+    "assertion_messages": [
+      "java.lang.AssertionError: expected=SETTLED actual=PENDING"
+    ]
+  },
+  "restoration": {
+    "command": [
+      "./scripts/test-core",
+      "/mnt/data/transaction-reliability-lab/.evidence/unit-probes/D08-ff996202-238b-47b1-bc99-4ca6e53978aa/restoration.xml",
+      "PROJECTION-stale"
+    ],
+    "start": "2026-09-26T11:45:38.523438+00:00",
+    "end": "2026-09-26T11:45:39.692010+00:00",
+    "exit_status": 0,
+    "log": ".evidence/unit-probes/D08-ff996202-238b-47b1-bc99-4ca6e53978aa/restoration.log",
+    "report": ".evidence/unit-probes/D08-ff996202-238b-47b1-bc99-4ca6e53978aa/restoration.xml",
+    "tests": 1,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "assertion_messages": []
+  },
+  "restored_sha256": "c1c0793b31627bec8e6f98e7b25ae99c7a840493090c0ede778d3f3b21abbe3c",
+  "ended": "2026-09-26T11:45:39.692299+00:00"
+}

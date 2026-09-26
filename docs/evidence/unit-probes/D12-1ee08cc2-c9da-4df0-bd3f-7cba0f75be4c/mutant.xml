@@ -1,0 +1,4 @@
+<testsuite name="typescript-client-unit" tests="1" failures="1" errors="0" skipped="0"><testcase name="TSMONEY-CAD-29"><failure message="Expected values to be strictly equal:
+
+'28' !== '29'
+"/></testcase></testsuite>

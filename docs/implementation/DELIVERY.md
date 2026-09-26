@@ -33,3 +33,9 @@ A single local main checkout contains the original remote commit as its exact an
 | Four-minute demonstration video | None |
 
 No fallback archive is represented as satisfying direct GitHub delivery. No CI badge, run URL, artifact URL, tag or deployment URL is fabricated.
+
+## Final re-read
+
+Recorded 2026-09-26T11:49:41.636094+00:00. Remote main still resolves to the original commit/tree above; the original README blob/content still matches. The Actions run collection filtered to local tested code SHA `a74d930987639f3bcfaf03038947537412599fda` returns total_count=0 and an empty workflow_runs array. See [remote verification](../evidence/remote-verification.json).
+
+The tested local code is `a74d930987639f3bcfaf03038947537412599fda`; later local evidence-only commits contain reports/validation tooling and do not imply that code reached GitHub. Final archive/bundle identities are in the standalone handoff manifest delivered alongside the archive.

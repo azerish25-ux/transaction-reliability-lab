@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "format": "JSON-compatible YAML",
   "source": "MASTER_SPEC.md unchanged; one source statement per ID; multi-clause statements need finer test decomposition as integration proceeds.",
-  "scope_notice": "Partial component test results do not verify entire source-statement requirements.",
+  "scope_notice": "Conservative whole-statement statuses; NOT_STARTED means the complete source statement has not been delivered, even where partial_work exists. This is a source index, not a finished fine-grained traceability matrix. Refine multi-clause statements as integration is implemented.",
   "requirements": [
     {
       "id": "REQ-00-001",
@@ -229,9 +229,9 @@
         34
       ],
       "requirement": "Start by inspecting the actual repository and available execution capabilities. Do not assume an earlier repository snapshot, an empty repository, remembered credentials, or tools from another conversation are still available.",
-      "status": "BLOCKED",
+      "status": "NOT_STARTED",
       "executed_evidence": [],
-      "note": "See DELIVERY/PROGRESS: read access worked; authenticated writes denied; no CI execution."
+      "note": "Inspection/attempt results are recorded in PROGRESS/DELIVERY; no whole multi-clause obligation is marked complete from that subset."
     },
     {
       "id": "REQ-01-002",
@@ -242,9 +242,9 @@
         36
       ],
       "requirement": "Determine and record:",
-      "status": "BLOCKED",
+      "status": "NOT_STARTED",
       "executed_evidence": [],
-      "note": "See DELIVERY/PROGRESS: read access worked; authenticated writes denied; no CI execution."
+      "note": "Inspection/attempt results are recorded in PROGRESS/DELIVERY; no whole multi-clause obligation is marked complete from that subset."
     },
     {
       "id": "REQ-01-003",
@@ -255,9 +255,9 @@
         37
       ],
       "requirement": "- Repository identity, default branch, remote HEAD, working-tree status, relevant existing files, AGENTS.md instructions, workflows, and protection rules accessible to you.",
-      "status": "BLOCKED",
+      "status": "NOT_STARTED",
       "executed_evidence": [],
-      "note": "See DELIVERY/PROGRESS: read access worked; authenticated writes denied; no CI execution."
+      "note": "Inspection/attempt results are recorded in PROGRESS/DELIVERY; no whole multi-clause obligation is marked complete from that subset."
     },
     {
       "id": "REQ-01-004",
@@ -268,9 +268,9 @@
         38
       ],
       "requirement": "- Whether Java, Maven, Node, Git, Docker CLI, a working Docker daemon, Compose, browsers, network access, and sufficient disk/memory are available.",
-      "status": "BLOCKED",
+      "status": "NOT_STARTED",
       "executed_evidence": [],
-      "note": "See DELIVERY/PROGRESS: read access worked; authenticated writes denied; no CI execution."
+      "note": "Inspection/attempt results are recorded in PROGRESS/DELIVERY; no whole multi-clause obligation is marked complete from that subset."
     },
     {
       "id": "REQ-01-005",
@@ -281,9 +281,9 @@
         39
       ],
       "requirement": "- The actual available authenticated GitHub write mechanism, not just a permission flag returned by a metadata read.",
-      "status": "BLOCKED",
+      "status": "NOT_STARTED",
       "executed_evidence": [],
-      "note": "See DELIVERY/PROGRESS: read access worked; authenticated writes denied; no CI execution."
+      "note": "Inspection/attempt results are recorded in PROGRESS/DELIVERY; no whole multi-clause obligation is marked complete from that subset."
     },
     {
       "id": "REQ-01-006",
@@ -294,9 +294,9 @@
         40
       ],
       "requirement": "- Whether the available integration can write ordinary source files, workflow files, refs, releases, and artifacts. These capabilities may differ.",
-      "status": "BLOCKED",
+      "status": "NOT_STARTED",
       "executed_evidence": [],
-      "note": "See DELIVERY/PROGRESS: read access worked; authenticated writes denied; no CI execution."
+      "note": "Inspection/attempt results are recorded in PROGRESS/DELIVERY; no whole multi-clause obligation is marked complete from that subset."
     },
     {
       "id": "REQ-01-007",
@@ -307,9 +307,9 @@
         42
       ],
       "requirement": "Use the GitHub connection associated with the intended repository owner. Do not change accounts or target a different repository to make delivery easier.",
-      "status": "BLOCKED",
+      "status": "NOT_STARTED",
       "executed_evidence": [],
-      "note": "See DELIVERY/PROGRESS: read access worked; authenticated writes denied; no CI execution."
+      "note": "Inspection/attempt results are recorded in PROGRESS/DELIVERY; no whole multi-clause obligation is marked complete from that subset."
     },
     {
       "id": "REQ-01-008",
@@ -320,9 +320,9 @@
         44
       ],
       "requirement": "Repository access and a usable write operation are separate facts. A read-only connector that reports push permission is not, by itself, a mechanism for making commits. Inspect tool schemas before relying on a write action. Prefer an already authorized Git transport or an available authenticated connector/API write operation.",
-      "status": "BLOCKED",
+      "status": "NOT_STARTED",
       "executed_evidence": [],
-      "note": "See DELIVERY/PROGRESS: read access worked; authenticated writes denied; no CI execution."
+      "note": "Inspection/attempt results are recorded in PROGRESS/DELIVERY; no whole multi-clause obligation is marked complete from that subset."
     },
     {
       "id": "REQ-01-009",
@@ -333,9 +333,9 @@
         46
       ],
       "requirement": "Work in one checkout of this repository. Reuse the correct existing checkout when present. Do not create unrelated repositories, worktrees, assembly branches, or parallel copies. Creating the project's necessary source directories is allowed. If the repository is genuinely empty, initialize its first implementation on main without inventing prior history.",
-      "status": "BLOCKED",
+      "status": "NOT_STARTED",
       "executed_evidence": [],
-      "note": "See DELIVERY/PROGRESS: read access worked; authenticated writes denied; no CI execution."
+      "note": "Inspection/attempt results are recorded in PROGRESS/DELIVERY; no whole multi-clause obligation is marked complete from that subset."
     },
     {
       "id": "REQ-01-010",
@@ -346,9 +346,9 @@
         48
       ],
       "requirement": "Preserve unrelated existing changes. Do not force-push, rewrite shared history, disable branch protections, delete unrelated files, or replace the remote wholesale. If existing branch rules require a pull request, honor them and explicitly report the resulting delivery state; do not bypass them.",
-      "status": "BLOCKED",
+      "status": "NOT_STARTED",
       "executed_evidence": [],
-      "note": "See DELIVERY/PROGRESS: read access worked; authenticated writes denied; no CI execution."
+      "note": "Inspection/attempt results are recorded in PROGRESS/DELIVERY; no whole multi-clause obligation is marked complete from that subset."
     },
     {
       "id": "REQ-01-011",
@@ -359,9 +359,9 @@
         50
       ],
       "requirement": "Do not ask me to install software, run commands, download the project, supply my laptop, or manually push your changes. Repository documentation may explain how a future reviewer runs the project; that is different from transferring your implementation work to me.",
-      "status": "BLOCKED",
+      "status": "NOT_STARTED",
       "executed_evidence": [],
-      "note": "See DELIVERY/PROGRESS: read access worked; authenticated writes denied; no CI execution."
+      "note": "Inspection/attempt results are recorded in PROGRESS/DELIVERY; no whole multi-clause obligation is marked complete from that subset."
     },
     {
       "id": "REQ-01-012",
@@ -372,9 +372,9 @@
         52
       ],
       "requirement": "Install only tools actually needed for this project using legitimate available mechanisms. Do not silently install or invoke unrelated coding-agent CLIs, use paid services, create cloud resources, or assume new subscriptions. Never search unrelated private files for credentials, expose tokens, or embed credentials in Git remotes, logs, screenshots, patches, or workflow files.",
-      "status": "BLOCKED",
+      "status": "NOT_STARTED",
       "executed_evidence": [],
-      "note": "See DELIVERY/PROGRESS: read access worked; authenticated writes denied; no CI execution."
+      "note": "Inspection/attempt results are recorded in PROGRESS/DELIVERY; no whole multi-clause obligation is marked complete from that subset."
     },
     {
       "id": "REQ-01-013",
@@ -385,9 +385,9 @@
         54
       ],
       "requirement": "When Docker is unavailable in your container, do the work that is possible there and use actual authorized GitHub Actions execution for Docker-dependent checks. Do not substitute SQLite, H2, fake RabbitMQ, or mocked integration tests and label them equivalent. Merely writing a workflow does not mean it ran.",
-      "status": "BLOCKED",
+      "status": "NOT_STARTED",
       "executed_evidence": [],
-      "note": "See DELIVERY/PROGRESS: read access worked; authenticated writes denied; no CI execution."
+      "note": "Inspection/attempt results are recorded in PROGRESS/DELIVERY; no whole multi-clause obligation is marked complete from that subset."
     },
     {
       "id": "REQ-01-014",
@@ -398,9 +398,9 @@
         56
       ],
       "requirement": "Establish delivery capability early with a useful, valid foundation commit, not an empty “test push.” Keep coherent checkpoints and preserve all work.",
-      "status": "BLOCKED",
+      "status": "NOT_STARTED",
       "executed_evidence": [],
-      "note": "See DELIVERY/PROGRESS: read access worked; authenticated writes denied; no CI execution."
+      "note": "Inspection/attempt results are recorded in PROGRESS/DELIVERY; no whole multi-clause obligation is marked complete from that subset."
     },
     {
       "id": "REQ-01-015",
@@ -411,9 +411,9 @@
         58
       ],
       "requirement": "For failures, capture the exact error, identify its class, and change the relevant condition before retrying. Use bounded retries for transient failures. Do not repeat an identical denied request indefinitely. Try genuinely different authorized mechanisms when available; do not bypass authorization or repository policy.",
-      "status": "BLOCKED",
+      "status": "NOT_STARTED",
       "executed_evidence": [],
-      "note": "See DELIVERY/PROGRESS: read access worked; authenticated writes denied; no CI execution."
+      "note": "Inspection/attempt results are recorded in PROGRESS/DELIVERY; no whole multi-clause obligation is marked complete from that subset."
     },
     {
       "id": "REQ-01-016",
@@ -424,9 +424,9 @@
         60
       ],
       "requirement": "Never promise background work or claim a later result. Work during the active execution. If a hard tool, permission, runtime, or context boundary interrupts completion, preserve the implemented files and recovery instructions, report exactly what is blocked, and mark the project INCOMPLETE. An inability to finish is not permission to fabricate success.",
-      "status": "BLOCKED",
+      "status": "NOT_STARTED",
       "executed_evidence": [],
-      "note": "See DELIVERY/PROGRESS: read access worked; authenticated writes denied; no CI execution."
+      "note": "Inspection/attempt results are recorded in PROGRESS/DELIVERY; no whole multi-clause obligation is marked complete from that subset."
     },
     {
       "id": "REQ-02-001",
@@ -1025,9 +1025,10 @@
         140
       ],
       "requirement": "Support CAD and USD with exponent 2, JPY with exponent 0, and KWD with exponent 3. These additional currencies exist to test monetary representation; do not implement conversion. Each account has exactly one immutable currency. Every transfer, payment, refund, and journal is single-currency.",
-      "status": "IMPLEMENTED_UNVERIFIED",
+      "status": "NOT_STARTED",
       "executed_evidence": [],
-      "note": "Partial Java/TypeScript policies and SQL source; missing committed PostgreSQL and end-to-end proof."
+      "partial_work": "Partial Java/TypeScript policies and SQL source; missing committed PostgreSQL and end-to-end proof.",
+      "note": "This whole source-statement obligation is not implemented/verified; partial component work is recorded separately, not counted as completion."
     },
     {
       "id": "REQ-05-002",
@@ -1038,9 +1039,10 @@
         142
       ],
       "requirement": "Store monetary values as integer minor units in PostgreSQL BIGINT and Java long. Use checked arithmetic and explicit bounds. Positive transaction amounts must be at most 1,000,000,000,000 minor units. Test values near numeric limits through isolated fixtures even when ordinary API limits are smaller.",
-      "status": "IMPLEMENTED_UNVERIFIED",
+      "status": "NOT_STARTED",
       "executed_evidence": [],
-      "note": "Partial Java/TypeScript policies and SQL source; missing committed PostgreSQL and end-to-end proof."
+      "partial_work": "Partial Java/TypeScript policies and SQL source; missing committed PostgreSQL and end-to-end proof.",
+      "note": "This whole source-statement obligation is not implemented/verified; partial component work is recorded separately, not counted as completion."
     },
     {
       "id": "REQ-05-003",
@@ -1051,9 +1053,10 @@
         144
       ],
       "requirement": "Represent all monetary amounts and balances as decimal integer strings in JSON, for example:",
-      "status": "IMPLEMENTED_UNVERIFIED",
+      "status": "NOT_STARTED",
       "executed_evidence": [],
-      "note": "Partial Java/TypeScript policies and SQL source; missing committed PostgreSQL and end-to-end proof."
+      "partial_work": "Partial Java/TypeScript policies and SQL source; missing committed PostgreSQL and end-to-end proof.",
+      "note": "This whole source-statement obligation is not implemented/verified; partial component work is recorded separately, not counted as completion."
     },
     {
       "id": "REQ-05-004",
@@ -1064,9 +1067,10 @@
         145
       ],
       "requirement": "{\"amountMinor\":\"1250\",\"currency\":\"CAD\"}",
-      "status": "IMPLEMENTED_UNVERIFIED",
+      "status": "NOT_STARTED",
       "executed_evidence": [],
-      "note": "Partial Java/TypeScript policies and SQL source; missing committed PostgreSQL and end-to-end proof."
+      "partial_work": "Partial Java/TypeScript policies and SQL source; missing committed PostgreSQL and end-to-end proof.",
+      "note": "This whole source-statement obligation is not implemented/verified; partial component work is recorded separately, not counted as completion."
     },
     {
       "id": "REQ-05-005",
@@ -1077,9 +1081,10 @@
         147
       ],
       "requirement": "Use exact TypeScript BigInt/string-based parsing and formatting. Never pass monetary arithmetic through floating-point Number, parseFloat, binary floating-point Java types, or PostgreSQL money. Do not serialize BigInt directly without the documented string conversion.",
-      "status": "IMPLEMENTED_UNVERIFIED",
+      "status": "NOT_STARTED",
       "executed_evidence": [],
-      "note": "Partial Java/TypeScript policies and SQL source; missing committed PostgreSQL and end-to-end proof."
+      "partial_work": "Partial Java/TypeScript policies and SQL source; missing committed PostgreSQL and end-to-end proof.",
+      "note": "This whole source-statement obligation is not implemented/verified; partial component work is recorded separately, not counted as completion."
     },
     {
       "id": "REQ-05-006",
@@ -1090,9 +1095,10 @@
         149
       ],
       "requirement": "Reject negative/zero transaction amounts, unsupported currencies, exponent notation, malformed values, excess fractional digits, overflow, cross-currency transfers, and source=destination. Do not silently round user input. Define canonical normalization and test it end to end.",
-      "status": "IMPLEMENTED_UNVERIFIED",
+      "status": "NOT_STARTED",
       "executed_evidence": [],
-      "note": "Partial Java/TypeScript policies and SQL source; missing committed PostgreSQL and end-to-end proof."
+      "partial_work": "Partial Java/TypeScript policies and SQL source; missing committed PostgreSQL and end-to-end proof.",
+      "note": "This whole source-statement obligation is not implemented/verified; partial component work is recorded separately, not counted as completion."
     },
     {
       "id": "REQ-05-007",
@@ -1103,9 +1109,10 @@
         151
       ],
       "requirement": "Use an explicit chart of accounts and debit/credit semantics:",
-      "status": "IMPLEMENTED_UNVERIFIED",
+      "status": "NOT_STARTED",
       "executed_evidence": [],
-      "note": "Partial Java/TypeScript policies and SQL source; missing committed PostgreSQL and end-to-end proof."
+      "partial_work": "Partial Java/TypeScript policies and SQL source; missing committed PostgreSQL and end-to-end proof.",
+      "note": "This whole source-statement obligation is not implemented/verified; partial component work is recorded separately, not counted as completion."
     },
     {
       "id": "REQ-05-008",
@@ -1116,9 +1123,10 @@
         152
       ],
       "requirement": "- Customer and merchant wallet accounts are credit-normal liabilities.",
-      "status": "IMPLEMENTED_UNVERIFIED",
+      "status": "NOT_STARTED",
       "executed_evidence": [],
-      "note": "Partial Java/TypeScript policies and SQL source; missing committed PostgreSQL and end-to-end proof."
+      "partial_work": "Partial Java/TypeScript policies and SQL source; missing committed PostgreSQL and end-to-end proof.",
+      "note": "This whole source-statement obligation is not implemented/verified; partial component work is recorded separately, not counted as completion."
     },
     {
       "id": "REQ-05-009",
@@ -1129,9 +1137,10 @@
         153
       ],
       "requirement": "- Sandbox funding is recorded against a debit-normal synthetic cash/funding asset account.",
-      "status": "IMPLEMENTED_UNVERIFIED",
+      "status": "NOT_STARTED",
       "executed_evidence": [],
-      "note": "Partial Java/TypeScript policies and SQL source; missing committed PostgreSQL and end-to-end proof."
+      "partial_work": "Partial Java/TypeScript policies and SQL source; missing committed PostgreSQL and end-to-end proof.",
+      "note": "This whole source-statement obligation is not implemented/verified; partial component work is recorded separately, not counted as completion."
     },
     {
       "id": "REQ-05-010",
@@ -1142,9 +1151,10 @@
         154
       ],
       "requirement": "- Funding: debit the synthetic asset, credit the recipient wallet liability.",
-      "status": "IMPLEMENTED_UNVERIFIED",
+      "status": "NOT_STARTED",
       "executed_evidence": [],
-      "note": "Partial Java/TypeScript policies and SQL source; missing committed PostgreSQL and end-to-end proof."
+      "partial_work": "Partial Java/TypeScript policies and SQL source; missing committed PostgreSQL and end-to-end proof.",
+      "note": "This whole source-statement obligation is not implemented/verified; partial component work is recorded separately, not counted as completion."
     },
     {
       "id": "REQ-05-011",
@@ -1155,9 +1165,10 @@
         155
       ],
       "requirement": "- Transfer/payment: debit the sending wallet liability, credit the receiving wallet liability.",
-      "status": "IMPLEMENTED_UNVERIFIED",
+      "status": "NOT_STARTED",
       "executed_evidence": [],
-      "note": "Partial Java/TypeScript policies and SQL source; missing committed PostgreSQL and end-to-end proof."
+      "partial_work": "Partial Java/TypeScript policies and SQL source; missing committed PostgreSQL and end-to-end proof.",
+      "note": "This whole source-statement obligation is not implemented/verified; partial component work is recorded separately, not counted as completion."
     },
     {
       "id": "REQ-05-012",
@@ -1168,9 +1179,10 @@
         156
       ],
       "requirement": "- Refund/reversal: debit the original recipient liability, credit the original payer liability.",
-      "status": "IMPLEMENTED_UNVERIFIED",
+      "status": "NOT_STARTED",
       "executed_evidence": [],
-      "note": "Partial Java/TypeScript policies and SQL source; missing committed PostgreSQL and end-to-end proof."
+      "partial_work": "Partial Java/TypeScript policies and SQL source; missing committed PostgreSQL and end-to-end proof.",
+      "note": "This whole source-statement obligation is not implemented/verified; partial component work is recorded separately, not counted as completion."
     },
     {
       "id": "REQ-05-013",
@@ -1181,9 +1193,10 @@
         158
       ],
       "requirement": "For every committed journal:",
-      "status": "IMPLEMENTED_UNVERIFIED",
+      "status": "NOT_STARTED",
       "executed_evidence": [],
-      "note": "Partial Java/TypeScript policies and SQL source; missing committed PostgreSQL and end-to-end proof."
+      "partial_work": "Partial Java/TypeScript policies and SQL source; missing committed PostgreSQL and end-to-end proof.",
+      "note": "This whole source-statement obligation is not implemented/verified; partial component work is recorded separately, not counted as completion."
     },
     {
       "id": "REQ-05-014",
@@ -1194,9 +1207,10 @@
         159
       ],
       "requirement": "- At least two positive entries exist.",
-      "status": "IMPLEMENTED_UNVERIFIED",
+      "status": "NOT_STARTED",
       "executed_evidence": [],
-      "note": "Partial Java/TypeScript policies and SQL source; missing committed PostgreSQL and end-to-end proof."
+      "partial_work": "Partial Java/TypeScript policies and SQL source; missing committed PostgreSQL and end-to-end proof.",
+      "note": "This whole source-statement obligation is not implemented/verified; partial component work is recorded separately, not counted as completion."
     },
     {
       "id": "REQ-05-015",
@@ -1207,9 +1221,10 @@
         160
       ],
       "requirement": "- All entries refer to valid same-currency accounts.",
-      "status": "IMPLEMENTED_UNVERIFIED",
+      "status": "NOT_STARTED",
       "executed_evidence": [],
-      "note": "Partial Java/TypeScript policies and SQL source; missing committed PostgreSQL and end-to-end proof."
+      "partial_work": "Partial Java/TypeScript policies and SQL source; missing committed PostgreSQL and end-to-end proof.",
+      "note": "This whole source-statement obligation is not implemented/verified; partial component work is recorded separately, not counted as completion."
     },
     {
       "id": "REQ-05-016",
@@ -1220,9 +1235,10 @@
         161
       ],
       "requirement": "- Total debits equal total credits, using overflow-safe aggregation.",
-      "status": "IMPLEMENTED_UNVERIFIED",
+      "status": "NOT_STARTED",
       "executed_evidence": [],
-      "note": "Partial Java/TypeScript policies and SQL source; missing committed PostgreSQL and end-to-end proof."
+      "partial_work": "Partial Java/TypeScript policies and SQL source; missing committed PostgreSQL and end-to-end proof.",
+      "note": "This whole source-statement obligation is not implemented/verified; partial component work is recorded separately, not counted as completion."
     },
     {
       "id": "REQ-05-017",
@@ -1233,9 +1249,10 @@
         162
       ],
       "requirement": "- A unique business-operation reference identifies the posting.",
-      "status": "IMPLEMENTED_UNVERIFIED",
+      "status": "NOT_STARTED",
       "executed_evidence": [],
-      "note": "Partial Java/TypeScript policies and SQL source; missing committed PostgreSQL and end-to-end proof."
+      "partial_work": "Partial Java/TypeScript policies and SQL source; missing committed PostgreSQL and end-to-end proof.",
+      "note": "This whole source-statement obligation is not implemented/verified; partial component work is recorded separately, not counted as completion."
     },
     {
       "id": "REQ-05-018",
@@ -1246,9 +1263,10 @@
         163
       ],
       "requirement": "- Journal headers and entries cannot subsequently be updated or deleted by the runtime role.",
-      "status": "IMPLEMENTED_UNVERIFIED",
+      "status": "NOT_STARTED",
       "executed_evidence": [],
-      "note": "Partial Java/TypeScript policies and SQL source; missing committed PostgreSQL and end-to-end proof."
+      "partial_work": "Partial Java/TypeScript policies and SQL source; missing committed PostgreSQL and end-to-end proof.",
+      "note": "This whole source-statement obligation is not implemented/verified; partial component work is recorded separately, not counted as completion."
     },
     {
       "id": "REQ-05-019",
@@ -1259,9 +1277,10 @@
         164
       ],
       "requirement": "- No incomplete/unbalanced journal can persist after commit.",
-      "status": "IMPLEMENTED_UNVERIFIED",
+      "status": "NOT_STARTED",
       "executed_evidence": [],
-      "note": "Partial Java/TypeScript policies and SQL source; missing committed PostgreSQL and end-to-end proof."
+      "partial_work": "Partial Java/TypeScript policies and SQL source; missing committed PostgreSQL and end-to-end proof.",
+      "note": "This whole source-statement obligation is not implemented/verified; partial component work is recorded separately, not counted as completion."
     },
     {
       "id": "REQ-05-020",
@@ -1272,9 +1291,10 @@
         166
       ],
       "requirement": "Define wallet posted balance as credits minus debits. Define:",
-      "status": "IMPLEMENTED_UNVERIFIED",
+      "status": "NOT_STARTED",
       "executed_evidence": [],
-      "note": "Partial Java/TypeScript policies and SQL source; missing committed PostgreSQL and end-to-end proof."
+      "partial_work": "Partial Java/TypeScript policies and SQL source; missing committed PostgreSQL and end-to-end proof.",
+      "note": "This whole source-statement obligation is not implemented/verified; partial component work is recorded separately, not counted as completion."
     },
     {
       "id": "REQ-05-021",
@@ -1285,9 +1305,10 @@
         167
       ],
       "requirement": "available_minor = posted_minor - reserved_minor.",
-      "status": "IMPLEMENTED_UNVERIFIED",
+      "status": "NOT_STARTED",
       "executed_evidence": [],
-      "note": "Partial Java/TypeScript policies and SQL source; missing committed PostgreSQL and end-to-end proof."
+      "partial_work": "Partial Java/TypeScript policies and SQL source; missing committed PostgreSQL and end-to-end proof.",
+      "note": "This whole source-statement obligation is not implemented/verified; partial component work is recorded separately, not counted as completion."
     },
     {
       "id": "REQ-05-022",
@@ -1298,9 +1319,10 @@
         169
       ],
       "requirement": "Require posted_minor >= 0, reserved_minor >= 0, and available_minor >= 0 for customer/merchant wallets. Credit-side overflow must also be rejected atomically.",
-      "status": "IMPLEMENTED_UNVERIFIED",
+      "status": "NOT_STARTED",
       "executed_evidence": [],
-      "note": "Partial Java/TypeScript policies and SQL source; missing committed PostgreSQL and end-to-end proof."
+      "partial_work": "Partial Java/TypeScript policies and SQL source; missing committed PostgreSQL and end-to-end proof.",
+      "note": "This whole source-statement obligation is not implemented/verified; partial component work is recorded separately, not counted as completion."
     },
     {
       "id": "REQ-05-023",
@@ -1311,9 +1333,10 @@
         171
       ],
       "requirement": "Reservations are not posted money movements. A payment hold reduces availability without reducing posted balance. Consuming the hold and posting settlement must be atomic. Releasing a hold must happen at most once.",
-      "status": "IMPLEMENTED_UNVERIFIED",
+      "status": "NOT_STARTED",
       "executed_evidence": [],
-      "note": "Partial Java/TypeScript policies and SQL source; missing committed PostgreSQL and end-to-end proof."
+      "partial_work": "Partial Java/TypeScript policies and SQL source; missing committed PostgreSQL and end-to-end proof.",
+      "note": "This whole source-statement obligation is not implemented/verified; partial component work is recorded separately, not counted as completion."
     },
     {
       "id": "REQ-05-024",
@@ -1324,9 +1347,10 @@
         173
       ],
       "requirement": "A cached/materialized account balance is allowed only when it is updated in the same transaction as the authoritative posting and independently reconciles to ledger entries. Never authorize spending from the UI, a stale cache, an asynchronous projection, or an unlocked balance read.",
-      "status": "IMPLEMENTED_UNVERIFIED",
+      "status": "NOT_STARTED",
       "executed_evidence": [],
-      "note": "Partial Java/TypeScript policies and SQL source; missing committed PostgreSQL and end-to-end proof."
+      "partial_work": "Partial Java/TypeScript policies and SQL source; missing committed PostgreSQL and end-to-end proof.",
+      "note": "This whole source-statement obligation is not implemented/verified; partial component work is recorded separately, not counted as completion."
     },
     {
       "id": "REQ-05-025",
@@ -1337,9 +1361,10 @@
         175
       ],
       "requirement": "Enforce critical invariants at the database boundary, not only through controller validation. Implement a narrowly permissioned posting interface, such as a carefully secured PostgreSQL posting function plus constraints/deferred constraint triggers. Ordinary runtime credentials must not be able to bypass it with direct journal mutation. Secure any SECURITY DEFINER function's privileges, search path, inputs, and ownership.",
-      "status": "IMPLEMENTED_UNVERIFIED",
+      "status": "NOT_STARTED",
       "executed_evidence": [],
-      "note": "Partial Java/TypeScript policies and SQL source; missing committed PostgreSQL and end-to-end proof."
+      "partial_work": "Partial Java/TypeScript policies and SQL source; missing committed PostgreSQL and end-to-end proof.",
+      "note": "This whole source-statement obligation is not implemented/verified; partial component work is recorded separately, not counted as completion."
     },
     {
       "id": "REQ-05-026",
@@ -1350,9 +1375,10 @@
         177
       ],
       "requirement": "Do not pretend a row-level CHECK constraint can validate a sum across arbitrary other rows. Actually test commit-time enforcement using the application's restricted database role, including attempts to insert an unbalanced journal, mutate a posted entry, and create an invalid balance.",
-      "status": "IMPLEMENTED_UNVERIFIED",
+      "status": "NOT_STARTED",
       "executed_evidence": [],
-      "note": "Partial Java/TypeScript policies and SQL source; missing committed PostgreSQL and end-to-end proof."
+      "partial_work": "Partial Java/TypeScript policies and SQL source; missing committed PostgreSQL and end-to-end proof.",
+      "note": "This whole source-statement obligation is not implemented/verified; partial component work is recorded separately, not counted as completion."
     },
     {
       "id": "REQ-05-027",
@@ -1363,9 +1389,10 @@
         179
       ],
       "requirement": "Document the posting SQL, lock order, transaction boundary, and independent reconciliation queries so an interviewer can inspect the reasoning.",
-      "status": "IMPLEMENTED_UNVERIFIED",
+      "status": "NOT_STARTED",
       "executed_evidence": [],
-      "note": "Partial Java/TypeScript policies and SQL source; missing committed PostgreSQL and end-to-end proof."
+      "partial_work": "Partial Java/TypeScript policies and SQL source; missing committed PostgreSQL and end-to-end proof.",
+      "note": "This whole source-statement obligation is not implemented/verified; partial component work is recorded separately, not counted as completion."
     },
     {
       "id": "REQ-06-001",
@@ -1376,9 +1403,10 @@
         183
       ],
       "requirement": "Implement entities/tables covering users, authentication sessions, accounts, account balances, journal headers, journal entries, transfers, payments, holds, refunds/reversals, idempotency records, outbox events, consumer inbox/deduplication, scheduled transfers, schedule occurrences, webhook endpoints, delivery jobs, delivery attempts, audit records, and reconciliation runs.",
-      "status": "IMPLEMENTED_UNVERIFIED",
+      "status": "NOT_STARTED",
       "executed_evidence": [],
-      "note": "Only partial schema/policy/adapter source; not the complete section or boundary evidence."
+      "partial_work": "Only partial schema/policy/adapter source; not the complete section or boundary evidence.",
+      "note": "This whole source-statement obligation is not implemented/verified; partial component work is recorded separately, not counted as completion."
     },
     {
       "id": "REQ-06-002",
@@ -1389,9 +1417,10 @@
         185
       ],
       "requirement": "A smaller equivalent schema is acceptable only when all responsibilities and invariants remain explicit. Do not add an enterprise abstraction framework merely to increase the table count.",
-      "status": "IMPLEMENTED_UNVERIFIED",
+      "status": "NOT_STARTED",
       "executed_evidence": [],
-      "note": "Only partial schema/policy/adapter source; not the complete section or boundary evidence."
+      "partial_work": "Only partial schema/policy/adapter source; not the complete section or boundary evidence.",
+      "note": "This whole source-statement obligation is not implemented/verified; partial component work is recorded separately, not counted as completion."
     },
     {
       "id": "REQ-06-003",
@@ -1402,9 +1431,10 @@
         187
       ],
       "requirement": "Use database constraints for important identities:",
-      "status": "IMPLEMENTED_UNVERIFIED",
+      "status": "NOT_STARTED",
       "executed_evidence": [],
-      "note": "Only partial schema/policy/adapter source; not the complete section or boundary evidence."
+      "partial_work": "Only partial schema/policy/adapter source; not the complete section or boundary evidence.",
+      "note": "This whole source-statement obligation is not implemented/verified; partial component work is recorded separately, not counted as completion."
     },
     {
       "id": "REQ-06-004",
@@ -1415,9 +1445,10 @@
         188
       ],
       "requirement": "- Unique normalized user identity.",
-      "status": "IMPLEMENTED_UNVERIFIED",
+      "status": "NOT_STARTED",
       "executed_evidence": [],
-      "note": "Only partial schema/policy/adapter source; not the complete section or boundary evidence."
+      "partial_work": "Only partial schema/policy/adapter source; not the complete section or boundary evidence.",
+      "note": "This whole source-statement obligation is not implemented/verified; partial component work is recorded separately, not counted as completion."
     },
     {
       "id": "REQ-06-005",
@@ -1428,9 +1459,10 @@
         189
       ],
       "requirement": "- Unique immutable public account reference.",
-      "status": "IMPLEMENTED_UNVERIFIED",
+      "status": "NOT_STARTED",
       "executed_evidence": [],
-      "note": "Only partial schema/policy/adapter source; not the complete section or boundary evidence."
+      "partial_work": "Only partial schema/policy/adapter source; not the complete section or boundary evidence.",
+      "note": "This whole source-statement obligation is not implemented/verified; partial component work is recorded separately, not counted as completion."
     },
     {
       "id": "REQ-06-006",
@@ -1441,9 +1473,10 @@
         190
       ],
       "requirement": "- Unique financial business-operation reference.",
-      "status": "IMPLEMENTED_UNVERIFIED",
+      "status": "NOT_STARTED",
       "executed_evidence": [],
-      "note": "Only partial schema/policy/adapter source; not the complete section or boundary evidence."
+      "partial_work": "Only partial schema/policy/adapter source; not the complete section or boundary evidence.",
+      "note": "This whole source-statement obligation is not implemented/verified; partial component work is recorded separately, not counted as completion."
     },
     {
       "id": "REQ-06-007",
@@ -1454,9 +1487,10 @@
         191
       ],
       "requirement": "- Unique actor/operation/idempotency-key scope.",
-      "status": "IMPLEMENTED_UNVERIFIED",
+      "status": "NOT_STARTED",
       "executed_evidence": [],
-      "note": "Only partial schema/policy/adapter source; not the complete section or boundary evidence."
+      "partial_work": "Only partial schema/policy/adapter source; not the complete section or boundary evidence.",
+      "note": "This whole source-statement obligation is not implemented/verified; partial component work is recorded separately, not counted as completion."
     },
     {
       "id": "REQ-06-008",
@@ -1467,9 +1501,10 @@
         192
       ],
       "requirement": "- Unique consumer/event identity.",
-      "status": "IMPLEMENTED_UNVERIFIED",
+      "status": "NOT_STARTED",
       "executed_evidence": [],
-      "note": "Only partial schema/policy/adapter source; not the complete section or boundary evidence."
+      "partial_work": "Only partial schema/policy/adapter source; not the complete section or boundary evidence.",
+      "note": "This whole source-statement obligation is not implemented/verified; partial component work is recorded separately, not counted as completion."
     },
     {
       "id": "REQ-06-009",
@@ -1480,9 +1515,10 @@
         193
       ],
       "requirement": "- Unique payment hold identity.",
-      "status": "IMPLEMENTED_UNVERIFIED",
+      "status": "NOT_STARTED",
       "executed_evidence": [],
-      "note": "Only partial schema/policy/adapter source; not the complete section or boundary evidence."
+      "partial_work": "Only partial schema/policy/adapter source; not the complete section or boundary evidence.",
+      "note": "This whole source-statement obligation is not implemented/verified; partial component work is recorded separately, not counted as completion."
     },
     {
       "id": "REQ-06-010",
@@ -1493,9 +1529,10 @@
         194
       ],
       "requirement": "- Unique schedule occurrence identity.",
-      "status": "IMPLEMENTED_UNVERIFIED",
+      "status": "NOT_STARTED",
       "executed_evidence": [],
-      "note": "Only partial schema/policy/adapter source; not the complete section or boundary evidence."
+      "partial_work": "Only partial schema/policy/adapter source; not the complete section or boundary evidence.",
+      "note": "This whole source-statement obligation is not implemented/verified; partial component work is recorded separately, not counted as completion."
     },
     {
       "id": "REQ-06-011",
@@ -1506,9 +1543,10 @@
         195
       ],
       "requirement": "- Unique endpoint/event logical webhook delivery.",
-      "status": "IMPLEMENTED_UNVERIFIED",
+      "status": "NOT_STARTED",
       "executed_evidence": [],
-      "note": "Only partial schema/policy/adapter source; not the complete section or boundary evidence."
+      "partial_work": "Only partial schema/policy/adapter source; not the complete section or boundary evidence.",
+      "note": "This whole source-statement obligation is not implemented/verified; partial component work is recorded separately, not counted as completion."
     },
     {
       "id": "REQ-06-012",
@@ -1519,9 +1557,10 @@
         196
       ],
       "requirement": "- Foreign keys and currency consistency.",
-      "status": "IMPLEMENTED_UNVERIFIED",
+      "status": "NOT_STARTED",
       "executed_evidence": [],
-      "note": "Only partial schema/policy/adapter source; not the complete section or boundary evidence."
+      "partial_work": "Only partial schema/policy/adapter source; not the complete section or boundary evidence.",
+      "note": "This whole source-statement obligation is not implemented/verified; partial component work is recorded separately, not counted as completion."
     },
     {
       "id": "REQ-06-013",
@@ -1532,9 +1571,10 @@
         198
       ],
       "requirement": "Store timestamps as UTC instants using appropriate timestamp-with-time-zone columns. Store IANA zone IDs and intended local recurrence separately for schedules. Never use an unqualified server-local timestamp as a financial ordering authority.",
-      "status": "IMPLEMENTED_UNVERIFIED",
+      "status": "NOT_STARTED",
       "executed_evidence": [],
-      "note": "Only partial schema/policy/adapter source; not the complete section or boundary evidence."
+      "partial_work": "Only partial schema/policy/adapter source; not the complete section or boundary evidence.",
+      "note": "This whole source-statement obligation is not implemented/verified; partial component work is recorded separately, not counted as completion."
     },
     {
       "id": "REQ-06-014",
@@ -1545,9 +1585,10 @@
         200
       ],
       "requirement": "Add justified indexes for account history, admin filters, pending outbox work, pending delivery work, due schedules, active holds, and deduplication lookups. Explain the important query plans with measured examples rather than claiming indexing automatically solves performance.",
-      "status": "IMPLEMENTED_UNVERIFIED",
+      "status": "NOT_STARTED",
       "executed_evidence": [],
-      "note": "Only partial schema/policy/adapter source; not the complete section or boundary evidence."
+      "partial_work": "Only partial schema/policy/adapter source; not the complete section or boundary evidence.",
+      "note": "This whole source-statement obligation is not implemented/verified; partial component work is recorded separately, not counted as completion."
     },
     {
       "id": "REQ-06-015",
@@ -1558,9 +1599,10 @@
         202
       ],
       "requirement": "Reconciliation must use a consistent database snapshot or equivalent verified watermark. A scan mixing different commit moments must not falsely report money corruption.",
-      "status": "IMPLEMENTED_UNVERIFIED",
+      "status": "NOT_STARTED",
       "executed_evidence": [],
-      "note": "Only partial schema/policy/adapter source; not the complete section or boundary evidence."
+      "partial_work": "Only partial schema/policy/adapter source; not the complete section or boundary evidence.",
+      "note": "This whole source-statement obligation is not implemented/verified; partial component work is recorded separately, not counted as completion."
     },
     {
       "id": "REQ-07-001",
@@ -1571,9 +1613,10 @@
         206
       ],
       "requirement": "Implement a documented global lock ordering for aggregate rows and account-balance rows. Lock account rows in stable ID order across transfers, payment reservation, settlement, cancellation, refunds, reversals, and reconciliation repair actions.",
-      "status": "IMPLEMENTED_UNVERIFIED",
+      "status": "NOT_STARTED",
       "executed_evidence": [],
-      "note": "Only partial schema/policy/adapter source; not the complete section or boundary evidence."
+      "partial_work": "Only partial schema/policy/adapter source; not the complete section or boundary evidence.",
+      "note": "This whole source-statement obligation is not implemented/verified; partial component work is recorded separately, not counted as completion."
     },
     {
       "id": "REQ-07-002",
@@ -1584,9 +1627,10 @@
         208
       ],
       "requirement": "Use PostgreSQL row locking/conditional updates or another explicitly justified database concurrency strategy. Java synchronized, one worker, or a serial test runner is not sufficient evidence of correctness across processes.",
-      "status": "IMPLEMENTED_UNVERIFIED",
+      "status": "NOT_STARTED",
       "executed_evidence": [],
-      "note": "Only partial schema/policy/adapter source; not the complete section or boundary evidence."
+      "partial_work": "Only partial schema/policy/adapter source; not the complete section or boundary evidence.",
+      "note": "This whole source-statement obligation is not implemented/verified; partial component work is recorded separately, not counted as completion."
     },
     {
       "id": "REQ-07-003",
@@ -1597,9 +1641,10 @@
         210
       ],
       "requirement": "The transaction that changes money must atomically include the relevant:",
-      "status": "IMPLEMENTED_UNVERIFIED",
+      "status": "NOT_STARTED",
       "executed_evidence": [],
-      "note": "Only partial schema/policy/adapter source; not the complete section or boundary evidence."
+      "partial_work": "Only partial schema/policy/adapter source; not the complete section or boundary evidence.",
+      "note": "This whole source-statement obligation is not implemented/verified; partial component work is recorded separately, not counted as completion."
     },
     {
       "id": "REQ-07-004",
@@ -1610,9 +1655,10 @@
         211
       ],
       "requirement": "- Authoritative business state.",
-      "status": "IMPLEMENTED_UNVERIFIED",
+      "status": "NOT_STARTED",
       "executed_evidence": [],
-      "note": "Only partial schema/policy/adapter source; not the complete section or boundary evidence."
+      "partial_work": "Only partial schema/policy/adapter source; not the complete section or boundary evidence.",
+      "note": "This whole source-statement obligation is not implemented/verified; partial component work is recorded separately, not counted as completion."
     },
     {
       "id": "REQ-07-005",
@@ -1623,9 +1669,10 @@
         212
       ],
       "requirement": "- Journal and entries.",
-      "status": "IMPLEMENTED_UNVERIFIED",
+      "status": "NOT_STARTED",
       "executed_evidence": [],
-      "note": "Only partial schema/policy/adapter source; not the complete section or boundary evidence."
+      "partial_work": "Only partial schema/policy/adapter source; not the complete section or boundary evidence.",
+      "note": "This whole source-statement obligation is not implemented/verified; partial component work is recorded separately, not counted as completion."
     },
     {
       "id": "REQ-07-006",
@@ -1636,9 +1683,10 @@
         213
       ],
       "requirement": "- Balance/reservation changes.",
-      "status": "IMPLEMENTED_UNVERIFIED",
+      "status": "NOT_STARTED",
       "executed_evidence": [],
-      "note": "Only partial schema/policy/adapter source; not the complete section or boundary evidence."
+      "partial_work": "Only partial schema/policy/adapter source; not the complete section or boundary evidence.",
+      "note": "This whole source-statement obligation is not implemented/verified; partial component work is recorded separately, not counted as completion."
     },
     {
       "id": "REQ-07-007",
@@ -1649,9 +1697,10 @@
         214
       ],
       "requirement": "- Financial audit record.",
-      "status": "IMPLEMENTED_UNVERIFIED",
+      "status": "NOT_STARTED",
       "executed_evidence": [],
-      "note": "Only partial schema/policy/adapter source; not the complete section or boundary evidence."
+      "partial_work": "Only partial schema/policy/adapter source; not the complete section or boundary evidence.",
+      "note": "This whole source-statement obligation is not implemented/verified; partial component work is recorded separately, not counted as completion."
     },
     {
       "id": "REQ-07-008",
@@ -1662,9 +1711,10 @@
         215
       ],
       "requirement": "- Idempotency outcome.",
-      "status": "IMPLEMENTED_UNVERIFIED",
+      "status": "NOT_STARTED",
       "executed_evidence": [],
-      "note": "Only partial schema/policy/adapter source; not the complete section or boundary evidence."
+      "partial_work": "Only partial schema/policy/adapter source; not the complete section or boundary evidence.",
+      "note": "This whole source-statement obligation is not implemented/verified; partial component work is recorded separately, not counted as completion."
     },
     {
       "id": "REQ-07-009",
@@ -1675,9 +1725,10 @@
         216
       ],
       "requirement": "- Outbox events.",
-      "status": "IMPLEMENTED_UNVERIFIED",
+      "status": "NOT_STARTED",
       "executed_evidence": [],
-      "note": "Only partial schema/policy/adapter source; not the complete section or boundary evidence."
+      "partial_work": "Only partial schema/policy/adapter source; not the complete section or boundary evidence.",
+      "note": "This whole source-statement obligation is not implemented/verified; partial component work is recorded separately, not counted as completion."
     },
     {
       "id": "REQ-07-010",
@@ -1688,9 +1739,10 @@
         217
       ],
       "requirement": "- Consumer inbox marker, when consuming a message.",
-      "status": "IMPLEMENTED_UNVERIFIED",
+      "status": "NOT_STARTED",
       "executed_evidence": [],
-      "note": "Only partial schema/policy/adapter source; not the complete section or boundary evidence."
+      "partial_work": "Only partial schema/policy/adapter source; not the complete section or boundary evidence.",
+      "note": "This whole source-statement obligation is not implemented/verified; partial component work is recorded separately, not counted as completion."
     },
     {
       "id": "REQ-07-011",
@@ -1701,9 +1753,10 @@
         219
       ],
       "requirement": "Do not place external HTTP calls or RabbitMQ publishing inside a long-running financial transaction. Do not split debit and credit into separate commits. Do not use REQUIRES_NEW to commit audit or financial fragments that should roll back together.",
-      "status": "IMPLEMENTED_UNVERIFIED",
+      "status": "NOT_STARTED",
       "executed_evidence": [],
-      "note": "Only partial schema/policy/adapter source; not the complete section or boundary evidence."
+      "partial_work": "Only partial schema/policy/adapter source; not the complete section or boundary evidence.",
+      "note": "This whole source-statement obligation is not implemented/verified; partial component work is recorded separately, not counted as completion."
     },
     {
       "id": "REQ-07-012",
@@ -1714,9 +1767,10 @@
         221
       ],
       "requirement": "Retry deadlock/serialization failures only when the whole transaction is safe to retry. Start a new transaction for each attempt. Classify PostgreSQL errors explicitly, bound attempts and total elapsed time, and log retry reasons. Never retry every exception indiscriminately or interpret an unknown commit outcome as definite rollback.",
-      "status": "IMPLEMENTED_UNVERIFIED",
+      "status": "NOT_STARTED",
       "executed_evidence": [],
-      "note": "Only partial schema/policy/adapter source; not the complete section or boundary evidence."
+      "partial_work": "Only partial schema/policy/adapter source; not the complete section or boundary evidence.",
+      "note": "This whole source-statement obligation is not implemented/verified; partial component work is recorded separately, not counted as completion."
     },
     {
       "id": "REQ-07-013",
@@ -1727,9 +1781,10 @@
         223
       ],
       "requirement": "Test with two independent API instances and at least two worker instances for the relevant races.",
-      "status": "IMPLEMENTED_UNVERIFIED",
+      "status": "NOT_STARTED",
       "executed_evidence": [],
-      "note": "Only partial schema/policy/adapter source; not the complete section or boundary evidence."
+      "partial_work": "Only partial schema/policy/adapter source; not the complete section or boundary evidence.",
+      "note": "This whole source-statement obligation is not implemented/verified; partial component work is recorded separately, not counted as completion."
     },
     {
       "id": "REQ-07-014",
@@ -1740,9 +1795,10 @@
         225
       ],
       "requirement": "The canonical overspend proof starts with 10,000 available minor units and two synchronized requests for 8,000 each. Exactly one may succeed; the other must receive the documented controlled rejection. There must be no negative availability, extra journal, leaked hold, or unexplained server error.",
-      "status": "IMPLEMENTED_UNVERIFIED",
+      "status": "NOT_STARTED",
       "executed_evidence": [],
-      "note": "Only partial schema/policy/adapter source; not the complete section or boundary evidence."
+      "partial_work": "Only partial schema/policy/adapter source; not the complete section or boundary evidence.",
+      "note": "This whole source-statement obligation is not implemented/verified; partial component work is recorded separately, not counted as completion."
     },
     {
       "id": "REQ-07-015",
@@ -1753,9 +1809,10 @@
         227
       ],
       "requirement": "Also test opposite-direction transfers, many clients spending one account, distinct accounts operating concurrently, concurrent partial refunds, cancellation-versus-settlement, reversal-versus-spending, and duplicate concurrent requests.",
-      "status": "IMPLEMENTED_UNVERIFIED",
+      "status": "NOT_STARTED",
       "executed_evidence": [],
-      "note": "Only partial schema/policy/adapter source; not the complete section or boundary evidence."
+      "partial_work": "Only partial schema/policy/adapter source; not the complete section or boundary evidence.",
+      "note": "This whole source-statement obligation is not implemented/verified; partial component work is recorded separately, not counted as completion."
     },
     {
       "id": "REQ-08-001",
@@ -1766,9 +1823,10 @@
         231
       ],
       "requirement": "Require Idempotency-Key on every money-affecting customer/admin command, including transfer creation, payment creation, cancellation, refunds, and reversals. Give scheduled execution a stable internally generated operation key.",
-      "status": "IMPLEMENTED_UNVERIFIED",
+      "status": "NOT_STARTED",
       "executed_evidence": [],
-      "note": "Only partial schema/policy/adapter source; not the complete section or boundary evidence."
+      "partial_work": "Only partial schema/policy/adapter source; not the complete section or boundary evidence.",
+      "note": "This whole source-statement obligation is not implemented/verified; partial component work is recorded separately, not counted as completion."
     },
     {
       "id": "REQ-08-002",
@@ -1779,9 +1837,10 @@
         233
       ],
       "requirement": "Scope keys by authenticated principal, operation kind, and relevant parent-resource scope. Specify bounded key syntax and length. Reusing a key in a different user's scope must not disclose or reuse that user's response.",
-      "status": "IMPLEMENTED_UNVERIFIED",
+      "status": "NOT_STARTED",
       "executed_evidence": [],
-      "note": "Only partial schema/policy/adapter source; not the complete section or boundary evidence."
+      "partial_work": "Only partial schema/policy/adapter source; not the complete section or boundary evidence.",
+      "note": "This whole source-statement obligation is not implemented/verified; partial component work is recorded separately, not counted as completion."
     },
     {
       "id": "REQ-08-003",
@@ -1792,9 +1851,10 @@
         235
       ],
       "requirement": "Compute a canonical request fingerprint after validation/normalization. Include all economically meaningful fields, currency, operation kind, and parent identifiers. Do not include incidental JSON property ordering or changing request timestamps.",
-      "status": "IMPLEMENTED_UNVERIFIED",
+      "status": "NOT_STARTED",
       "executed_evidence": [],
-      "note": "Only partial schema/policy/adapter source; not the complete section or boundary evidence."
+      "partial_work": "Only partial schema/policy/adapter source; not the complete section or boundary evidence.",
+      "note": "This whole source-statement obligation is not implemented/verified; partial component work is recorded separately, not counted as completion."
     },
     {
       "id": "REQ-08-004",
@@ -1805,9 +1865,10 @@
         237
       ],
       "requirement": "Required behavior:",
-      "status": "IMPLEMENTED_UNVERIFIED",
+      "status": "NOT_STARTED",
       "executed_evidence": [],
-      "note": "Only partial schema/policy/adapter source; not the complete section or boundary evidence."
+      "partial_work": "Only partial schema/policy/adapter source; not the complete section or boundary evidence.",
+      "note": "This whole source-statement obligation is not implemented/verified; partial component work is recorded separately, not counted as completion."
     },
     {
       "id": "REQ-08-005",
@@ -1818,9 +1879,10 @@
         238
       ],
       "requirement": "- Same scope/key/fingerprint: one business operation and the documented replay response.",
-      "status": "IMPLEMENTED_UNVERIFIED",
+      "status": "NOT_STARTED",
       "executed_evidence": [],
-      "note": "Only partial schema/policy/adapter source; not the complete section or boundary evidence."
+      "partial_work": "Only partial schema/policy/adapter source; not the complete section or boundary evidence.",
+      "note": "This whole source-statement obligation is not implemented/verified; partial component work is recorded separately, not counted as completion."
     },
     {
       "id": "REQ-08-006",
@@ -1831,9 +1893,10 @@
         239
       ],
       "requirement": "- Same scope/key with different intent: 409 IDEMPOTENCY_CONFLICT and no financial effect.",
-      "status": "IMPLEMENTED_UNVERIFIED",
+      "status": "NOT_STARTED",
       "executed_evidence": [],
-      "note": "Only partial schema/policy/adapter source; not the complete section or boundary evidence."
+      "partial_work": "Only partial schema/policy/adapter source; not the complete section or boundary evidence.",
+      "note": "This whole source-statement obligation is not implemented/verified; partial component work is recorded separately, not counted as completion."
     },
     {
       "id": "REQ-08-007",
@@ -1844,9 +1907,10 @@
         240
       ],
       "requirement": "- Concurrent same-key requests: deterministic single-operation behavior, never duplicated posting.",
-      "status": "IMPLEMENTED_UNVERIFIED",
+      "status": "NOT_STARTED",
       "executed_evidence": [],
-      "note": "Only partial schema/policy/adapter source; not the complete section or boundary evidence."
+      "partial_work": "Only partial schema/policy/adapter source; not the complete section or boundary evidence.",
+      "note": "This whole source-statement obligation is not implemented/verified; partial component work is recorded separately, not counted as completion."
     },
     {
       "id": "REQ-08-008",
@@ -1857,9 +1921,10 @@
         241
       ],
       "requirement": "- Committed operation followed by lost response: retry returns the original operation rather than performing it again.",
-      "status": "IMPLEMENTED_UNVERIFIED",
+      "status": "NOT_STARTED",
       "executed_evidence": [],
-      "note": "Only partial schema/policy/adapter source; not the complete section or boundary evidence."
+      "partial_work": "Only partial schema/policy/adapter source; not the complete section or boundary evidence.",
+      "note": "This whole source-statement obligation is not implemented/verified; partial component work is recorded separately, not counted as completion."
     },
     {
       "id": "REQ-08-009",
@@ -1870,9 +1935,10 @@
         242
       ],
       "requirement": "- Temporary failure before durable acceptance: retry with the same key remains safe.",
-      "status": "IMPLEMENTED_UNVERIFIED",
+      "status": "NOT_STARTED",
       "executed_evidence": [],
-      "note": "Only partial schema/policy/adapter source; not the complete section or boundary evidence."
+      "partial_work": "Only partial schema/policy/adapter source; not the complete section or boundary evidence.",
+      "note": "This whole source-statement obligation is not implemented/verified; partial component work is recorded separately, not counted as completion."
     },
     {
       "id": "REQ-08-010",
@@ -1883,9 +1949,10 @@
         244
       ],
       "requirement": "Persist the accepted command/outcome and key association atomically. Do not merely cache the key in memory or write it after committing money.",
-      "status": "IMPLEMENTED_UNVERIFIED",
+      "status": "NOT_STARTED",
       "executed_evidence": [],
-      "note": "Only partial schema/policy/adapter source; not the complete section or boundary evidence."
+      "partial_work": "Only partial schema/policy/adapter source; not the complete section or boundary evidence.",
+      "note": "This whole source-statement obligation is not implemented/verified; partial component work is recorded separately, not counted as completion."
     },
     {
       "id": "REQ-08-011",
@@ -1896,9 +1963,10 @@
         246
       ],
       "requirement": "Define response behavior exactly: replay the original creation status/body and resource identity, with a replay indicator; use the resource GET endpoint for its current asynchronous status. Do not silently return a different financial operation because the original is now settled.",
-      "status": "IMPLEMENTED_UNVERIFIED",
+      "status": "NOT_STARTED",
       "executed_evidence": [],
-      "note": "Only partial schema/policy/adapter source; not the complete section or boundary evidence."
+      "partial_work": "Only partial schema/policy/adapter source; not the complete section or boundary evidence.",
+      "note": "This whole source-statement obligation is not implemented/verified; partial component work is recorded separately, not counted as completion."
     },
     {
       "id": "REQ-08-012",
@@ -1909,9 +1977,10 @@
         248
       ],
       "requirement": "Define how a concurrent request still in progress is handled, such as bounded waiting followed by a documented retryable conflict with Retry-After. Do not leave an eternal IN_PROGRESS key after a crash. Prefer one-transaction claims/outcomes where possible; otherwise implement and test lease ownership and recovery.",
-      "status": "IMPLEMENTED_UNVERIFIED",
+      "status": "NOT_STARTED",
       "executed_evidence": [],
-      "note": "Only partial schema/policy/adapter source; not the complete section or boundary evidence."
+      "partial_work": "Only partial schema/policy/adapter source; not the complete section or boundary evidence.",
+      "note": "This whole source-statement obligation is not implemented/verified; partial component work is recorded separately, not counted as completion."
     },
     {
       "id": "REQ-08-013",
@@ -1922,9 +1991,10 @@
         250
       ],
       "requirement": "Persist accepted commands and deterministic business rejections consistently. Reject invalid unauthenticated/malformed requests before claiming a durable operation key. Document which errors are replayed and which may be retried.",
-      "status": "IMPLEMENTED_UNVERIFIED",
+      "status": "NOT_STARTED",
       "executed_evidence": [],
-      "note": "Only partial schema/policy/adapter source; not the complete section or boundary evidence."
+      "partial_work": "Only partial schema/policy/adapter source; not the complete section or boundary evidence.",
+      "note": "This whole source-statement obligation is not implemented/verified; partial component work is recorded separately, not counted as completion."
     },
     {
       "id": "REQ-08-014",
@@ -1935,9 +2005,10 @@
         252
       ],
       "requirement": "For this compact lab, retain financial idempotency identities for the lifetime of retained transaction history. Do not prune the replay protection and thereby turn a late retry into a new payment.",
-      "status": "IMPLEMENTED_UNVERIFIED",
+      "status": "NOT_STARTED",
       "executed_evidence": [],
-      "note": "Only partial schema/policy/adapter source; not the complete section or boundary evidence."
+      "partial_work": "Only partial schema/policy/adapter source; not the complete section or boundary evidence.",
+      "note": "This whole source-statement obligation is not implemented/verified; partial component work is recorded separately, not counted as completion."
     },
     {
       "id": "REQ-08-015",
@@ -1948,9 +2019,10 @@
         254
       ],
       "requirement": "The frontend must reuse the same key and normalized intent after a timeout. Generate a new key only for a genuinely new user instruction. Provide an owner-scoped way to resolve an uncertain operation or safely replay its original request. Display “outcome not yet confirmed” instead of falsely declaring failure or success.",
-      "status": "IMPLEMENTED_UNVERIFIED",
+      "status": "NOT_STARTED",
       "executed_evidence": [],
-      "note": "Only partial schema/policy/adapter source; not the complete section or boundary evidence."
+      "partial_work": "Only partial schema/policy/adapter source; not the complete section or boundary evidence.",
+      "note": "This whole source-statement obligation is not implemented/verified; partial component work is recorded separately, not counted as completion."
     },
     {
       "id": "REQ-09-001",
@@ -1961,9 +2033,10 @@
         258
       ],
       "requirement": "Implement immediate transfers separately from asynchronous payments, but make both call the same protected ledger posting logic.",
-      "status": "IMPLEMENTED_UNVERIFIED",
+      "status": "NOT_STARTED",
       "executed_evidence": [],
-      "note": "Only partial schema/policy/adapter source; not the complete section or boundary evidence."
+      "partial_work": "Only partial schema/policy/adapter source; not the complete section or boundary evidence.",
+      "note": "This whole source-statement obligation is not implemented/verified; partial component work is recorded separately, not counted as completion."
     },
     {
       "id": "REQ-09-002",
@@ -1974,9 +2047,10 @@
         260
       ],
       "requirement": "For asynchronous payments:",
-      "status": "IMPLEMENTED_UNVERIFIED",
+      "status": "NOT_STARTED",
       "executed_evidence": [],
-      "note": "Only partial schema/policy/adapter source; not the complete section or boundary evidence."
+      "partial_work": "Only partial schema/policy/adapter source; not the complete section or boundary evidence.",
+      "note": "This whole source-statement obligation is not implemented/verified; partial component work is recorded separately, not counted as completion."
     },
     {
       "id": "REQ-09-003",
@@ -1987,9 +2061,10 @@
         261
       ],
       "requirement": "1. Authenticate and authorize the payer's source account.",
-      "status": "IMPLEMENTED_UNVERIFIED",
+      "status": "NOT_STARTED",
       "executed_evidence": [],
-      "note": "Only partial schema/policy/adapter source; not the complete section or boundary evidence."
+      "partial_work": "Only partial schema/policy/adapter source; not the complete section or boundary evidence.",
+      "note": "This whole source-statement obligation is not implemented/verified; partial component work is recorded separately, not counted as completion."
     },
     {
       "id": "REQ-09-004",
@@ -2000,9 +2075,10 @@
         262
       ],
       "requirement": "2. Validate the active recipient and same currency.",
-      "status": "IMPLEMENTED_UNVERIFIED",
+      "status": "NOT_STARTED",
       "executed_evidence": [],
-      "note": "Only partial schema/policy/adapter source; not the complete section or boundary evidence."
+      "partial_work": "Only partial schema/policy/adapter source; not the complete section or boundary evidence.",
+      "note": "This whole source-statement obligation is not implemented/verified; partial component work is recorded separately, not counted as completion."
     },
     {
       "id": "REQ-09-005",
@@ -2013,9 +2089,10 @@
         263
       ],
       "requirement": "3. Lock/check available funds.",
-      "status": "IMPLEMENTED_UNVERIFIED",
+      "status": "NOT_STARTED",
       "executed_evidence": [],
-      "note": "Only partial schema/policy/adapter source; not the complete section or boundary evidence."
+      "partial_work": "Only partial schema/policy/adapter source; not the complete section or boundary evidence.",
+      "note": "This whole source-statement obligation is not implemented/verified; partial component work is recorded separately, not counted as completion."
     },
     {
       "id": "REQ-09-006",
@@ -2026,9 +2103,10 @@
         264
       ],
       "requirement": "4. Create a durable PENDING payment and ACTIVE hold.",
-      "status": "IMPLEMENTED_UNVERIFIED",
+      "status": "NOT_STARTED",
       "executed_evidence": [],
-      "note": "Only partial schema/policy/adapter source; not the complete section or boundary evidence."
+      "partial_work": "Only partial schema/policy/adapter source; not the complete section or boundary evidence.",
+      "note": "This whole source-statement obligation is not implemented/verified; partial component work is recorded separately, not counted as completion."
     },
     {
       "id": "REQ-09-007",
@@ -2039,9 +2117,10 @@
         265
       ],
       "requirement": "5. Persist idempotency, audit, and payment-requested outbox event atomically.",
-      "status": "IMPLEMENTED_UNVERIFIED",
+      "status": "NOT_STARTED",
       "executed_evidence": [],
-      "note": "Only partial schema/policy/adapter source; not the complete section or boundary evidence."
+      "partial_work": "Only partial schema/policy/adapter source; not the complete section or boundary evidence.",
+      "note": "This whole source-statement obligation is not implemented/verified; partial component work is recorded separately, not counted as completion."
     },
     {
       "id": "REQ-09-008",
@@ -2052,9 +2131,10 @@
         266
       ],
       "requirement": "6. Return 202 with a stable payment ID and resource location.",
-      "status": "IMPLEMENTED_UNVERIFIED",
+      "status": "NOT_STARTED",
       "executed_evidence": [],
-      "note": "Only partial schema/policy/adapter source; not the complete section or boundary evidence."
+      "partial_work": "Only partial schema/policy/adapter source; not the complete section or boundary evidence.",
+      "note": "This whole source-statement obligation is not implemented/verified; partial component work is recorded separately, not counted as completion."
     },
     {
       "id": "REQ-09-009",
@@ -2065,9 +2145,10 @@
         267
       ],
       "requirement": "7. Let the worker settle or safely fail/reconcile the accepted payment.",
-      "status": "IMPLEMENTED_UNVERIFIED",
+      "status": "NOT_STARTED",
       "executed_evidence": [],
-      "note": "Only partial schema/policy/adapter source; not the complete section or boundary evidence."
+      "partial_work": "Only partial schema/policy/adapter source; not the complete section or boundary evidence.",
+      "note": "This whole source-statement obligation is not implemented/verified; partial component work is recorded separately, not counted as completion."
     },
     {
       "id": "REQ-09-010",
@@ -2078,9 +2159,10 @@
         269
       ],
       "requirement": "Use the canonical base states PENDING, SETTLED, FAILED, and CANCELLED. Keep retry/lease/attempt data separate from economic state; a worker crash must not strand a permanent PROCESSING state. Any optional processing indicator must have a demonstrated lease recovery path.",
-      "status": "IMPLEMENTED_UNVERIFIED",
+      "status": "NOT_STARTED",
       "executed_evidence": [],
-      "note": "Only partial schema/policy/adapter source; not the complete section or boundary evidence."
+      "partial_work": "Only partial schema/policy/adapter source; not the complete section or boundary evidence.",
+      "note": "This whole source-statement obligation is not implemented/verified; partial component work is recorded separately, not counted as completion."
     },
     {
       "id": "REQ-09-011",
@@ -2091,9 +2173,10 @@
         271
       ],
       "requirement": "Settlement atomically consumes the hold, posts the balanced journal, updates balances, sets SETTLED, writes audit/outbox, and records event processing. A crash after this commit but before queue acknowledgement must not produce another posting.",
-      "status": "IMPLEMENTED_UNVERIFIED",
+      "status": "NOT_STARTED",
       "executed_evidence": [],
-      "note": "Only partial schema/policy/adapter source; not the complete section or boundary evidence."
+      "partial_work": "Only partial schema/policy/adapter source; not the complete section or boundary evidence.",
+      "note": "This whole source-statement obligation is not implemented/verified; partial component work is recorded separately, not counted as completion."
     },
     {
       "id": "REQ-09-012",
@@ -2104,9 +2187,10 @@
         273
       ],
       "requirement": "Temporary infrastructure problems leave the operation pending/retryable. A permanent business failure before posting releases the hold atomically and records FAILED with a meaningful reason. No path may label an already-posted payment FAILED merely because publishing or webhook delivery failed.",
-      "status": "IMPLEMENTED_UNVERIFIED",
+      "status": "NOT_STARTED",
       "executed_evidence": [],
-      "note": "Only partial schema/policy/adapter source; not the complete section or boundary evidence."
+      "partial_work": "Only partial schema/policy/adapter source; not the complete section or boundary evidence.",
+      "note": "This whole source-statement obligation is not implemented/verified; partial component work is recorded separately, not counted as completion."
     },
     {
       "id": "REQ-09-013",
@@ -2117,9 +2201,10 @@
         275
       ],
       "requirement": "Cancellation is allowed only while PENDING and before settlement wins the lock. The payer or authorized administrator may cancel. Release the hold once; post no refund journal because money has not yet moved.",
-      "status": "IMPLEMENTED_UNVERIFIED",
+      "status": "NOT_STARTED",
       "executed_evidence": [],
-      "note": "Only partial schema/policy/adapter source; not the complete section or boundary evidence."
+      "partial_work": "Only partial schema/policy/adapter source; not the complete section or boundary evidence.",
+      "note": "This whole source-statement obligation is not implemented/verified; partial component work is recorded separately, not counted as completion."
     },
     {
       "id": "REQ-09-014",
@@ -2130,9 +2215,10 @@
         277
       ],
       "requirement": "Refunds are partial or full compensating postings against a SETTLED payment. They may be initiated by the original recipient's owner or an administrator, not by an arbitrary payer simply because they can view the payment. Preserve the original posting.",
-      "status": "IMPLEMENTED_UNVERIFIED",
+      "status": "NOT_STARTED",
       "executed_evidence": [],
-      "note": "Only partial schema/policy/adapter source; not the complete section or boundary evidence."
+      "partial_work": "Only partial schema/policy/adapter source; not the complete section or boundary evidence.",
+      "note": "This whole source-statement obligation is not implemented/verified; partial component work is recorded separately, not counted as completion."
     },
     {
       "id": "REQ-09-015",
@@ -2143,9 +2229,10 @@
         279
       ],
       "requirement": "Lock the parent payment and relevant balances. Require:",
-      "status": "IMPLEMENTED_UNVERIFIED",
+      "status": "NOT_STARTED",
       "executed_evidence": [],
-      "note": "Only partial schema/policy/adapter source; not the complete section or boundary evidence."
+      "partial_work": "Only partial schema/policy/adapter source; not the complete section or boundary evidence.",
+      "note": "This whole source-statement obligation is not implemented/verified; partial component work is recorded separately, not counted as completion."
     },
     {
       "id": "REQ-09-016",
@@ -2156,9 +2243,10 @@
         280
       ],
       "requirement": "0 < requested_refund <= original_settled_amount - already_refunded_amount.",
-      "status": "IMPLEMENTED_UNVERIFIED",
+      "status": "NOT_STARTED",
       "executed_evidence": [],
-      "note": "Only partial schema/policy/adapter source; not the complete section or boundary evidence."
+      "partial_work": "Only partial schema/policy/adapter source; not the complete section or boundary evidence.",
+      "note": "This whole source-statement obligation is not implemented/verified; partial component work is recorded separately, not counted as completion."
     },
     {
       "id": "REQ-09-017",
@@ -2169,9 +2257,10 @@
         282
       ],
       "requirement": "Require the original recipient to have sufficient currently available funds. Do not manufacture funds or permit an undocumented overdraft. Each refund has its own immutable identity, idempotency scope, journal, audit, and event.",
-      "status": "IMPLEMENTED_UNVERIFIED",
+      "status": "NOT_STARTED",
       "executed_evidence": [],
-      "note": "Only partial schema/policy/adapter source; not the complete section or boundary evidence."
+      "partial_work": "Only partial schema/policy/adapter source; not the complete section or boundary evidence.",
+      "note": "This whole source-statement obligation is not implemented/verified; partial component work is recorded separately, not counted as completion."
     },
     {
       "id": "REQ-09-018",
@@ -2182,9 +2271,10 @@
         284
       ],
       "requirement": "Administrative reversal is a full compensating posting for an otherwise unadjusted settled payment. Require ADMIN, a recorded reason, zero prior successful refund/reversal, and sufficient recipient availability. Reject reversal after any refund; reject refunds after reversal. Concurrent adjustment requests must not exceed the original settlement.",
-      "status": "IMPLEMENTED_UNVERIFIED",
+      "status": "NOT_STARTED",
       "executed_evidence": [],
-      "note": "Only partial schema/policy/adapter source; not the complete section or boundary evidence."
+      "partial_work": "Only partial schema/policy/adapter source; not the complete section or boundary evidence.",
+      "note": "This whole source-statement obligation is not implemented/verified; partial component work is recorded separately, not counted as completion."
     },
     {
       "id": "REQ-09-019",
@@ -2195,9 +2285,10 @@
         286
       ],
       "requirement": "Keep base settlement state and adjustment state distinguishable. Expose adjustment states NONE, PARTIALLY_REFUNDED, FULLY_REFUNDED, or REVERSED, derived/maintained consistently from successful adjustments. Do not overwrite history or turn a settled journal into an editable record.",
-      "status": "IMPLEMENTED_UNVERIFIED",
+      "status": "NOT_STARTED",
       "executed_evidence": [],
-      "note": "Only partial schema/policy/adapter source; not the complete section or boundary evidence."
+      "partial_work": "Only partial schema/policy/adapter source; not the complete section or boundary evidence.",
+      "note": "This whole source-statement obligation is not implemented/verified; partial component work is recorded separately, not counted as completion."
     },
     {
       "id": "REQ-09-020",
@@ -2208,9 +2299,10 @@
         288
       ],
       "requirement": "Write and test the complete transition table, including forbidden transitions and race outcomes.",
-      "status": "IMPLEMENTED_UNVERIFIED",
+      "status": "NOT_STARTED",
       "executed_evidence": [],
-      "note": "Only partial schema/policy/adapter source; not the complete section or boundary evidence."
+      "partial_work": "Only partial schema/policy/adapter source; not the complete section or boundary evidence.",
+      "note": "This whole source-statement obligation is not implemented/verified; partial component work is recorded separately, not counted as completion."
     },
     {
       "id": "REQ-10-001",
@@ -2461,9 +2553,10 @@
         336
       ],
       "requirement": "Implement one-time, daily, and weekly scheduled transfers. Store the intended local date/time, IANA zone, recurrence, schedule version, next execution instant, status, and occurrence history. Support at least America/Halifax and UTC in fixtures.",
-      "status": "IMPLEMENTED_UNVERIFIED",
+      "status": "NOT_STARTED",
       "executed_evidence": [],
-      "note": "Only partial schema/policy/adapter source; not the complete section or boundary evidence."
+      "partial_work": "Only partial schema/policy/adapter source; not the complete section or boundary evidence.",
+      "note": "This whole source-statement obligation is not implemented/verified; partial component work is recorded separately, not counted as completion."
     },
     {
       "id": "REQ-12-002",
@@ -2474,9 +2567,10 @@
         338
       ],
       "requirement": "Use an injectable Clock for business-time tests. Do not rely on the test machine's locale/time zone or long real-time sleeps. Keep lease/timeout clocks and accelerated business clocks clearly distinguished and consistently controlled in lab tests.",
-      "status": "IMPLEMENTED_UNVERIFIED",
+      "status": "NOT_STARTED",
       "executed_evidence": [],
-      "note": "Only partial schema/policy/adapter source; not the complete section or boundary evidence."
+      "partial_work": "Only partial schema/policy/adapter source; not the complete section or boundary evidence.",
+      "note": "This whole source-statement obligation is not implemented/verified; partial component work is recorded separately, not counted as completion."
     },
     {
       "id": "REQ-12-003",
@@ -2487,9 +2581,10 @@
         340
       ],
       "requirement": "Specify daylight-saving policy:",
-      "status": "IMPLEMENTED_UNVERIFIED",
+      "status": "NOT_STARTED",
       "executed_evidence": [],
-      "note": "Only partial schema/policy/adapter source; not the complete section or boundary evidence."
+      "partial_work": "Only partial schema/policy/adapter source; not the complete section or boundary evidence.",
+      "note": "This whole source-statement obligation is not implemented/verified; partial component work is recorded separately, not counted as completion."
     },
     {
       "id": "REQ-12-004",
@@ -2500,9 +2595,10 @@
         341
       ],
       "requirement": "- Spring gap: move the nonexistent wall time forward by the transition gap, preserving minutes where applicable.",
-      "status": "IMPLEMENTED_UNVERIFIED",
+      "status": "NOT_STARTED",
       "executed_evidence": [],
-      "note": "Only partial schema/policy/adapter source; not the complete section or boundary evidence."
+      "partial_work": "Only partial schema/policy/adapter source; not the complete section or boundary evidence.",
+      "note": "This whole source-statement obligation is not implemented/verified; partial component work is recorded separately, not counted as completion."
     },
     {
       "id": "REQ-12-005",
@@ -2513,9 +2609,10 @@
         342
       ],
       "requirement": "- Autumn overlap: choose the earlier valid offset and execute exactly once for that intended local occurrence.",
-      "status": "IMPLEMENTED_UNVERIFIED",
+      "status": "NOT_STARTED",
       "executed_evidence": [],
-      "note": "Only partial schema/policy/adapter source; not the complete section or boundary evidence."
+      "partial_work": "Only partial schema/policy/adapter source; not the complete section or boundary evidence.",
+      "note": "This whole source-statement obligation is not implemented/verified; partial component work is recorded separately, not counted as completion."
     },
     {
       "id": "REQ-12-006",
@@ -2526,9 +2623,10 @@
         343
       ],
       "requirement": "- Daily recurrence means the specified local wall time, not simply last execution plus 24 hours.",
-      "status": "IMPLEMENTED_UNVERIFIED",
+      "status": "NOT_STARTED",
       "executed_evidence": [],
-      "note": "Only partial schema/policy/adapter source; not the complete section or boundary evidence."
+      "partial_work": "Only partial schema/policy/adapter source; not the complete section or boundary evidence.",
+      "note": "This whole source-statement obligation is not implemented/verified; partial component work is recorded separately, not counted as completion."
     },
     {
       "id": "REQ-12-007",
@@ -2539,9 +2637,10 @@
         345
       ],
       "requirement": "Give every occurrence a stable identity from schedule ID/version and intended local occurrence. Enforce uniqueness in PostgreSQL. Two schedulers must not create two financial effects for the same occurrence.",
-      "status": "IMPLEMENTED_UNVERIFIED",
+      "status": "NOT_STARTED",
       "executed_evidence": [],
-      "note": "Only partial schema/policy/adapter source; not the complete section or boundary evidence."
+      "partial_work": "Only partial schema/policy/adapter source; not the complete section or boundary evidence.",
+      "note": "This whole source-statement obligation is not implemented/verified; partial component work is recorded separately, not counted as completion."
     },
     {
       "id": "REQ-12-008",
@@ -2552,9 +2651,10 @@
         347
       ],
       "requirement": "Reserve/check funds when an occurrence executes, not for all future occurrences at schedule creation. A business rejection such as insufficient funds produces a recorded failed occurrence and does not retry later with a new identity. Infrastructure retries reuse the same identity.",
-      "status": "IMPLEMENTED_UNVERIFIED",
+      "status": "NOT_STARTED",
       "executed_evidence": [],
-      "note": "Only partial schema/policy/adapter source; not the complete section or boundary evidence."
+      "partial_work": "Only partial schema/policy/adapter source; not the complete section or boundary evidence.",
+      "note": "This whole source-statement obligation is not implemented/verified; partial component work is recorded separately, not counted as completion."
     },
     {
       "id": "REQ-12-009",
@@ -2565,9 +2665,10 @@
         349
       ],
       "requirement": "Specify catch-up behavior: execute overdue unprocessed occurrences within a 24-hour window once, oldest first, with bounded batches; record older missed occurrences as skipped-late. Do not silently collapse many obligations into one oversized transfer.",
-      "status": "IMPLEMENTED_UNVERIFIED",
+      "status": "NOT_STARTED",
       "executed_evidence": [],
-      "note": "Only partial schema/policy/adapter source; not the complete section or boundary evidence."
+      "partial_work": "Only partial schema/policy/adapter source; not the complete section or boundary evidence.",
+      "note": "This whole source-statement obligation is not implemented/verified; partial component work is recorded separately, not counted as completion."
     },
     {
       "id": "REQ-12-010",
@@ -2578,9 +2679,10 @@
         351
       ],
       "requirement": "Pausing/cancelling prevents not-yet-claimed future occurrences. Define the race with an already executing occurrence. Resuming starts according to the documented future schedule and does not resurrect intentionally skipped obligations.",
-      "status": "IMPLEMENTED_UNVERIFIED",
+      "status": "NOT_STARTED",
       "executed_evidence": [],
-      "note": "Only partial schema/policy/adapter source; not the complete section or boundary evidence."
+      "partial_work": "Only partial schema/policy/adapter source; not the complete section or boundary evidence.",
+      "note": "This whole source-statement obligation is not implemented/verified; partial component work is recorded separately, not counted as completion."
     },
     {
       "id": "REQ-12-011",
@@ -2591,9 +2693,10 @@
         353
       ],
       "requirement": "Editing a schedule increments its version, affects future occurrences, and preserves existing occurrence history. Test duplicate ticks, two scheduler instances, restart during execution, schedule editing races, DST gaps/overlaps, insufficient funds, catch-up limits, and time-zone display.",
-      "status": "IMPLEMENTED_UNVERIFIED",
+      "status": "NOT_STARTED",
       "executed_evidence": [],
-      "note": "Only partial schema/policy/adapter source; not the complete section or boundary evidence."
+      "partial_work": "Only partial schema/policy/adapter source; not the complete section or boundary evidence.",
+      "note": "This whole source-statement obligation is not implemented/verified; partial component work is recorded separately, not counted as completion."
     },
     {
       "id": "REQ-13-001",
@@ -3228,9 +3331,10 @@
         445
       ],
       "requirement": "Financial audit records must be append-only to runtime users. Record actor or system identity, action, affected entity, immutable operation/reference IDs, reason where applicable, aggregate version, timestamp, correlation ID, and safe relevant metadata.",
-      "status": "IMPLEMENTED_UNVERIFIED",
+      "status": "NOT_STARTED",
       "executed_evidence": [],
-      "note": "Only partial schema/policy/adapter source; not the complete section or boundary evidence."
+      "partial_work": "Only partial schema/policy/adapter source; not the complete section or boundary evidence.",
+      "note": "This whole source-statement obligation is not implemented/verified; partial component work is recorded separately, not counted as completion."
     },
     {
       "id": "REQ-16-002",
@@ -3241,9 +3345,10 @@
         447
       ],
       "requirement": "Financial audit writes belong to the same transaction as the associated financial change. Record failed authentication/authorization and operational actions separately where necessary, without accidentally committing a failed financial transaction's audit as if it succeeded.",
-      "status": "IMPLEMENTED_UNVERIFIED",
+      "status": "NOT_STARTED",
       "executed_evidence": [],
-      "note": "Only partial schema/policy/adapter source; not the complete section or boundary evidence."
+      "partial_work": "Only partial schema/policy/adapter source; not the complete section or boundary evidence.",
+      "note": "This whole source-statement obligation is not implemented/verified; partial component work is recorded separately, not counted as completion."
     },
     {
       "id": "REQ-16-003",
@@ -3254,9 +3359,10 @@
         449
       ],
       "requirement": "Include tamper-evidence for audit records, such as a documented per-aggregate hash chain with deterministic serialization and concurrency-safe sequence allocation. Verify it independently. Be explicit that a database owner with control over records and anchors is outside the protection boundary; do not claim absolute immutability against a privileged database administrator.",
-      "status": "IMPLEMENTED_UNVERIFIED",
+      "status": "NOT_STARTED",
       "executed_evidence": [],
-      "note": "Only partial schema/policy/adapter source; not the complete section or boundary evidence."
+      "partial_work": "Only partial schema/policy/adapter source; not the complete section or boundary evidence.",
+      "note": "This whole source-statement obligation is not implemented/verified; partial component work is recorded separately, not counted as completion."
     },
     {
       "id": "REQ-16-004",
@@ -3267,9 +3373,10 @@
         451
       ],
       "requirement": "No audit/ledger edit/delete APIs. Demonstrate runtime-role rejection of direct modification. Redact passwords, JWTs, cookies, signing secrets, and unnecessary personal data from logs and evidence.",
-      "status": "IMPLEMENTED_UNVERIFIED",
+      "status": "NOT_STARTED",
       "executed_evidence": [],
-      "note": "Only partial schema/policy/adapter source; not the complete section or boundary evidence."
+      "partial_work": "Only partial schema/policy/adapter source; not the complete section or boundary evidence.",
+      "note": "This whole source-statement obligation is not implemented/verified; partial component work is recorded separately, not counted as completion."
     },
     {
       "id": "REQ-16-005",
@@ -3280,9 +3387,10 @@
         453
       ],
       "requirement": "Structured logs and trace context must connect request -> operation -> journal -> outbox event -> consumer processing -> webhook delivery. Correlation across asynchronous boundaries must actually work in a captured experiment.",
-      "status": "IMPLEMENTED_UNVERIFIED",
+      "status": "NOT_STARTED",
       "executed_evidence": [],
-      "note": "Only partial schema/policy/adapter source; not the complete section or boundary evidence."
+      "partial_work": "Only partial schema/policy/adapter source; not the complete section or boundary evidence.",
+      "note": "This whole source-statement obligation is not implemented/verified; partial component work is recorded separately, not counted as completion."
     },
     {
       "id": "REQ-16-006",
@@ -3293,9 +3401,10 @@
         455
       ],
       "requirement": "Expose meaningful metrics, including request latency/error class, transaction outcomes, lock/retry counts, idempotency replays/conflicts, pending-payment age, active-hold age, outbox age, deduplication count, queue/dead-letter depth where observable, webhook attempts/exhaustion, schedule lateness, and reconciliation discrepancies.",
-      "status": "IMPLEMENTED_UNVERIFIED",
+      "status": "NOT_STARTED",
       "executed_evidence": [],
-      "note": "Only partial schema/policy/adapter source; not the complete section or boundary evidence."
+      "partial_work": "Only partial schema/policy/adapter source; not the complete section or boundary evidence.",
+      "note": "This whole source-statement obligation is not implemented/verified; partial component work is recorded separately, not counted as completion."
     },
     {
       "id": "REQ-16-007",
@@ -3306,9 +3415,10 @@
         457
       ],
       "requirement": "Do not label metrics with unbounded user IDs, payment IDs, or idempotency keys. Put high-cardinality context in appropriately protected logs/traces instead.",
-      "status": "IMPLEMENTED_UNVERIFIED",
+      "status": "NOT_STARTED",
       "executed_evidence": [],
-      "note": "Only partial schema/policy/adapter source; not the complete section or boundary evidence."
+      "partial_work": "Only partial schema/policy/adapter source; not the complete section or boundary evidence.",
+      "note": "This whole source-statement obligation is not implemented/verified; partial component work is recorded separately, not counted as completion."
     },
     {
       "id": "REQ-16-008",
@@ -3319,9 +3429,10 @@
         459
       ],
       "requirement": "Separate liveness from readiness and degraded capability. A RabbitMQ outage may delay asynchronous settlement while immediate PostgreSQL-only transfers still work. Health checks must not kill otherwise healthy API instances merely because an optional path is degraded.",
-      "status": "IMPLEMENTED_UNVERIFIED",
+      "status": "NOT_STARTED",
       "executed_evidence": [],
-      "note": "Only partial schema/policy/adapter source; not the complete section or boundary evidence."
+      "partial_work": "Only partial schema/policy/adapter source; not the complete section or boundary evidence.",
+      "note": "This whole source-statement obligation is not implemented/verified; partial component work is recorded separately, not counted as completion."
     },
     {
       "id": "REQ-16-009",
@@ -3332,9 +3443,10 @@
         461
       ],
       "requirement": "Reconciliation must independently compare entries to balances, holds to reserved totals, payment states to postings, adjustment totals to original settlement, and durable work to terminal states. A clean result must include query scope and snapshot time, not just the text “balanced.”",
-      "status": "IMPLEMENTED_UNVERIFIED",
+      "status": "NOT_STARTED",
       "executed_evidence": [],
-      "note": "Only partial schema/policy/adapter source; not the complete section or boundary evidence."
+      "partial_work": "Only partial schema/policy/adapter source; not the complete section or boundary evidence.",
+      "note": "This whole source-statement obligation is not implemented/verified; partial component work is recorded separately, not counted as completion."
     },
     {
       "id": "REQ-16-010",
@@ -3345,9 +3457,10 @@
         463
       ],
       "requirement": "If a discrepancy cannot be safely resolved from durable identities/history, report and quarantine the affected operation for investigation. Never erase evidence or invent a balancing entry to make a dashboard green.",
-      "status": "IMPLEMENTED_UNVERIFIED",
+      "status": "NOT_STARTED",
       "executed_evidence": [],
-      "note": "Only partial schema/policy/adapter source; not the complete section or boundary evidence."
+      "partial_work": "Only partial schema/policy/adapter source; not the complete section or boundary evidence.",
+      "note": "This whole source-statement obligation is not implemented/verified; partial component work is recorded separately, not counted as completion."
     },
     {
       "id": "REQ-17-001",

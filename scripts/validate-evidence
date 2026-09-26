@@ -1,0 +1,65 @@
+#!/usr/bin/env python3
+"""Verify preserved component evidence and links; does not turn partial evidence into release approval."""
+from pathlib import Path
+import hashlib,json,re,sys,xml.etree.ElementTree as ET
+R=Path(__file__).resolve().parent.parent
+errors=[];checks=0
+def need(condition,message):
+    global checks
+    checks+=1
+    if not condition:errors.append(message)
+def safe(path):
+    p=(R/path).resolve()
+    if not p.is_relative_to(R):raise ValueError('Path outside repository')
+    return p
+def sha(p):return hashlib.sha256(p.read_bytes()).hexdigest()
+def xml(path):return ET.parse(safe(path)).getroot()
+try:
+    evidence=json.loads((R/'docs/evidence/component/run.json').read_text())
+    need(evidence['exit_status']==0,'Final unit command did not pass')
+    need(evidence['dirty_tree'] is False,'Final unit evidence starts from a dirty tree')
+    for file,total in [('java.xml',120),('client.xml',44)]:
+        p=R/'docs/evidence/component'/file;root=ET.parse(p).getroot()
+        need(sha(p)==evidence['artifacts'][file]['sha256'],f'Result hash changed: {file}')
+        need(int(root.attrib['tests'])==total,f'Unexpected discovery count: {file}')
+        need(all(int(root.attrib.get(k,0))==0 for k in ['failures','errors','skipped']),f'Unit failure/error/skip: {file}')
+        names=[n.attrib['name'] for n in root.iter('testcase')];need(len(names)==len(set(names))==total,f'Duplicate/missing case IDs: {file}')
+    sources=json.loads((R/'docs/evidence/source-inputs.json').read_text())
+    need(sources['source_commit']==evidence['source_commit'],'Source/execute SHA differs')
+    for entry in sources['inputs']:need(sha(safe(entry['path']))==entry['sha256'],f'Evidence stale after source change: {entry["path"]}')
+    summary=json.loads((R/'docs/evidence/unit-probes/summary.json').read_text())
+    need(summary['full_stack_defects_detected']==0,'Unit probes falsely counted as full-stack defects')
+    need(len(summary['results'])==7,'Seven component probe reports expected')
+    for probe in summary['results']:
+        need(probe['source_commit']==evidence['source_commit'],f'Probe on different source: {probe["id"]}')
+        need(probe['scope']=='UNIT_COMPONENT_ONLY' and probe['counts_toward_G07'] is False,'Probe scope inflated')
+        need(probe['verdict']=='DETECTED',f'Component probe not detected: {probe["id"]}')
+        need(probe['source_sha256']==probe['restored_sha256'],f'Source restoration mismatch: {probe["id"]}')
+        directory=safe(probe['curated_directory'])
+        need(sha(directory/'source-before.txt')==probe['source_sha256'],'Original probe source hash mismatch')
+        need(sha(directory/'source-mutant.txt')==probe['mutation_sha256'],'Mutant source hash mismatch')
+        for phase in ['baseline','mutant','restoration']:
+            record=probe[phase];report=xml(record['curated_report']);bad=phase=='mutant'
+            need(record['exit_status']==(1 if bad else 0),f'Unexpected return code {probe["id"]}/{phase}')
+            need(int(report.attrib['tests'])==1 and [e.attrib['name'] for e in report.iter('testcase')]==[probe['test_id']],f'Wrong detecting test {probe["id"]}/{phase}')
+            need(int(report.attrib['failures'])==(1 if bad else 0) and int(report.attrib.get('errors',0))==0 and int(report.attrib.get('skipped',0))==0,f'Invalid probe result {probe["id"]}/{phase}')
+            need(safe(record['curated_log']).is_file(),f'Missing probe log {probe["id"]}/{phase}')
+    requirements=json.loads((R/'docs/implementation/REQUIREMENTS.yaml').read_text())['requirements']
+    ids=set();allowed={'NOT_STARTED','IMPLEMENTED_UNVERIFIED','VERIFIED_PASS','VERIFIED_FAIL','BLOCKED','NOT_APPLICABLE'}
+    for item in requirements:
+        need(item['id'] not in ids,'Duplicate requirement ID');ids.add(item['id'])
+        need(item['status'] in allowed,'Unknown requirement status')
+        lines=safe(item['source_file']).read_text().splitlines();a,b=item['source_lines']
+        need(a==b and 1<=a<=len(lines) and lines[a-1].strip()==item['requirement'],f'Source obligation altered: {item["id"]}')
+    for file in list((R/'docs').rglob('*.md'))+[R/'README.md']:
+        if file.name=='MASTER_SPEC.md':continue
+        for match in re.finditer(r'\[[^\]]*\]\(([^)\s]+)\)',file.read_text()):
+            target=match.group(1).split('#')[0]
+            if not target or re.match(r'^[a-z]+:',target):continue
+            need((file.parent/target).resolve().is_file(),f'Broken link {file.relative_to(R)} -> {target}')
+    readiness=(R/'docs/implementation/RELEASE_READINESS.md').read_text()
+    need('NO_GO' in readiness and 'INCOMPLETE' in readiness,'Release status was inflated')
+    for n in range(1,17):need(f'G{n:02}' in readiness,f'Missing gate G{n:02}')
+except Exception as exc:errors.append(f'Invalid/missing evidence structure: {type(exc).__name__}: {exc}')
+result={'evidence_structure': 'PASS' if not errors else 'FAIL','checks':checks,'errors':errors,'release_decision':'NO_GO','scope':'Source/result/hash/link validation only; not financial/infrastructure/browser/security certification.'}
+print(json.dumps(result,indent=2));sys.exit(1 if errors else 0)

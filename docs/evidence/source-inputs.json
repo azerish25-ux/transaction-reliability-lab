@@ -1,0 +1,161 @@
+{
+  "source_commit": "a74d930987639f3bcfaf03038947537412599fda",
+  "notice": "Inputs present at the tested code commit. Some files in this manifest, such as SQL and Testcontainers/Jupiter sources, were NOT executed; hashing proves identity, not execution. See run scopes.",
+  "inputs": [
+    {
+      "path": "backend/src/main/java/lab/ledgerguard/core/CurrencyUnit.java",
+      "sha256": "426ef591e54faf124a0c15923af4384d3ef346cd70c1e26f24c220757abe2bc6",
+      "bytes": 517
+    },
+    {
+      "path": "backend/src/main/java/lab/ledgerguard/core/DomainFailure.java",
+      "sha256": "2cbaa63bd5b10d37e1ee63320cd917797aa5d08c30cf471aff12e2459edf36d8",
+      "bytes": 659
+    },
+    {
+      "path": "backend/src/main/java/lab/ledgerguard/core/Idempotency.java",
+      "sha256": "596a093ad30d70a2a0b9460e045608e4aba4d295e298fd79117b287017008369",
+      "bytes": 1414
+    },
+    {
+      "path": "backend/src/main/java/lab/ledgerguard/core/Journal.java",
+      "sha256": "7eaf47c3bc22afb494c5211da3d3d46d81414935f327b486cb75df7b0f5c9bc8",
+      "bytes": 1331
+    },
+    {
+      "path": "backend/src/main/java/lab/ledgerguard/core/Money.java",
+      "sha256": "be658b6434dec42f24c15af8b87a6e816c3fb6024609f5a6ee2c8f42225630e9",
+      "bytes": 2836
+    },
+    {
+      "path": "backend/src/main/java/lab/ledgerguard/core/PaymentRules.java",
+      "sha256": "f9ca472061e766163aa263b1216f524d7bd2b80607e7120a78520947a8d1326f",
+      "bytes": 2194
+    },
+    {
+      "path": "backend/src/main/java/lab/ledgerguard/core/Projection.java",
+      "sha256": "c1c0793b31627bec8e6f98e7b25ae99c7a840493090c0ede778d3f3b21abbe3c",
+      "bytes": 725
+    },
+    {
+      "path": "backend/src/main/java/lab/ledgerguard/core/SchedulePolicy.java",
+      "sha256": "ba503d13d9625f9cc6152fe2d088e1e1dfa9b875293094196b2fa51729792443",
+      "bytes": 1719
+    },
+    {
+      "path": "backend/src/main/java/lab/ledgerguard/core/SecretBox.java",
+      "sha256": "6e6fe17bfca8cd3d537bcf7476dd4d58b9f9a496dd42191d15468204a48fe489",
+      "bytes": 2135
+    },
+    {
+      "path": "backend/src/main/java/lab/ledgerguard/core/SqlRetry.java",
+      "sha256": "d5af44bea54b7cf7638e27bbd5ba0aa019344a6e588cb368d9eaf1e252807208",
+      "bytes": 1115
+    },
+    {
+      "path": "backend/src/main/java/lab/ledgerguard/core/WalletBalance.java",
+      "sha256": "1bd77de511546334a3a0e1fda1fb310662c6c7d26b55e5e367982b742323ea7f",
+      "bytes": 1724
+    },
+    {
+      "path": "backend/src/main/java/lab/ledgerguard/core/WebhookDestination.java",
+      "sha256": "2e99d7a5783e0d86a35f2e4a12974ad4f9daedb62aa280d7444a83aae7ebb0c7",
+      "bytes": 1835
+    },
+    {
+      "path": "backend/src/main/java/lab/ledgerguard/core/WebhookPolicy.java",
+      "sha256": "19001c50d93bd03a0bf771617eb82d901a0d16f00186078479a79ce2053fc7e2",
+      "bytes": 1580
+    },
+    {
+      "path": "backend/src/main/java/lab/ledgerguard/core/WebhookSignature.java",
+      "sha256": "14dd6f17c1dab167dfce1d43a157173b533a71c1d0257c3b14c6d01a34dce960",
+      "bytes": 1679
+    },
+    {
+      "path": "backend/src/main/java/lab/ledgerguard/db/FinancialCommands.java",
+      "sha256": "72bd4e749995e54fe357d66ac0254dcf673869ec477e8330d7520dbb56e9b6f2",
+      "bytes": 3974
+    },
+    {
+      "path": "backend/src/main/resources/db/migration/V1__financial_schema.sql",
+      "sha256": "5ddf91aa14abcb2c6d4f73edee7bbb8eb5f0b3f6bae73dd6e21a645fd72e9d72",
+      "bytes": 16797
+    },
+    {
+      "path": "backend/src/main/resources/db/migration/V2__protected_financial_commands.sql",
+      "sha256": "ff12eaae4e26bb0ccae098b22e2876c5bc404b4a1c218366639dc79f134a3d1c",
+      "bytes": 20487
+    },
+    {
+      "path": "backend/src/main/resources/db/migration/V3__historical_event_backfill.sql",
+      "sha256": "d71cd891dec98398051a3cabc1c21a7676436c6b1a195de239a4105bd2b44db0",
+      "bytes": 606
+    },
+    {
+      "path": "backend/src/main/resources/db/migration/V4__deferred_business_consistency.sql",
+      "sha256": "5968e139859bec3c1e416560a5e2217f552a9f3f0ab018177aa5ef812a098f3e",
+      "bytes": 3726
+    },
+    {
+      "path": "backend/src/test/java/lab/ledgerguard/CoreCases.java",
+      "sha256": "15127dc7ef851a4af554257a7bd356efdc49ebfab41037e65e8a5282fb4c1c88",
+      "bytes": 17896
+    },
+    {
+      "path": "backend/src/test/java/lab/ledgerguard/CoreTest.java",
+      "sha256": "a2eb7677420ed47b67488f372dbb835b81e43921addd2714830b6766fdbe3d50",
+      "bytes": 332
+    },
+    {
+      "path": "backend/src/test/java/lab/ledgerguard/PostgresFinancialIT.java",
+      "sha256": "9de7ce3823a7a25455c3a2cc8337828ff148f25cb53c045564ff0be24d715230",
+      "bytes": 13397
+    },
+    {
+      "path": "frontend/src/api.ts",
+      "sha256": "9cbc8fcb7d42cd749e9c203c82cb795b2f89284a9a0e1592f951f7f268f198b1",
+      "bytes": 4621
+    },
+    {
+      "path": "frontend/src/intent-store.ts",
+      "sha256": "23b45a4740292f9d01104534f1c4378783cb3f47681ded80cff5a958c4e1ef9e",
+      "bytes": 2740
+    },
+    {
+      "path": "frontend/src/money.ts",
+      "sha256": "ae7d4efd624a04e113009a29aed063c664a730efa0fcb003c24a2ab0549b0773",
+      "bytes": 2156
+    },
+    {
+      "path": "frontend/tsconfig.core.json",
+      "sha256": "6299aa264d1866a7d069a7bfcc9f14f6f9dd4bd9a9a860bff7160bc4c1c074db",
+      "bytes": 299
+    },
+    {
+      "path": "lab-support/unit-probes.json",
+      "sha256": "5186e4af9b9d14d20af8fee414f8fe9ec883ed2abdeb68c0b9278aa265cd3536",
+      "bytes": 4628
+    },
+    {
+      "path": "scripts/test-client",
+      "sha256": "b66503812283b95a0d20270e4dd98d5eaec013eec5c423449b92f08870f09455",
+      "bytes": 141
+    },
+    {
+      "path": "scripts/test-core",
+      "sha256": "75879fa52eec838fdd8721c6beb70ae506049f4745c00eea40cf87186f1fef35",
+      "bytes": 514
+    },
+    {
+      "path": "tests/StandaloneCoreRunner.java",
+      "sha256": "886fb35e9ae1b7bc459c8d2a33c697e7a3d6df64a10b424e418f82881013b454",
+      "bytes": 2046
+    },
+    {
+      "path": "tests/contracts/client.test.cjs",
+      "sha256": "36ec74bc31e02f65d7a3a82a2102b3d49c1396301e8adc098f7a8f59e7278334",
+      "bytes": 7687
+    }
+  ]
+}

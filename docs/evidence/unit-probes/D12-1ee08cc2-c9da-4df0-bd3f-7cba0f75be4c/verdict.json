@@ -1,0 +1,79 @@
+{
+  "id": "D12",
+  "title": "FLOATING_POINT_AMOUNT_PARSE",
+  "test_id": "TSMONEY-CAD-29",
+  "risk": "R09",
+  "mechanism": "Float/truncate conversion changes CAD 0.29 into 28 minor units.",
+  "scope": "UNIT_COMPONENT_ONLY",
+  "counts_toward_G07": false,
+  "run_id": "D12-1ee08cc2-c9da-4df0-bd3f-7cba0f75be4c",
+  "started": "2026-09-26T11:45:42.959301+00:00",
+  "source_commit": "a74d930987639f3bcfaf03038947537412599fda",
+  "dirty_tree": false,
+  "source_sha256": "ae7d4efd624a04e113009a29aed063c664a730efa0fcb003c24a2ab0549b0773",
+  "source_file": "frontend/src/money.ts",
+  "seed": 74021,
+  "verdict": "DETECTED",
+  "mutation_sha256": "96a36339d582db88c5bed1a4c6552fdd2ae008dcbbcd016114c9b43a44b6f99b",
+  "baseline": {
+    "command": [
+      "bash",
+      "-c",
+      "tsc --project frontend/tsconfig.core.json && node tests/contracts/client.test.cjs \"$1\"",
+      "client-probe",
+      "TSMONEY-CAD-29"
+    ],
+    "start": "2026-09-26T11:45:42.962993+00:00",
+    "end": "2026-09-26T11:45:43.780392+00:00",
+    "exit_status": 0,
+    "log": ".evidence/unit-probes/D12-1ee08cc2-c9da-4df0-bd3f-7cba0f75be4c/baseline.log",
+    "report": ".evidence/unit-probes/D12-1ee08cc2-c9da-4df0-bd3f-7cba0f75be4c/baseline.xml",
+    "tests": 1,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "assertion_messages": []
+  },
+  "mutant": {
+    "command": [
+      "bash",
+      "-c",
+      "tsc --project frontend/tsconfig.core.json && node tests/contracts/client.test.cjs \"$1\"",
+      "client-probe",
+      "TSMONEY-CAD-29"
+    ],
+    "start": "2026-09-26T11:45:43.780752+00:00",
+    "end": "2026-09-26T11:45:44.647728+00:00",
+    "exit_status": 1,
+    "log": ".evidence/unit-probes/D12-1ee08cc2-c9da-4df0-bd3f-7cba0f75be4c/mutant.log",
+    "report": ".evidence/unit-probes/D12-1ee08cc2-c9da-4df0-bd3f-7cba0f75be4c/mutant.xml",
+    "tests": 1,
+    "failures": 1,
+    "errors": 0,
+    "skipped": 0,
+    "assertion_messages": [
+      "Expected values to be strictly equal:  '28' !== '29' "
+    ]
+  },
+  "restoration": {
+    "command": [
+      "bash",
+      "-c",
+      "tsc --project frontend/tsconfig.core.json && node tests/contracts/client.test.cjs \"$1\"",
+      "client-probe",
+      "TSMONEY-CAD-29"
+    ],
+    "start": "2026-09-26T11:45:44.648034+00:00",
+    "end": "2026-09-26T11:45:45.475329+00:00",
+    "exit_status": 0,
+    "log": ".evidence/unit-probes/D12-1ee08cc2-c9da-4df0-bd3f-7cba0f75be4c/restoration.log",
+    "report": ".evidence/unit-probes/D12-1ee08cc2-c9da-4df0-bd3f-7cba0f75be4c/restoration.xml",
+    "tests": 1,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "assertion_messages": []
+  },
+  "restored_sha256": "ae7d4efd624a04e113009a29aed063c664a730efa0fcb003c24a2ab0549b0773",
+  "ended": "2026-09-26T11:45:45.475543+00:00"
+}

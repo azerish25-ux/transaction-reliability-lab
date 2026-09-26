@@ -1,0 +1,2 @@
+PASS SCHEDULE-daily-spring
+SUMMARY tests=1 passed=1 failed=0 errors=0 skipped=0 runtime=standalone-java

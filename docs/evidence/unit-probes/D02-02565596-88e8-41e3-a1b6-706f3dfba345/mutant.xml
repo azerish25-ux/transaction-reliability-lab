@@ -1,0 +1,3 @@
+<testsuite name="standalone-not-junit-runtime" timestamp="2026-09-26T11:45:35.206540007Z" tests="1" failures="1" errors="0" skipped="0">
+  <testcase classname="core.Standalone" name="IDEMPOTENCY-intent-change"><failure message="java.lang.AssertionError: values unexpectedly equal: 9557955382fa8de2f7caeb026303f7ef047660386897aa1a1cf29c77d719e0f1"/></testcase>
+</testsuite>

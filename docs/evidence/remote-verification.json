@@ -1,0 +1,29 @@
+{
+  "recorded_at": "2026-09-26T11:49:41.636094+00:00",
+  "method": "Authenticated GitHub connector read results transcribed without credentials",
+  "repository": "azerish25-ux/transaction-reliability-lab",
+  "branch": "main",
+  "remote_head": "b2e85ee6a1330efc9c4737f7e1f6ad693753b6ae",
+  "remote_tree": "47476259c6014879ddde4deb9be795f91b86c8a5",
+  "readme_sha": "6f86c32f7d60244ec51e0997738ed4e4c13c9f33",
+  "readme_content": "# project-1",
+  "protected": false,
+  "tested_local_code_sha": "a74d930987639f3bcfaf03038947537412599fda",
+  "candidate_actions_runs": {
+    "total_count": 0,
+    "workflow_runs": []
+  },
+  "ordinary_contents_write": {
+    "status": 403,
+    "message": "Resource not accessible by integration"
+  },
+  "git_data_tree_write": {
+    "status": 403,
+    "message": "Resource not accessible by integration"
+  },
+  "workflow_write": "NOT_VERIFIED",
+  "ref_write": "NOT_PERFORMED",
+  "release": "NOT_CREATED",
+  "deployment": "NOT_CREATED",
+  "conclusion": "GitHub delivery BLOCKED; initial metadata permission claim did not prove integration write permission."
+}

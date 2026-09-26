@@ -1,0 +1,49 @@
+PASS TSMONEY-CAD-29
+PASS TSMONEY-USD-199
+PASS TSMONEY-JPY-8
+PASS TSMONEY-KWD-1
+PASS TSMONEY-CAD-1000000000000
+PASS TSMONEY-reject-0
+PASS TSMONEY-reject--1
+PASS TSMONEY-reject-+1
+PASS TSMONEY-reject- 1
+PASS TSMONEY-reject-1 
+PASS TSMONEY-reject-01
+PASS TSMONEY-reject-1e2
+PASS TSMONEY-reject-.2
+PASS TSMONEY-reject-1.
+PASS TSMONEY-reject-NaN
+PASS TSMONEY-reject-Infinity
+PASS TSMONEY-reject-1.999
+PASS TSMONEY-reject-10000000000.01
+PASS TSMONEY-JPY-precision
+PASS TSMONEY-KWD-precision
+PASS TSMONEY-max-balance
+PASS TSMONEY-bigint-json
+PASS TSMONEY-grouping
+PASS TSMONEY-availability
+PASS TSMONEY-overreserved
+PASS TSMONEY-number-rejected
+PASS TSMONEY-unsupported
+PASS TSMONEY-prototype
+PASS TSMONEY-roundtrip-model
+PASS TSINTENT-persist-before-send
+PASS TSINTENT-uncertain-reload-same-key
+PASS TSINTENT-owner-isolation
+PASS TSINTENT-no-forget-uncertain
+PASS TSINTENT-confirmed-new-instruction
+PASS TSAPI-money-string-cookie-csrf
+PASS TSAPI-unknown-outcome-replay
+PASS TSAPI-malformed-accepted-response-uncertain
+PASS TSAPI-conflict-not-success
+PASS TSAPI-expiry-forgets-csrf-not-intent
+PASS TSAPI-no-cross-origin
+FAIL TSAPI-5xx-remains-uncertain The error is expected to be an instance of "OutcomeUnknown". Received "ApiError"
+
+Error message:
+
+Request could not be completed.
+PASS TSMONEY-final-newline-major-rejected
+PASS TSMONEY-final-newline-minor-rejected
+PASS TSINTENT-final-newline-key-rejected
+SUMMARY tests=44 passed=43 failed=1 runtime=node-client-unit
