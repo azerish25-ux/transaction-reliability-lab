@@ -5,19 +5,17 @@ import lab.ledgerguard.core.SqlRetry;
 import javax.sql.DataSource;
 import java.sql.*;
 import java.util.UUID;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /** JDBC adapter: every retry obtains a NEW connection/transaction. PostgreSQL remains spending authority. */
 public final class FinancialCommands {
-    private static final Logger LOG = LoggerFactory.getLogger(FinancialCommands.class);
+    private static final System.Logger LOG = System.getLogger(FinancialCommands.class.getName());
     public record Result(int status, String json, boolean replayed) { }
     private final DataSource dataSource;
     public FinancialCommands(DataSource dataSource) { this.dataSource = dataSource; }
     public Result execute(UUID actor, String operation, UUID parent, String key, String normalizedJson, UUID correlation) throws Exception {
         Idempotency.key(key);
         return SqlRetry.wholeTransaction(() -> executeOnce(actor, operation, parent, key, normalizedJson, correlation),
-            attempt -> LOG.warn("financial_transaction_retry operation={} attempt={}", operation, attempt));
+            attempt -> LOG.log(System.Logger.Level.WARNING, "financial_transaction_retry operation={0} attempt={1}", operation, attempt));
     }
     private Result executeOnce(UUID actor, String operation, UUID parent, String key, String json, UUID correlation) throws SQLException {
         try (Connection c = dataSource.getConnection()) {
@@ -69,6 +67,6 @@ public final class FinancialCommands {
                     throw e;
                 }
             }
-        }, attempt -> LOG.warn("financial_transaction_retry operation=SETTLE attempt={}", attempt));
+        }, attempt -> LOG.log(System.Logger.Level.WARNING, "financial_transaction_retry operation=SETTLE attempt={0}", attempt));
     }
 }
