@@ -1,4 +1,4 @@
-import { type Intent, normalizeIntent } from './api.js';
+import { ApiClient, ApiError, OutcomeUnknown, type CommandResponse, type Intent, type TransferReceipt, normalizeIntent } from './api.js';
 export type IntentState = 'PREPARED' | 'UNCERTAIN' | 'CONFIRMED' | 'REJECTED';
 export interface StoredIntent { ownerId: string; key: string; kind: 'transfers' | 'payments'; intent: Intent; state: IntentState; createdAt: string; }
 /** Stores only economic intent. Authentication/CSRF/JWT material must never enter this store. */
@@ -32,6 +32,26 @@ export class IntentStore {
     const updated = { ...current, state };
     this.storage.setItem(this.slot, JSON.stringify(updated));
     return updated;
+  }
+  async executeTransfer(api: ApiClient, input: Intent, newKey: () => string = () => crypto.randomUUID()): Promise<CommandResponse<TransferReceipt>> {
+    const prepared = this.prepare('transfers', input, newKey);
+    return this.sendPreparedTransfer(api, prepared);
+  }
+  async retryTransfer(api: ApiClient): Promise<CommandResponse<TransferReceipt>> {
+    const current = this.current();
+    if (!current || current.kind !== 'transfers' || !['PREPARED','UNCERTAIN'].includes(current.state)) throw new Error('No unresolved transfer intent.');
+    return this.sendPreparedTransfer(api, current);
+  }
+  private async sendPreparedTransfer(api: ApiClient, record: StoredIntent): Promise<CommandResponse<TransferReceipt>> {
+    try {
+      const response = await api.transfer(record.intent, record.key);
+      this.transition('CONFIRMED');
+      return response;
+    } catch (failure) {
+      if (failure instanceof OutcomeUnknown) this.transition('UNCERTAIN');
+      else if (failure instanceof ApiError && failure.status < 500) this.transition('REJECTED');
+      throw failure;
+    }
   }
   // Logout does not erase uncertain operations. A subsequent login by this owner may resolve/replay them.
   forgetConfirmed(): void {

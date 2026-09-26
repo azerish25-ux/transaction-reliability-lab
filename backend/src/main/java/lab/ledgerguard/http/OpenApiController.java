@@ -8,5 +8,8 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 public class OpenApiController {
     @GetMapping(value="/api/v1/openapi.json",produces="application/json")
-    public Resource specification() { return new ClassPathResource("openapi/p03.json"); }
+    public Resource p03CompatibilitySpecification() { return new ClassPathResource("openapi/p03.json"); }
+
+    @GetMapping(value="/api/v1/openapi/p04.json",produces="application/json")
+    public Resource p04Specification() { return new ClassPathResource("openapi/p04.json"); }
 }

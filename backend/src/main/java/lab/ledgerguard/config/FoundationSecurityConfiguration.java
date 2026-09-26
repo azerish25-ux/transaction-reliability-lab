@@ -43,16 +43,14 @@ public class FoundationSecurityConfiguration {
             SecurityEvents events,ObjectMapper json,CookieCsrfTokenRepository csrf) throws Exception {
         http.sessionManagement(session->session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .requestCache(AbstractHttpConfigurer::disable)
-            // JWT verification on each request is not a new login. AuthController explicitly
-            // rotates CSRF after successful login/logout; do not rotate after every account read/write.
-            // CSRF validation and the default XOR/BREACH token handler remain enabled.
             .csrf(config->config.csrfTokenRepository(csrf)
                 .sessionAuthenticationStrategy(new NullAuthenticatedSessionStrategy()))
             .authorizeHttpRequests(authorize->authorize
-                .requestMatchers(HttpMethod.GET,"/actuator/health/**","/actuator/info","/api/v1/system","/api/v1/openapi.json","/api/v1/auth/csrf").permitAll()
+                .requestMatchers(HttpMethod.GET,"/actuator/health/**","/actuator/info","/api/v1/system","/api/v1/openapi.json","/api/v1/openapi/**","/api/v1/auth/csrf").permitAll()
                 .requestMatchers(HttpMethod.POST,"/api/v1/auth/register","/api/v1/auth/login").permitAll()
                 .requestMatchers("/api/v1/auth/me","/api/v1/auth/logout").authenticated()
-                .requestMatchers("/api/v1/accounts","/api/v1/accounts/**","/api/v1/recipients/**").hasRole("CUSTOMER")
+                .requestMatchers("/api/v1/accounts","/api/v1/accounts/**","/api/v1/recipients/**",
+                    "/api/v1/transfers","/api/v1/transfers/**").hasRole("CUSTOMER")
                 .requestMatchers("/api/v1/admin/**","/actuator/metrics","/actuator/metrics/**").hasRole("ADMIN")
                 .anyRequest().denyAll())
             .exceptionHandling(errors->errors

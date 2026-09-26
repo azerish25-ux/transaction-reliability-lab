@@ -70,7 +70,7 @@ management:
 info:
   app:
     name: LedgerGuard
-    version: 0.2.0-INCOMPLETE
+    version: 0.4.0-INCOMPLETE
     boundary: synthetic-money-only
 
 logging:

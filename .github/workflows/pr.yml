@@ -11,9 +11,9 @@ permissions:
 
 jobs:
   verify:
-    name: Build, security, financial core, PostgreSQL and Compose smoke
+    name: Build, security, transfers, financial core, PostgreSQL and Compose smoke
     runs-on: ubuntu-latest
-    timeout-minutes: 45
+    timeout-minutes: 55
     steps:
       - name: Check out candidate
         uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
@@ -31,22 +31,22 @@ jobs:
           cache: npm
           cache-dependency-path: frontend/package-lock.json
       - name: Prepare deterministic tools
-        run: chmod +x mvnw scripts/lab scripts/test-core scripts/test-client scripts/unit-probes scripts/validate-evidence scripts/scan-secrets infra/docker/postgres/00-roles.sh
+        run: chmod +x mvnw scripts/lab scripts/test-core scripts/test-client scripts/assert-p04-evidence scripts/smoke-auth scripts/unit-probes scripts/validate-evidence scripts/scan-secrets infra/docker/postgres/00-roles.sh
       - name: Install locked TypeScript dependency
         run: npm ci --prefix frontend
       - name: Run Java and TypeScript component regressions
         run: ./scripts/lab test unit
-      - name: Execute JUnit and PostgreSQL HTTP verification with independent JVMs
+      - name: Execute JUnit, PostgreSQL and two-process transfer HTTP verification
         run: ./mvnw -B -ntp -f backend/pom.xml verify
-      - name: Require nonzero security and regression test discovery with no skips
-        run: python3 scripts/assert-p03-evidence
+      - name: Require executed P03/P04 requirements with no failures or skips
+        run: python3 scripts/assert-p04-evidence
       - name: Validate Compose model
         run: docker compose --env-file .env.example -f compose.yaml config --quiet
       - name: Scan tracked source for high-signal literal secrets
         run: ./scripts/scan-secrets
       - name: Start, seed and reconcile restricted-role application
         run: ./scripts/lab up
-      - name: Exercise live seeded authentication and account boundaries
+      - name: Exercise live authentication, accounts, transfer and durable replay
         run: python3 scripts/smoke-auth
       - name: Verify live status and repeatable reconciliation
         run: |
@@ -71,6 +71,7 @@ jobs:
             backend/target/surefire-reports/
             backend/target/failsafe-reports/
             backend/target/auth-http-evidence/
+            backend/target/transfer-http-evidence/
   gate:
     name: Required fast-lane gate
     if: always()

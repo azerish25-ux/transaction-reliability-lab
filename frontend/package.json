@@ -5,7 +5,7 @@
   "type": "commonjs",
   "scripts": {
     "typecheck": "tsc --project tsconfig.core.json",
-    "test": "cd .. && node tests/contracts/client.test.cjs && node tests/contracts/auth-client.test.cjs",
+    "test": "cd .. && node tests/contracts/client.test.cjs && node tests/contracts/auth-client.test.cjs && node tests/contracts/transfer-client.test.cjs",
     "verify": "npm run typecheck && npm test"
   },
   "devDependencies": {

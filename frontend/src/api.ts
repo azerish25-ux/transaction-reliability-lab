@@ -9,6 +9,9 @@ export interface Transaction { journalId: string; operationId: string; kind: str
 export interface Recipient { publicRef: string; currency: Currency; }
 export interface Receipt { operationId: string; state: string; journalId?: string; paymentId?: string; }
 export interface Intent { sourceId: string; recipientRef: string; amountMinor: string; currency: Currency; }
+export interface TransferReceipt { id: string; kind: 'TRANSFER'; state: 'SETTLED'; journalId: string; amountMinor: string; currency: Currency; }
+export interface TransferRecord { id: string; sourceId: string; recipientRef: string; amountMinor: string; currency: Currency; state: 'SETTLED'; journalId: string; createdAt: string; }
+export interface CommandResponse<T> { status: number; body: T; replayed: boolean; }
 export class ApiError extends Error {
   constructor(readonly status: number, readonly problem: Problem) { super(problem.message); this.name = 'ApiError'; }
 }
@@ -22,6 +25,12 @@ export function normalizeIntent(input: Intent): Intent {
   if (!recipient || recipient.length > 80) throw new TypeError('Invalid recipient reference');
   return Object.freeze({ sourceId: input.sourceId.toLowerCase(), recipientRef: recipient, amountMinor: amount.toString(), currency: currency(input.currency) });
 }
+export function normalizeTransferIntent(input: Intent): Intent {
+  const normalized = normalizeIntent(input);
+  if (!/^LG-[0-9a-f]{32}$/i.test(normalized.recipientRef)) throw new TypeError('Invalid transfer recipient reference');
+  return Object.freeze({ ...normalized, recipientRef: `LG-${normalized.recipientRef.slice(3).toLowerCase()}` });
+}
+
 export class ApiClient {
   private csrf: { headerName: string; token: string } | undefined;
   constructor(private readonly transport: typeof fetch = fetch, private readonly prefix = '/api/v1') {
@@ -51,11 +60,22 @@ export class ApiClient {
   async createAccount(name: string, unit: Currency): Promise<Account> {
     return (await this.command<Account>('/accounts', { name, currency: currency(unit) })).body;
   }
-  async command<T>(path: string, body: unknown, key?: string): Promise<{ status: number; body: T; replayed: boolean }> {
+  transfer(input: Intent, key: string): Promise<CommandResponse<TransferReceipt>> {
+    return this.command<TransferReceipt>('/transfers', normalizeTransferIntent(input), key);
+  }
+  transferById(id: string): Promise<TransferRecord> {
+    if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id)) throw new TypeError('Invalid transfer identity');
+    return this.get<TransferRecord>(`/transfers/${id.toLowerCase()}`);
+  }
+  transfers(limit = 50, offset = 0): Promise<Page<TransferRecord>> {
+    if (!Number.isInteger(limit) || limit < 1 || limit > 100 || !Number.isInteger(offset) || offset < 0 || offset > 10000) throw new TypeError('Invalid pagination');
+    return this.get<Page<TransferRecord>>(`/transfers?limit=${limit}&offset=${offset}`);
+  }
+  async command<T>(path: string, body: unknown, key?: string): Promise<CommandResponse<T>> {
     if (!this.csrf) await this.csrfToken();
     return this.request<T>(path, 'POST', body, key);
   }
-  private async request<T>(path: string, method: 'GET' | 'POST', body?: unknown, key?: string): Promise<{ status: number; body: T; replayed: boolean }> {
+  private async request<T>(path: string, method: 'GET' | 'POST', body?: unknown, key?: string): Promise<CommandResponse<T>> {
     if (!path.startsWith('/') || path.startsWith('//') || /[\r\n]/.test(path)) throw new TypeError('Invalid API path');
     const headers = new Headers({ Accept: 'application/json' });
     if (method !== 'GET') {

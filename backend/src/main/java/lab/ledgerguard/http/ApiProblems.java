@@ -32,6 +32,7 @@ public class ApiProblems {
             case 404 -> "Resource not found";
             case 409 -> "Request conflicts with current state";
             case 413 -> "Request is too large";
+            case 422 -> "Business rule rejected request";
             case 429 -> "Too many authentication attempts";
             case 503 -> "Service temporarily unavailable";
             default -> "Request could not be completed";
@@ -48,6 +49,7 @@ public class ApiProblems {
         var builder = ResponseEntity.status(status).header("Cache-Control", "no-store")
             .header("Content-Type", "application/problem+json");
         if (status == 429) builder.header("Retry-After", "300");
+        if ("OUTCOME_UNKNOWN".equals(code)) builder.header("Retry-After", "1");
         return builder.body(problem(status, code, fields));
     }
     @ExceptionHandler(ApiException.class)
@@ -67,7 +69,6 @@ public class ApiProblems {
     ResponseEntity<Problem> absent(NoResourceFoundException failure) { return response(404, "NOT_FOUND", Map.of()); }
     @ExceptionHandler(DataAccessException.class)
     ResponseEntity<Problem> database(DataAccessException failure) {
-        // Do not serialize SQL, connection strings, failed inputs or nested exception messages.
         return response(503, "DEPENDENCY_UNAVAILABLE", Map.of());
     }
 }

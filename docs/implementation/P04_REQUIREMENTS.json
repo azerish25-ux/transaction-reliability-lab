@@ -1,0 +1,67 @@
+{
+  "phase": "P04",
+  "sourceContract": "docs/implementation/MASTER_SPEC.md",
+  "scope": "Immediate account-to-account transfer HTTP commands and owned reads, durable scoped idempotency, cross-process spending concurrency, and uncertain-response recovery. Asynchronous payments, RabbitMQ workers, adjustments, schedules, webhooks and React remain later phases.",
+  "requirements": [
+    {
+      "id": "P04-R01",
+      "sections": ["3", "5", "8", "14"],
+      "statement": "Authenticated CUSTOMER commands create one immediate same-currency transfer through the protected PostgreSQL command path and return the durable receipt, Location and replay indicator.",
+      "tests": {"TransferReliabilityIT": ["P0401"], "transfer-client": ["P04TS01"]}
+    },
+    {
+      "id": "P04-R02",
+      "sections": ["8"],
+      "statement": "Actor/kind/key scope and canonical normalized intent provide exact replay while changed economically meaningful intent returns 409 without another financial effect.",
+      "tests": {"TransferReliabilityIT": ["P0401", "P0402", "P0408"]}
+    },
+    {
+      "id": "P04-R03",
+      "sections": ["7", "8"],
+      "statement": "Concurrent identical requests through independent API processes produce one transfer, one journal and one durable outcome.",
+      "tests": {"TransferReliabilityIT": ["P0403"]}
+    },
+    {
+      "id": "P04-R04",
+      "sections": ["5", "7"],
+      "statement": "The canonical 10000 available versus two synchronized 8000 requests across API processes permits exactly one success and no negative balance, leaked hold or duplicate journal.",
+      "tests": {"TransferReliabilityIT": ["P0404"]}
+    },
+    {
+      "id": "P04-R05",
+      "sections": ["7", "8"],
+      "statement": "A response deliberately dropped only after the API completed its commit becomes an uncertain client outcome; replaying the same key and intent returns the original transfer with one committed effect.",
+      "tests": {"TransferReliabilityIT": ["P0405"], "transfer-client": ["P04TS02", "P04TS04"]}
+    },
+    {
+      "id": "P04-R06",
+      "sections": ["8", "13"],
+      "statement": "Missing/malformed keys and malformed, mass-assigned or unowned intents are rejected before idempotency claim; customer reads are owner-scoped and counterparty-private.",
+      "tests": {"TransferReliabilityIT": ["P0406", "P0408", "P0411"]}
+    },
+    {
+      "id": "P04-R07",
+      "sections": ["5", "7", "8"],
+      "statement": "Deterministic insufficient-funds, self-transfer, cross-currency and closed-recipient outcomes are atomic; accepted rejection replay is stable and does not create postings.",
+      "tests": {"TransferReliabilityIT": ["P0407"], "transfer-client": ["P04TS03"]}
+    },
+    {
+      "id": "P04-R08",
+      "sections": ["7"],
+      "statement": "Opposite-direction operations follow stable lock order, many clients cannot overspend one account, and independent accounts can progress concurrently.",
+      "tests": {"TransferReliabilityIT": ["P0409", "P0410"]}
+    },
+    {
+      "id": "P04-R09",
+      "sections": ["5", "6", "13"],
+      "statement": "Restricted runtime credentials cannot forge transfer rows, and current CUSTOMER/CSRF authorization protects transfer commands while ADMIN cannot spend as a customer.",
+      "tests": {"TransferReliabilityIT": ["P0411"]}
+    },
+    {
+      "id": "P04-R10",
+      "sections": ["8", "14", "15"],
+      "statement": "The current P04 OpenAPI and TypeScript client describe/use exact string money, owner read paths and persistent uncertain intents without silently generating a new key.",
+      "tests": {"TransferReliabilityIT": ["P0411"], "transfer-client": ["P04TS01", "P04TS02", "P04TS05", "P04TS06", "P04TS07"]}
+    }
+  ]
+}

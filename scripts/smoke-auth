@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Live Compose smoke. Private passwords/cookies stay in memory and never enter evidence."""
+"""Live Compose P04 smoke. Passwords, JWTs and CSRF values never enter evidence."""
 import copy
 import http.cookiejar
 import json
@@ -11,59 +11,112 @@ import uuid
 from datetime import datetime, timezone
 from pathlib import Path
 
-ROOT=Path(__file__).resolve().parent.parent
-values=dict(line.split("=",1) for line in (ROOT/".ledgerguard/runtime.env").read_text().splitlines() if line and not line.startswith("#"))
-BASE="http://127.0.0.1:"+values.get("LEDGER_HTTP_PORT","8080")+"/api/v1"
+ROOT = Path(__file__).resolve().parent.parent
+VALUES = dict(line.split("=", 1) for line in (ROOT / ".ledgerguard/runtime.env").read_text().splitlines()
+              if line and not line.startswith("#"))
+BASE = "http://127.0.0.1:" + VALUES.get("LEDGER_HTTP_PORT", "8080") + "/api/v1"
+
 class Browser:
     def __init__(self):
-        self.jar=http.cookiejar.CookieJar()
-        self.opener=urllib.request.build_opener(urllib.request.HTTPCookieProcessor(self.jar))
-        self.token=None
-    def call(self,path,body=None,method=None):
-        headers={"Accept":"application/json"}
-        if self.token: headers["X-XSRF-TOKEN"]=self.token
-        data=None
+        self.jar = http.cookiejar.CookieJar()
+        self.opener = urllib.request.build_opener(urllib.request.HTTPCookieProcessor(self.jar))
+        self.token = None
+
+    def call(self, path, body=None, method=None, headers=None):
+        request_headers = {"Accept": "application/json", **(headers or {})}
+        if self.token:
+            request_headers["X-XSRF-TOKEN"] = self.token
+        data = None
         if body is not None:
-            headers["Content-Type"]="application/json"
-            data=json.dumps(body).encode()
-        request=urllib.request.Request(BASE+path,data=data,headers=headers,method=method or ("POST" if body is not None else "GET"))
-        try: response=self.opener.open(request,timeout=10)
-        except urllib.error.HTTPError as error: response=error
+            request_headers["Content-Type"] = "application/json"
+            data = json.dumps(body, separators=(",", ":")).encode()
+        request = urllib.request.Request(BASE + path, data=data, headers=request_headers,
+                                         method=method or ("POST" if body is not None else "GET"))
+        try:
+            response = self.opener.open(request, timeout=15)
+        except urllib.error.HTTPError as error:
+            response = error
         with response:
-            raw=response.read()
-            return response.status,json.loads(raw) if raw else None
+            raw = response.read()
+            return response.status, json.loads(raw) if raw else None, dict(response.headers.items())
+
     def csrf(self):
-        status,body=self.call("/auth/csrf")
-        assert status==200,"CSRF acquisition failed"
-        self.token=body["token"]
-    def login(self,email,password):
-        self.csrf();status,body=self.call("/auth/login",{"email":email,"password":password})
-        assert status==200,"Fixture login failed"
-        self.csrf();return body
+        status, body, _ = self.call("/auth/csrf")
+        assert status == 200, "CSRF acquisition failed"
+        self.token = body["token"]
 
-checks=[]
-def check(name,condition):
-    if not condition: raise AssertionError(name)
-    checks.append({"test":name,"status":"PASS"})
+    def login(self, email, password):
+        self.csrf()
+        status, body, _ = self.call("/auth/login", {"email": email, "password": password})
+        assert status == 200, "Fixture login failed"
+        self.csrf()
+        return body
 
-alice=Browser();identity=alice.login("alice@example.test",values["LEDGER_DEMO_PASSWORD"])
-check("seeded-customer-login",identity["role"]=="CUSTOMER")
-status,accounts=alice.call("/accounts")
-check("real-seeded-account-balances",status==200 and len(accounts["items"])==5 and all(isinstance(a["postedMinor"],str) for a in accounts["items"]))
-check("cross-customer-denial",alice.call("/accounts/20000000-0000-0000-0000-000000000001")[0]==404)
-check("customer-admin-denial",alice.call("/admin/security-events")[0]==403)
-admin=Browser();admin.login("admin@example.test",values["LEDGER_DEMO_PASSWORD"])
-check("real-admin-security-feed",admin.call("/admin/security-events")[0]==200)
-new=Browser();new.csrf();email=str(uuid.uuid4())+"@example.test";password=secrets.token_urlsafe(24)
-check("real-registration",new.call("/auth/register",{"email":email,"password":password,"displayName":"Compose smoke"})[0]==201)
-new.login(email,password);status,account=new.call("/accounts",{"name":"Zero balance","currency":"KWD"})
-check("new-account-zero",status==201 and account["postedMinor"]=="0" and account["availableMinor"]=="0")
-saved=Browser()
-for cookie in new.jar: saved.jar.set_cookie(copy.copy(cookie))
-check("logout-empty-response",new.call("/auth/logout",method="POST")== (204,None))
-check("copied-cookie-revoked",saved.call("/auth/me")[0]==401)
-report={"sourceSha":subprocess.check_output(["git","rev-parse","HEAD"],cwd=ROOT,text=True).strip(),
-        "timestamp":datetime.now(timezone.utc).isoformat(),"scope":"real Docker Compose P03 HTTP smoke","checks":checks}
-out=ROOT/".evidence/auth-compose";out.mkdir(parents=True,exist_ok=True)
-(out/"results.json").write_text(json.dumps(report,indent=2)+"\n")
-print(json.dumps(report,indent=2))
+checks = []
+def check(name, condition):
+    if not condition:
+        raise AssertionError(name)
+    checks.append({"test": name, "status": "PASS"})
+
+alice = Browser()
+identity = alice.login("alice@example.test", VALUES["LEDGER_DEMO_PASSWORD"])
+check("seeded-customer-login", identity["role"] == "CUSTOMER")
+status, accounts, _ = alice.call("/accounts")
+check("real-seeded-account-balances", status == 200 and len(accounts["items"]) == 5
+      and all(isinstance(a["postedMinor"], str) for a in accounts["items"]))
+check("cross-customer-denial", alice.call("/accounts/20000000-0000-0000-0000-000000000001")[0] == 404)
+check("customer-admin-denial", alice.call("/admin/security-events")[0] == 403)
+
+source = "10000000-0000-0000-0000-000000000001"
+recipient = "LG-20000000000000000000000000000001"
+before = int(alice.call("/accounts/" + source)[1]["postedMinor"])
+transfer_body = {"sourceId": source, "recipientRef": recipient, "amountMinor": "1250", "currency": "CAD"}
+status, receipt, headers = alice.call("/transfers", transfer_body,
+                                      headers={"Idempotency-Key": "compose-smoke-transfer-v1"})
+check("immediate-transfer-command", status == 201 and receipt["state"] == "SETTLED"
+      and receipt["amountMinor"] == "1250")
+replayed = headers.get("Idempotency-Replayed", headers.get("Idempotency-replayed", "")).lower() == "true"
+after = int(alice.call("/accounts/" + source)[1]["postedMinor"])
+check("transfer-balance-effect", after == (before if replayed else before - 1250))
+status2, receipt2, headers2 = alice.call("/transfers", transfer_body,
+                                        headers={"Idempotency-Key": "compose-smoke-transfer-v1"})
+check("durable-transfer-replay", status2 == 201 and receipt2 == receipt
+      and headers2.get("Idempotency-Replayed", headers2.get("Idempotency-replayed", "")).lower() == "true")
+check("owner-transfer-read", alice.call("/transfers/" + receipt["id"])[0] == 200)
+
+bob = Browser()
+bob.login("bob@example.test", VALUES["LEDGER_DEMO_PASSWORD"])
+check("cross-customer-transfer-denial", bob.call("/transfers/" + receipt["id"])[0] == 404)
+
+admin = Browser()
+admin.login("admin@example.test", VALUES["LEDGER_DEMO_PASSWORD"])
+check("real-admin-security-feed", admin.call("/admin/security-events")[0] == 200)
+check("administrator-cannot-transfer", admin.call("/transfers", transfer_body,
+      headers={"Idempotency-Key": "admin-compose-spend-v1"})[0] == 403)
+
+new = Browser()
+new.csrf()
+email = str(uuid.uuid4()) + "@example.test"
+password = secrets.token_urlsafe(24)
+check("real-registration", new.call("/auth/register", {"email": email, "password": password,
+      "displayName": "Compose smoke"})[0] == 201)
+new.login(email, password)
+status, account, _ = new.call("/accounts", {"name": "Zero balance", "currency": "KWD"})
+check("new-account-zero", status == 201 and account["postedMinor"] == "0" and account["availableMinor"] == "0")
+
+saved = Browser()
+for cookie in new.jar:
+    saved.jar.set_cookie(copy.copy(cookie))
+check("logout-empty-response", new.call("/auth/logout", method="POST")[:2] == (204, None))
+check("copied-cookie-revoked", saved.call("/auth/me")[0] == 401)
+
+report = {
+    "sourceSha": subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=ROOT, text=True).strip(),
+    "timestamp": datetime.now(timezone.utc).isoformat(),
+    "scope": "real Docker Compose P04 authentication/account/transfer smoke",
+    "checks": checks,
+}
+out = ROOT / ".evidence/transfer-compose"
+out.mkdir(parents=True, exist_ok=True)
+(out / "results.json").write_text(json.dumps(report, indent=2) + "\n")
+print(json.dumps(report, indent=2))
