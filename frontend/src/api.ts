@@ -53,6 +53,8 @@ export class ApiClient {
       if (method === 'POST' && key) throw new OutcomeUnknown();
       throw cause;
     }
+    // A proxy/dependency may fail after durable acceptance. Never turn that into a definitive rejection.
+    if (method === 'POST' && key && (response.status >= 500 || response.status === 408)) throw new OutcomeUnknown();
     let result: unknown;
     try { result = await response.json(); } catch {
       if (method === 'POST' && key) throw new OutcomeUnknown();
