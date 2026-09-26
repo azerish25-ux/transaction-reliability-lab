@@ -1,0 +1,73 @@
+{
+  "phase": "P04",
+  "phaseStatus": "VERIFIED_PASS",
+  "productStatus": "INCOMPLETE",
+  "releaseDecision": "NO_GO",
+  "repository": "azerish25-ux/transaction-reliability-lab",
+  "branch": "main",
+  "sourceSha": "60a95db82350983eaf1ad3c7545190866c831f98",
+  "sourceTree": "7dcea7445209a501a9a036e5d9170224ea623ba4",
+  "trackedTreeDirty": false,
+  "workflow": {
+    "runId": 36276049817,
+    "event": "push",
+    "verificationJobId": 108498899419,
+    "gateJobId": 108499548289,
+    "verification": "SUCCESS",
+    "gate": "SUCCESS",
+    "startedAt": "2026-09-26T22:22:20Z",
+    "completedAt": "2026-09-26T22:26:32Z"
+  },
+  "suites": [
+    {"name":"CoreTest","tests":120,"failures":0,"errors":0,"skipped":0,"reportSha256":"59a1cad69b0fff496aaab2e33379d31ad137e7484a25d8d4c6e0bf2d34cb6050"},
+    {"name":"SecuritySettingsTest","tests":13,"failures":0,"errors":0,"skipped":0,"reportSha256":"02377b3d464c15df6fa372d8d3b9d28dfdc8c0c8e097ee0d309ee08ec212c7f4"},
+    {"name":"PostgresFinancialIT","tests":11,"failures":0,"errors":0,"skipped":0,"reportSha256":"8cd4b16b02dd2528f7217f263aae7a389a5ed94748eeeb651d64a39fa3a389e0"},
+    {"name":"AuthenticationAccountsIT","tests":58,"failures":0,"errors":0,"skipped":0,"reportSha256":"8dda14e1fe115a2012e15f8a7dc7a9174bf64f88438d545fb514e662e5e0b340"},
+    {"name":"TransferReliabilityIT","tests":20,"failures":0,"errors":0,"skipped":0,"reportSha256":"043defa7795681ac11eb07a55a29a12e08cb576437e3a17d4e21ec3facb6af38"},
+    {"name":"client","tests":44,"failures":0,"errors":0,"skipped":0,"reportSha256":"6e04c1dc155db49059d8c3ca7175ebf02f53039b4c20d2734ac2b2e2728afe19"},
+    {"name":"auth-client","tests":6,"failures":0,"errors":0,"skipped":0,"reportSha256":"0af4b5aae48cc9366062caa58b78778f96433a9f5a3f5dd303e8697745c23121"},
+    {"name":"transfer-client","tests":7,"failures":0,"errors":0,"skipped":0,"reportSha256":"57df5a41bd204e3e561cdf0dc4c2b678f65ffc199ae3d3c288254b8a88038755"}
+  ],
+  "standaloneCore": {
+    "tests": 120,
+    "status": "PASS",
+    "sameCasesAsCoreTest": true,
+    "additionalUniqueCases": 0,
+    "reportSha256": "c0b388f6fa417a4bb1cc0957a2be53e9d503570ce3ca06daaa9371ee7c380e9b"
+  },
+  "requirements": {"P03":14,"P04":10,"totalScoped":24,"status":"VERIFIED_PASS"},
+  "compose": {
+    "status": "PASS",
+    "checks": 15,
+    "timestamp": "2026-09-26T22:26:21.130060+00:00",
+    "migrations": 6,
+    "runtimeRole": "ledger_runtime",
+    "reconciliationRuns": 2,
+    "discrepancies": 0
+  },
+  "literalScan": {"files":219,"findings":0,"scope":"Configured literal patterns only"},
+  "artifact": {
+    "id": 10916927772,
+    "name": "ledgerguard-fast-evidence-60a95db82350983eaf1ad3c7545190866c831f98",
+    "files": 56,
+    "bytes": 106305,
+    "sha256": "f0eb46254f81208bf834ea54ac6888f29a91588de724c7b270a839cc0ff202f2",
+    "expiresAt": "2026-10-10T22:26:24Z",
+    "downloadAndHashVerified": true
+  },
+  "priorFailure": {
+    "runId": 36275988571,
+    "sourceSha": "9847369369fcb8ae685dfc6fe6fe910070a8160b",
+    "finding": "Standalone dependency-light compiler rejected SLF4J imports in shared FinancialCommands; fixed with JDK System.Logger"
+  },
+  "publicApplication": false,
+  "releaseTag": null,
+  "limitations": [
+    "P05-P11 incomplete",
+    "No RabbitMQ publisher/worker financial processing",
+    "No React or actual browser/accessibility campaign",
+    "No complete scanner/Pact/performance/restore campaign",
+    "No public TLS deployment",
+    "No independent certification"
+  ]
+}
