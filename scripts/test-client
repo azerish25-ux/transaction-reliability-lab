@@ -3,3 +3,4 @@ set -euo pipefail
 cd "$(dirname "$0")/.."
 npm --prefix frontend run --silent typecheck
 node tests/contracts/client.test.cjs
+node tests/contracts/auth-client.test.cjs

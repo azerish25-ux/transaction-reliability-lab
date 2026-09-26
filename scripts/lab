@@ -1,11 +1,15 @@
 #!/usr/bin/env python3
 """LedgerGuard deterministic developer and CI control surface."""
 from __future__ import annotations
+import base64
+import fcntl
 import json
+import os
 import secrets
 import shutil
 import subprocess
 import sys
+import tempfile
 import time
 import urllib.error
 import urllib.request
@@ -18,7 +22,7 @@ EVIDENCE = ROOT / ".evidence"
 COMPOSE = ROOT / "compose.yaml"
 
 HELP = """LedgerGuard — synthetic-money reliability laboratory
-Implemented foundation commands:
+Implemented commands:
   ./scripts/lab help
   ./scripts/lab doctor
   ./scripts/lab up
@@ -27,24 +31,18 @@ Implemented foundation commands:
   ./scripts/lab status
   ./scripts/lab test unit
   ./scripts/lab test database
+  ./scripts/lab test auth
   ./scripts/lab test pr
   ./scripts/lab reconcile
   ./scripts/lab evidence
 
 Later product/laboratory phases remain explicit blockers: test nightly/release,
-defect(s), resilience, performance and demo.
+defect(s), resilience, performance and demo. P03 provides APIs, not a React UI.
 """
 
 
 def run(command: list[str], *, check: bool = True, capture: bool = False, input_text: str | None = None) -> subprocess.CompletedProcess[str]:
-    return subprocess.run(
-        command,
-        cwd=ROOT,
-        check=check,
-        text=True,
-        input=input_text,
-        capture_output=capture,
-    )
+    return subprocess.run(command, cwd=ROOT, check=check, text=True, input=input_text, capture_output=capture)
 
 
 def docker_ready() -> bool:
@@ -66,23 +64,43 @@ def compose_available() -> bool:
 
 
 def ensure_environment() -> dict[str, str]:
-    STATE.mkdir(parents=True, exist_ok=True)
-    if not ENV_FILE.exists():
-        values = {
-            "COMPOSE_PROJECT_NAME": "ledgerguard",
-            "POSTGRES_DB": "ledgerguard",
+    STATE.mkdir(parents=True, exist_ok=True, mode=0o700)
+    STATE.chmod(0o700)
+    # Preserve existing database passwords/signing keys across upgrades and repeated startup.
+    # Serialize concurrent CLI initialization and atomically publish mode-0600 configuration.
+    with (STATE / "environment.lock").open("a", encoding="utf-8") as lock:
+        fcntl.flock(lock, fcntl.LOCK_EX)
+        values = read_environment()
+        defaults = {
+            "COMPOSE_PROJECT_NAME": "ledgerguard", "POSTGRES_DB": "ledgerguard",
             "POSTGRES_SUPERUSER_PASSWORD": secrets.token_hex(32),
-            "LEDGER_OWNER_PASSWORD": secrets.token_hex(32),
-            "LEDGER_RUNTIME_PASSWORD": secrets.token_hex(32),
-            "RABBITMQ_DEFAULT_USER": "ledgerguard",
-            "RABBITMQ_DEFAULT_PASS": secrets.token_hex(32),
-            "RABBITMQ_DEFAULT_VHOST": "/ledgerguard",
-            "LEDGER_HTTP_PORT": "8080",
+            "LEDGER_OWNER_PASSWORD": secrets.token_hex(32), "LEDGER_RUNTIME_PASSWORD": secrets.token_hex(32),
+            "RABBITMQ_DEFAULT_USER": "ledgerguard", "RABBITMQ_DEFAULT_PASS": secrets.token_hex(32),
+            "RABBITMQ_DEFAULT_VHOST": "/ledgerguard", "LEDGER_HTTP_PORT": "8080",
             "LEDGER_RABBIT_MANAGEMENT_PORT": "15672",
+            "LEDGER_AUTH_KEY": base64.b64encode(secrets.token_bytes(64)).decode("ascii"),
+            "LEDGER_DEMO_PASSWORD": secrets.token_urlsafe(24),
         }
-        ENV_FILE.write_text("".join(f"{key}={value}\n" for key, value in values.items()), encoding="utf-8")
+        changed = False
+        for key, value in defaults.items():
+            if key not in values:
+                values[key] = value
+                changed = True
+        if changed:
+            temporary = None
+            try:
+                with tempfile.NamedTemporaryFile(mode="w", encoding="utf-8", dir=STATE, delete=False) as output:
+                    temporary = Path(output.name)
+                    os.fchmod(output.fileno(), 0o600)
+                    output.write("".join(f"{key}={value}\n" for key, value in values.items()))
+                    output.flush()
+                    os.fsync(output.fileno())
+                os.replace(temporary, ENV_FILE)
+            finally:
+                if temporary is not None:
+                    temporary.unlink(missing_ok=True)
         ENV_FILE.chmod(0o600)
-    return read_environment()
+        return values
 
 
 def read_environment() -> dict[str, str]:
@@ -96,14 +114,12 @@ def read_environment() -> dict[str, str]:
 
 
 def api_base_url() -> str:
-    values = ensure_environment()
-    return f"http://127.0.0.1:{values.get('LEDGER_HTTP_PORT', '8080')}"
+    return f"http://127.0.0.1:{ensure_environment().get('LEDGER_HTTP_PORT', '8080')}"
 
 
 def compose(*arguments: str, check: bool = True, capture: bool = False, input_text: str | None = None) -> subprocess.CompletedProcess[str]:
     ensure_environment()
-    command = ["docker", "compose", "--env-file", str(ENV_FILE), "-f", str(COMPOSE), *arguments]
-    return run(command, check=check, capture=capture, input_text=input_text)
+    return run(["docker", "compose", "--env-file", str(ENV_FILE), "-f", str(COMPOSE), *arguments], check=check, capture=capture, input_text=input_text)
 
 
 def get_json(url: str, timeout: float = 3.0) -> dict[str, object]:
@@ -124,9 +140,6 @@ def wait_for_readiness(seconds: int = 210) -> dict[str, object]:
                 return system
             latest = f"health={health!r} system={system!r}"
         except (urllib.error.URLError, OSError, json.JSONDecodeError) as failure:
-            # A newly started JVM can accept and reset an early socket before the
-            # HTTP server is ready. Treat all connection-level startup failures as
-            # transient until the bounded readiness deadline expires.
             latest = f"{type(failure).__name__}: {failure}"
         time.sleep(2)
     raise RuntimeError(f"LedgerGuard did not become ready: {latest}")
@@ -135,12 +148,7 @@ def wait_for_readiness(seconds: int = 210) -> dict[str, object]:
 def reconcile() -> None:
     values = ensure_environment()
     sql = (ROOT / "tests/database/reconcile.sql").read_text(encoding="utf-8")
-    command = [
-        "exec", "-T", "-e", f"PGPASSWORD={values['LEDGER_OWNER_PASSWORD']}",
-        "postgres", "psql", "-X", "-v", "ON_ERROR_STOP=1", "-h", "127.0.0.1",
-        "-U", "ledger_owner", "-d", values["POSTGRES_DB"],
-    ]
-    compose(*command, input_text=sql)
+    compose("exec", "-T", "-e", f"PGPASSWORD={values['LEDGER_OWNER_PASSWORD']}", "postgres", "psql", "-X", "-v", "ON_ERROR_STOP=1", "-h", "127.0.0.1", "-U", "ledger_owner", "-d", values["POSTGRES_DB"], input_text=sql)
 
 
 def capture_logs() -> None:
@@ -176,13 +184,14 @@ def command_up() -> int:
         print(f"STARTUP FAILED: {failure}", file=sys.stderr)
         return 1
     base = api_base_url()
-    management_port = ensure_environment().get("LEDGER_RABBIT_MANAGEMENT_PORT", "15672")
-    print("LedgerGuard foundation is ready (synthetic money only).")
+    print("LedgerGuard P03 API is ready (synthetic money only; no React UI yet).")
     print(f"API health: {base}/actuator/health/readiness")
     print(f"System boundary: {base}/api/v1/system")
-    print(f"RabbitMQ management: http://127.0.0.1:{management_port}")
+    print(f"OpenAPI: {base}/api/v1/openapi.json")
     print(f"Database runtime role: {system.get('databaseRole')}")
-    print("Authentication/UI are intentionally not claimed in this P01/P02 milestone.")
+    print("Sandbox identities: alice@example.test, bob@example.test, merchant@example.test, admin@example.test.")
+    print("Their generated password is LEDGER_DEMO_PASSWORD in private .ledgerguard/runtime.env; it is not printed in CI logs.")
+    print("Acquire /api/v1/auth/csrf before POST /api/v1/auth/login, then reacquire CSRF. See docs/architecture/adr/0012-p03-authentication.md.")
     return 0
 
 
@@ -201,10 +210,7 @@ def command_status() -> int:
     compose("ps")
     base = api_base_url()
     try:
-        print(json.dumps({
-            "readiness": get_json(f"{base}/actuator/health/readiness"),
-            "system": get_json(f"{base}/api/v1/system"),
-        }, indent=2))
+        print(json.dumps({"readiness": get_json(f"{base}/actuator/health/readiness"), "system": get_json(f"{base}/api/v1/system")}, indent=2))
         return 0
     except (urllib.error.URLError, OSError, json.JSONDecodeError) as failure:
         print(f"API not ready: {failure}", file=sys.stderr)
@@ -218,20 +224,22 @@ def command_test(target: str) -> int:
             if result.returncode:
                 return result.returncode
         return 0
-    if target == "database":
+    if target in {"database", "auth"}:
         if not docker_ready():
             print("BLOCKED: a working Docker daemon is required by Testcontainers.", file=sys.stderr)
             return 2
-        return run(["./mvnw", "-B", "-ntp", "-f", "backend/pom.xml", "verify"], check=False).returncode
+        command = ["./mvnw", "-B", "-ntp", "-f", "backend/pom.xml", "verify"]
+        if target == "auth":
+            command.insert(-1, "-Dit.test=AuthenticationAccountsIT")
+        return run(command, check=False).returncode
     if target == "pr":
         if not docker_ready():
             print("BLOCKED: PR verification requires Docker.", file=sys.stderr)
             return 2
         commands = [
-            ["npm", "ci", "--prefix", "frontend"],
-            ["./scripts/lab", "test", "unit"],
+            ["npm", "ci", "--prefix", "frontend"], ["./scripts/lab", "test", "unit"],
             ["./mvnw", "-B", "-ntp", "-f", "backend/pom.xml", "verify"],
-            ["./scripts/scan-secrets"],
+            ["python3", "scripts/assert-p03-evidence"], ["./scripts/scan-secrets"],
             ["docker", "compose", "--env-file", ".env.example", "-f", "compose.yaml", "config", "--quiet"],
         ]
         for command in commands:
@@ -248,28 +256,22 @@ def main() -> int:
     if not args or args[0] in {"help", "--help", "-h"}:
         print(HELP)
         return 0
-    if args == ["doctor"]:
-        return command_doctor()
-    if args == ["up"]:
-        return command_up()
-    if args == ["down"]:
-        return command_down()
+    if args == ["doctor"]: return command_doctor()
+    if args == ["up"]: return command_up()
+    if args == ["down"]: return command_down()
     if args == ["logs"]:
         capture_logs()
         print(EVIDENCE / "compose" / "services.log")
         return 0
-    if args == ["status"]:
-        return command_status()
-    if len(args) == 2 and args[0] == "test":
-        return command_test(args[1])
+    if args == ["status"]: return command_status()
+    if len(args) == 2 and args[0] == "test": return command_test(args[1])
     if args == ["reconcile"]:
         if not docker_ready():
             print("BLOCKED: reconciliation requires the running Compose database.", file=sys.stderr)
             return 2
         reconcile()
         return 0
-    if args == ["evidence"]:
-        return run(["./scripts/validate-evidence"], check=False).returncode
+    if args == ["evidence"]: return run(["./scripts/validate-evidence"], check=False).returncode
     if args[0] in {"defect", "defects", "resilience", "performance", "demo"}:
         print("BLOCKED / NOT_STARTED: this belongs to a later implementation phase.", file=sys.stderr)
         return 2

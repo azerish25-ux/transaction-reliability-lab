@@ -1,7 +1,12 @@
 import { currency, minor, MAX_TRANSACTION, type Currency } from './money.js';
 export interface Problem { code: string; message: string; correlationId: string; }
-export interface Session { id: string; name: string; role: 'CUSTOMER' | 'ADMIN'; expiresAt: string; }
+export interface Session { id: string; email: string; displayName: string; role: 'CUSTOMER' | 'ADMIN'; expiresAt: string; }
+export interface Registered { id: string; email: string; displayName: string; role: 'CUSTOMER'; }
 export interface Account { id: string; publicRef: string; name: string; currency: Currency; postedMinor: string; reservedMinor: string; availableMinor: string; version: string; updatedAt: string; }
+export interface Page<T> { items: T[]; limit: number; offset: number; hasMore: boolean; }
+export interface Entry { id: string; journalId: string; operationId: string; kind: string; side: 'DEBIT' | 'CREDIT'; amountMinor: string; currency: Currency; createdAt: string; }
+export interface Transaction { journalId: string; operationId: string; kind: string; effectMinor: string; currency: Currency; createdAt: string; }
+export interface Recipient { publicRef: string; currency: Currency; }
 export interface Receipt { operationId: string; state: string; journalId?: string; paymentId?: string; }
 export interface Intent { sourceId: string; recipientRef: string; amountMinor: string; currency: Currency; }
 export class ApiError extends Error {
@@ -20,7 +25,6 @@ export function normalizeIntent(input: Intent): Intent {
 export class ApiClient {
   private csrf: { headerName: string; token: string } | undefined;
   constructor(private readonly transport: typeof fetch = fetch, private readonly prefix = '/api/v1') {
-    // The production browser client is same origin; injected prefixes belong only to test harnesses.
     if (!prefix.startsWith('/') || prefix.startsWith('//') || prefix.includes('..')) throw new TypeError('Expected same-origin API prefix');
   }
   async get<T>(path: string): Promise<T> { return (await this.request<T>(path, 'GET')).body; }
@@ -30,6 +34,23 @@ export class ApiClient {
     this.csrf = token;
   }
   clearSession(): void { this.csrf = undefined; }
+  async register(input: { email: string; password: string; displayName: string }): Promise<Registered> {
+    return (await this.command<Registered>('/auth/register', input)).body;
+  }
+  async login(email: string, password: string): Promise<Session> {
+    const response = await this.command<Session>('/auth/login', { email, password });
+    await this.csrfToken();
+    return response.body;
+  }
+  async logout(): Promise<void> {
+    await this.command<void>('/auth/logout', undefined);
+    await this.csrfToken();
+  }
+  me(): Promise<Session> { return this.get<Session>('/auth/me'); }
+  accounts(limit = 50, offset = 0): Promise<Page<Account>> { return this.get<Page<Account>>(`/accounts?limit=${limit}&offset=${offset}`); }
+  async createAccount(name: string, unit: Currency): Promise<Account> {
+    return (await this.command<Account>('/accounts', { name, currency: currency(unit) })).body;
+  }
   async command<T>(path: string, body: unknown, key?: string): Promise<{ status: number; body: T; replayed: boolean }> {
     if (!this.csrf) await this.csrfToken();
     return this.request<T>(path, 'POST', body, key);
@@ -53,17 +74,21 @@ export class ApiClient {
       if (method === 'POST' && key) throw new OutcomeUnknown();
       throw cause;
     }
-    // A proxy/dependency may fail after durable acceptance. Never turn that into a definitive rejection.
     if (method === 'POST' && key && (response.status >= 500 || response.status === 408)) throw new OutcomeUnknown();
+    if (response.status === 401) this.clearSession();
+    if (response.ok && (path === '/auth/login' || path === '/auth/logout')) this.clearSession();
     let result: unknown;
-    try { result = await response.json(); } catch {
-      if (method === 'POST' && key) throw new OutcomeUnknown();
-      throw new TypeError('Invalid API response');
+    if (response.status === 204) {
+      result = undefined;
+    } else {
+      try { result = await response.json(); } catch {
+        if (method === 'POST' && key) throw new OutcomeUnknown();
+        throw new TypeError('Invalid API response');
+      }
     }
     if (!response.ok) {
-      if (response.status === 401) this.clearSession();
-      const p = result as Partial<Problem>;
-      throw new ApiError(response.status, { code: p?.code ?? 'HTTP_ERROR', message: p?.message ?? 'Request could not be completed.', correlationId: p?.correlationId ?? '' });
+      const p = result as Partial<Problem> & { title?: string };
+      throw new ApiError(response.status, { code: p?.code ?? 'HTTP_ERROR', message: p?.message ?? p?.title ?? 'Request could not be completed.', correlationId: p?.correlationId ?? '' });
     }
     return { status: response.status, body: result as T, replayed: response.headers.get('Idempotency-Replayed') === 'true' };
   }

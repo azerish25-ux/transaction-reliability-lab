@@ -52,6 +52,9 @@ services:
       context: .
       dockerfile: infra/docker/Dockerfile.backend
     environment:
+      SPRING_PROFILES_ACTIVE: sandbox
+      LEDGER_SANDBOX_HTTP: "true"
+      LEDGER_AUTH_KEY: ${LEDGER_AUTH_KEY:?LEDGER_AUTH_KEY is required}
       LEDGER_DATABASE_URL: jdbc:postgresql://postgres:5432/${POSTGRES_DB:-ledgerguard}
       LEDGER_MIGRATION_URL: jdbc:postgresql://postgres:5432/${POSTGRES_DB:-ledgerguard}
       LEDGER_OWNER_USER: ledger_owner
@@ -90,20 +93,15 @@ services:
     profiles: ["tools"]
     environment:
       PGPASSWORD: ${LEDGER_OWNER_PASSWORD:?LEDGER_OWNER_PASSWORD is required}
+      PGDATABASE: ${POSTGRES_DB:-ledgerguard}
+      PGHOST: postgres
+      PGUSER: ledger_owner
+      LEDGER_DEMO_PASSWORD: ${LEDGER_DEMO_PASSWORD:?LEDGER_DEMO_PASSWORD is required}
+    entrypoint: ["/bin/sh", "-ec"]
     command:
-      - psql
-      - -v
-      - ON_ERROR_STOP=1
-      - -h
-      - postgres
-      - -U
-      - ledger_owner
-      - -d
-      - ${POSTGRES_DB:-ledgerguard}
-      - -f
-      - /seed/seed.sql
+      - "psql -X -v ON_ERROR_STOP=1 -f /seed/seed.sql && psql -X -v ON_ERROR_STOP=1 -f /seed/seed-auth.sql"
     volumes:
-      - ./infra/docker/postgres/seed.sql:/seed/seed.sql:ro
+      - ./infra/docker/postgres:/seed:ro
     depends_on:
       api:
         condition: service_healthy

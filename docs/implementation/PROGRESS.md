@@ -1,67 +1,43 @@
-# Execution checkpoint — P01/P02 FOUNDATION VERIFIED
+# Execution checkpoint — P03 candidate
 
-Overall product status remains **INCOMPLETE / NO_GO**. The requested next coherent milestone is implemented and verified without relabeling P03–P11 as complete.
+Overall product status remains **INCOMPLETE / NO_GO**. P03 authentication/accounts are **IMPLEMENTED_UNVERIFIED** until the exact candidate's expanded fast lane completes. No release or public application is claimed.
 
-## Repository and delivery
+## Preserved verified foundation
 
-- Repository: `azerish25-ux/transaction-reliability-lab`.
-- Target branch: `main`.
+Repository: `azerish25-ux/transaction-reliability-lab`, branch `main`.
+
 - Original milestone parent: `1c2aaf42d66d176edbf5e3306a9dbfadc90db32e`.
 - Foundation implementation: `e91161e2f77b39c5dd59a878102db1cac40fecea`.
 - Additive PostgreSQL repair: `e614cdde88336e535f4d6c7c8e5052a0b62659a6`.
-- Verified source candidate: `cb9930168ffdc793a5759f754a39685369620422`.
-- Verified push workflow: run `36267641798`, both verification job and required aggregate gate SUCCESS.
-- Every branch update was a non-forced fast-forward. Existing ancestry was preserved.
+- Verified foundation source: `cb9930168ffdc793a5759f754a39685369620422`, successful run `36267641798`.
+- Subsequent documentation HEAD: `b15992c7c98e188792f4041a56a94ab63b979320`, successful fast run `36267909205`.
 
-## P01 foundation scope — VERIFIED_PASS
+P01/P02 evidence remains the previously executed 120 Java cases (same bodies also run standalone, not counted twice), 44 TypeScript cases, 11 PostgreSQL integration tests, five validated migrations, Compose startup with restricted runtime identity, idempotent balanced fixtures, and two discrepancy-free independent reconciliations. The foundation fixed an ambiguous SQL status reference with additive V5 and a bounded startup readiness connection-reset issue. P03 preserves V1–V5 and all protected financial posting logic.
 
-Implemented and executed:
+## P03 candidate implementation
 
-- Checked Maven 3.9.16 bootstrap with committed distribution SHA-256 and Java 21 baseline.
-- Executable Spring Boot application with restricted default endpoint surface.
-- Correlation IDs, structured console context, liveness/readiness and explicit database-role health.
-- Pinned PostgreSQL 17.11, RabbitMQ 4.3.5 and Temurin 21.0.12.1 container tags.
-- Docker Compose role separation, internal database/broker networking, actual health checks, loopback-only host ports and a non-root/read-only API runtime.
-- Runtime-generated ignored sandbox secrets; no committed live credentials.
-- Idempotent fictional fixture seeding through protected balanced funding journals.
-- Locked TypeScript 5.8.3 dependency.
-- Permanent push/pull-request/manual fast workflow with a required aggregate gate and retained reports.
-- Working `lab up/down/status/logs/test/reconcile` foundation commands.
-- Clean Actions execution proved build, health, restricted `ledger_runtime`, deterministic seed, two reconciliation passes and scoped teardown.
+- Registration with normalized identity uniqueness, BCrypt, zero initial funding and strict input-field allowlists.
+- HS256 cookie authentication, required claim checks, 15-minute sessions, persisted revocation, current enabled-user/role checks and durable logout.
+- Same-origin/CSRF handling, CSRF rotation, HttpOnly/Secure/Strict cookie policies, explicit loopback sandbox exception, bounded JSON requests and safe problem responses.
+- PostgreSQL-shared authentication budgets and separate append-only security events.
+- Owner-scoped account creation/list/detail/entry/transaction APIs, exact decimal-string balances and minimal recipient routing lookup.
+- Additive V6 identity/session protections without granting direct financial mutation rights.
+- Versioned actual OpenAPI and updated TypeScript client, including HTTP 204 and CSRF refresh handling.
+- Real PostgreSQL HTTP integration suite using two independently restartable JVMs; configuration and TypeScript regression suites.
+- Expanded required CI checks for expected nonzero test discovery, live Compose authentication, fixture login, ownership denial and copied-cookie logout revocation.
+- Persisted generated sandbox signing key and demo credentials; no secret values printed or committed.
 
-## Current P02 financial-core scope — VERIFIED_PASS
+The implementation was authored through the authorized GitHub Git-data API. Git objects are not counted as a delivered branch until the main ref is advanced and re-read. The local authoring container lacks Docker and cannot reach dependency hosts; Docker-dependent checks must actually execute on the repository's GitHub Actions runner. No local Testcontainers or Maven result is claimed.
 
-Executed evidence:
+## Immediate verification actions
 
-- Exact integer-minor-unit policies for CAD/USD/JPY/KWD.
-- Protected PostgreSQL posting/financial commands and restricted runtime grants.
-- Deferred journal, balance/hold, payment/adjustment and idempotency consistency checks.
-- 120 standalone Java cases passed; the same 120 case bodies passed through JUnit Jupiter.
-- 44 TypeScript client/money/uncertain-intent cases passed.
-- Eleven committed-transaction PostgreSQL tests passed with no failure/error/skip.
-- Five Flyway migrations validated and applied to a fresh PostgreSQL 17.11 database.
-- Two independent REPEATABLE READ / READ ONLY reconciliations returned zero discrepancies.
-- A high-signal literal scan checked 180 tracked text files with zero configured matches.
+1. Publish the coherent candidate by non-forced fast-forward to main.
+2. Observe the actual push-triggered workflow; inspect compile, HTTP, database and Compose failures.
+3. Repair concrete causes without weakening assertions, then rerun the full affected lane.
+4. Record exact source SHA, test counts, workflow/job conclusions and artifact locations after execution.
 
-The JUnit and standalone executions of the same Java cases are reported separately but not counted twice as unique coverage.
+## Remaining product phases
 
-## Findings fixed during verification
+P04 transfer HTTP/idempotency/uncertain-response boundary; P05 RabbitMQ publisher/consumer and worker; P06 adjustment APIs; P07 schedules/webhooks; P08 React/browser/accessibility; P09 fault/defect laboratory; P10 full contracts/security scans/performance/restore/nightly/release; P11 final evidence/video remain incomplete. Dependency presence, a static OpenAPI document, or a passing component suite alone does not fulfill those phases.
 
-1. The first real database run exposed an ambiguous unqualified `status` reference inside `execute_command`. The function also declared a local `status` variable. Additive Flyway V5 performs a guarded definition repair, preserves the published V2 checksum and reapplies execute privileges.
-2. The first clean Compose smoke exposed a transient startup connection reset that escaped the readiness poll. The CLI now treats connection-level startup failures as transient until its bounded deadline and publishes hidden service logs.
-
-Both findings were followed by complete affected-lane reruns; no test was weakened or skipped.
-
-## Open phases
-
-- P03 authentication, revocable sessions, roles, ownership-safe accounts and OpenAPI: NOT_STARTED.
-- P04 live transfer HTTP/idempotency/uncertain-response boundary: NOT_STARTED.
-- P05 RabbitMQ publisher/consumer, worker and projection: NOT_STARTED.
-- P06 cancellation/refund/reversal product APIs: NOT_STARTED.
-- P07 schedules and webhook dispatcher/receiver: NOT_STARTED.
-- P08 React interface and browser/accessibility journeys: NOT_STARTED.
-- P09 complete F01–F08 and D01–D24 isolated laboratory: NOT_STARTED.
-- P10 full contracts/security/performance/migration/restore plus nightly and release lanes: NOT_STARTED beyond the verified fast foundation lane.
-- P11 complete portfolio evidence and video: NOT_STARTED beyond this milestone summary.
-
-No release, public application, authentication claim, complete testing-laboratory claim or production-readiness claim is made.
+The P03 architecture and limits are documented in [ADR 0012](../architecture/adr/0012-p03-authentication.md).
