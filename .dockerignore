@@ -1,0 +1,9 @@
+.git
+.runtime
+.evidence
+**/node_modules
+**/target
+**/test-results
+**/playwright-report
+lab-support
+docs/evidence/raw

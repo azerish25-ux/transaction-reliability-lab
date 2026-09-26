@@ -1,0 +1,36 @@
+package lab.ledgerguard.core;
+
+import java.time.*;
+import java.time.zone.ZoneOffsetTransition;
+import java.util.List;
+import java.util.UUID;
+
+public final class SchedulePolicy {
+    public enum Recurrence { ONCE, DAILY, WEEKLY }
+    private SchedulePolicy() { }
+    public static Instant resolve(LocalDateTime intended, ZoneId zone) {
+        List<ZoneOffset> offsets = zone.getRules().getValidOffsets(intended);
+        if (offsets.size() == 1) return intended.toInstant(offsets.getFirst());
+        if (offsets.size() == 2) return intended.toInstant(offsets.getFirst()); // earlier overlap offset
+        ZoneOffsetTransition transition = zone.getRules().getTransition(intended);
+        return intended.plusSeconds(transition.getDuration().getSeconds()).toInstant(transition.getOffsetAfter());
+    }
+    public static LocalDateTime next(LocalDateTime intended, Recurrence recurrence) {
+        return switch (recurrence) {
+            case ONCE -> throw new DomainFailure("SCHEDULE_FINISHED", 409);
+            case DAILY -> intended.plusDays(1);
+            case WEEKLY -> intended.plusWeeks(1);
+        };
+    }
+    public static Instant nextInstant(LocalDateTime intended, ZoneId zone, Recurrence recurrence) {
+        return resolve(next(intended, recurrence), zone);
+    }
+    public static String occurrenceKey(UUID scheduleId, long version, LocalDateTime intended) {
+        DomainFailure.require(version > 0, "INVALID_SCHEDULE_VERSION", 400);
+        return scheduleId + ":" + version + ":" + intended;
+    }
+    public static boolean withinCatchUp(Instant due, Clock clock) {
+        Instant now = clock.instant();
+        return !due.isAfter(now) && !due.isBefore(now.minus(Duration.ofHours(24)));
+    }
+}

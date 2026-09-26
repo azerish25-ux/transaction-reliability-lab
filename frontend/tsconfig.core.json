@@ -1,0 +1,4 @@
+{
+  "compilerOptions": { "target": "ES2022", "module": "NodeNext", "moduleResolution": "NodeNext", "strict": true, "noUncheckedIndexedAccess": false, "lib": ["ES2022", "DOM"], "outDir": "../.evidence/ts", "skipLibCheck": false },
+  "include": ["src/money.ts", "src/api.ts", "src/intent-store.ts"]
+}

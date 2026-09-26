@@ -1,0 +1,13 @@
+.runtime/
+.evidence/
+**/target/
+**/node_modules/
+frontend/dist/
+**/test-results/
+**/playwright-report/
+**/__pycache__/
+*.dump
+.env
+*.pem
+*.key
+.DS_Store

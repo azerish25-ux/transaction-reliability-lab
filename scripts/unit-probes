@@ -1,0 +1,88 @@
+#!/usr/bin/env python3
+"""In-place, single-checkout component mutations. Failures never count as full-stack defect evidence."""
+import argparse, fcntl, hashlib, json, os, signal, subprocess, sys, time, uuid
+from datetime import datetime, timezone
+from pathlib import Path
+import xml.etree.ElementTree as ET
+ROOT=Path(__file__).resolve().parent.parent
+MANIFEST=json.loads((ROOT/'lab-support/unit-probes.json').read_text())
+def digest(data):return hashlib.sha256(data).hexdigest()
+def timestamp():return datetime.now(timezone.utc).isoformat()
+def git(*args):return subprocess.check_output(['git','-C',str(ROOT),*args],text=True).strip()
+def run_case(probe,out,phase):
+    report=out/(phase+'.xml');log=out/(phase+'.log')
+    if probe['runner']=='java':cmd=['./scripts/test-core',str(report),probe['test_id']]
+    else:
+        cmd=['bash','-c','tsc --project frontend/tsconfig.core.json && node tests/contracts/client.test.cjs "$1"','client-probe',probe['test_id']]
+        shared=ROOT/'.evidence/client/results.xml'
+        shared.unlink(missing_ok=True)
+    start=timestamp()
+    with log.open('w') as stream:
+        process=subprocess.Popen(cmd,cwd=ROOT,stdout=stream,stderr=subprocess.STDOUT,start_new_session=True)
+        try:code=process.wait(timeout=45)
+        except subprocess.TimeoutExpired:
+            os.killpg(process.pid,signal.SIGTERM)
+            try:process.wait(timeout=3)
+            except subprocess.TimeoutExpired:os.killpg(process.pid,signal.SIGKILL);process.wait()
+            code=124
+    if probe['runner']=='typescript' and shared.exists():report.write_bytes(shared.read_bytes())
+    result={'command':cmd,'start':start,'end':timestamp(),'exit_status':code,'log':str(log.relative_to(ROOT)),'report':str(report.relative_to(ROOT))}
+    try:
+        tree=ET.parse(report).getroot()
+        result.update({name:int(tree.attrib.get(name,0)) for name in ['tests','failures','errors','skipped']})
+        names=[e.attrib.get('name') for e in tree.iter('testcase')]
+        if names!=[probe['test_id']]:raise ValueError('Unexpected test discovery')
+        result['assertion_messages']=[e.attrib.get('message','') for e in tree.iter('failure')]
+    except (OSError,ET.ParseError,ValueError):result['invalid_report']=True
+    return result
+
+def passed(result):return result['exit_status']==0 and result.get('tests')==1 and all(result.get(k)==0 for k in ['failures','errors','skipped']) and not result.get('invalid_report')
+def experiment(probe):
+    run_id=f"{probe['id']}-{uuid.uuid4()}";out=ROOT/'.evidence/unit-probes'/run_id;out.mkdir(parents=True)
+    path=(ROOT/probe['file']).resolve()
+    if not path.is_relative_to(ROOT) or not str(path).endswith(('.java','.ts')):raise ValueError('Mutation path not allowlisted')
+    original=path.read_bytes();text=original.decode()
+    result={k:probe[k] for k in ['id','title','test_id','risk','mechanism','scope','counts_toward_G07']}
+    result.update(run_id=run_id,started=timestamp(),source_commit=git('rev-parse','HEAD'),dirty_tree=bool(git('status','--porcelain')),source_sha256=digest(original),source_file=probe['file'],seed=74021,verdict='INVALID_EXPERIMENT')
+    if text.count(probe['before'])!=1:result['reason']='Mutation target no longer uniquely matches';return result
+    patched=text.replace(probe['before'],probe['after'],1).encode();result['mutation_sha256']=digest(patched)
+    (out/'source-before.txt').write_bytes(original)
+    (out/'source-mutant.txt').write_bytes(patched)
+    (out/'recovery.json').write_text(json.dumps({'file':probe['file'],'before':digest(original),'mutant':digest(patched)}))
+    mutated=False
+    try:
+        result['baseline']=run_case(probe,out,'baseline')
+        if not passed(result['baseline']):result['verdict']='BASELINE_FAILED';return result
+        path.write_bytes(patched);mutated=True
+        result['mutant']=run_case(probe,out,'mutant')
+        bad=result['mutant']
+        if bad.get('tests')==1 and bad['exit_status']==1 and bad.get('failures')==1 and bad.get('errors')==0 and bad.get('skipped')==0 and any(probe['expected_failure'] in s for s in bad.get('assertion_messages',[])):
+            result['verdict']='DETECTED'
+        elif passed(bad):result['verdict']='SURVIVED'
+        else:result['verdict']='INVALID_EXPERIMENT'
+    finally:
+        if mutated:
+            if path.read_bytes()!=patched:
+                result['verdict']='CLEANUP_FAILED';result['reason']='Source changed concurrently; original preserved, unrelated edits not overwritten'
+            else:
+                path.write_bytes(original)
+                result['restoration']=run_case(probe,out,'restoration')
+                result['restored_sha256']=digest(path.read_bytes())
+                if result['restored_sha256']!=result['source_sha256'] or not passed(result['restoration']):result['verdict']='CLEANUP_FAILED'
+        result['ended']=timestamp()
+        (out/'verdict.json').write_text(json.dumps(result,indent=2)+'\n')
+    return result
+
+def interrupt(signum,frame):raise KeyboardInterrupt()
+signal.signal(signal.SIGTERM,interrupt)
+parser=argparse.ArgumentParser(description=__doc__);parser.add_argument('target',help='D02/D08/D11/D12/D13/D19/D21 or --all',nargs='?',default='');parser.add_argument('--all',action='store_true');args=parser.parse_args()
+selected=[p for p in MANIFEST['probes'] if args.all or p['id']==args.target]
+if not selected:parser.error('No implemented component probe matches; full-stack D01–D24 are still incomplete.')
+(ROOT/'.evidence').mkdir(exist_ok=True)
+with (ROOT/'.evidence/mutation.lock').open('w') as lock:
+    fcntl.flock(lock,fcntl.LOCK_EX|fcntl.LOCK_NB)
+    results=[]
+    for probe in selected:
+        result=experiment(probe);results.append(result);print(probe['id'],result['verdict'],'scope=UNIT_COMPONENT_ONLY counts_toward_G07=false',flush=True)
+    (ROOT/'.evidence/unit-probes/summary.json').write_text(json.dumps({'scope':'UNIT_COMPONENT_ONLY','full_stack_defects_detected':0,'results':results},indent=2)+'\n')
+sys.exit(0 if all(r['verdict']=='DETECTED' for r in results) else 1)

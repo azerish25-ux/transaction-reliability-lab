@@ -1,0 +1,11 @@
+#!/usr/bin/env bash
+set -euo pipefail
+cd "$(dirname "$0")/.."
+BUILD=.evidence/core-classes
+mkdir -p "$BUILD" .evidence/core
+find "$BUILD" -type f -name '*.class' -delete
+javac --release 21 -Xlint:all -Werror -d "$BUILD" \
+  backend/src/main/java/lab/ledgerguard/core/*.java \
+  backend/src/main/java/lab/ledgerguard/db/*.java \
+  backend/src/test/java/lab/ledgerguard/CoreCases.java tests/StandaloneCoreRunner.java
+java -cp "$BUILD" lab.ledgerguard.StandaloneCoreRunner "${1:-.evidence/core/results.xml}" "${2:-}"

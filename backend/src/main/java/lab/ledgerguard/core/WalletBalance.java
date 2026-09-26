@@ -1,0 +1,35 @@
+package lab.ledgerguard.core;
+
+/** Pure arithmetic policy, NOT a substitute for database locking/commit-time constraints. */
+public record WalletBalance(long posted, long reserved) {
+    public WalletBalance {
+        DomainFailure.require(posted >= 0 && reserved >= 0 && reserved <= posted, "BALANCE_INVARIANT", 422);
+    }
+    public long available() { return Math.subtractExact(posted, reserved); }
+    public WalletBalance reserve(long amount) {
+        positive(amount);
+        DomainFailure.require(available() >= amount, "INSUFFICIENT_FUNDS", 422);
+        return new WalletBalance(posted, Math.addExact(reserved, amount));
+    }
+    public WalletBalance release(long amount) {
+        positive(amount);
+        DomainFailure.require(reserved >= amount, "INVALID_HOLD", 409);
+        return new WalletBalance(posted, Math.subtractExact(reserved, amount));
+    }
+    public WalletBalance consume(long amount) {
+        positive(amount);
+        DomainFailure.require(reserved >= amount, "INVALID_HOLD", 409);
+        return new WalletBalance(Math.subtractExact(posted, amount), Math.subtractExact(reserved, amount));
+    }
+    public WalletBalance debit(long amount) {
+        positive(amount);
+        DomainFailure.require(available() >= amount, "INSUFFICIENT_FUNDS", 422);
+        return new WalletBalance(Math.subtractExact(posted, amount), reserved);
+    }
+    public WalletBalance credit(long amount) {
+        positive(amount);
+        try { return new WalletBalance(Math.addExact(posted, amount), reserved); }
+        catch (ArithmeticException ex) { throw new DomainFailure("BALANCE_OVERFLOW", 422); }
+    }
+    private static void positive(long n) { DomainFailure.require(n > 0, "INVALID_AMOUNT", 400); }
+}

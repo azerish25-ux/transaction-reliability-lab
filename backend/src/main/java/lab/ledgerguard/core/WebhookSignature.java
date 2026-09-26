@@ -1,0 +1,33 @@
+package lab.ledgerguard.core;
+
+import javax.crypto.Mac;
+import javax.crypto.spec.SecretKeySpec;
+import java.nio.charset.StandardCharsets;
+import java.security.GeneralSecurityException;
+import java.security.MessageDigest;
+import java.time.Clock;
+import java.util.HexFormat;
+import java.util.UUID;
+
+/** Signed bytes: ASCII(timestamp) + '.' + ASCII(event UUID) + '.' + raw transmitted body. */
+public final class WebhookSignature {
+    private WebhookSignature() { }
+    public static String sign(byte[] secret, long epochSeconds, UUID eventId, byte[] body) {
+        DomainFailure.require(secret != null && secret.length >= 32 && body != null && body.length <= 65536,
+            "INVALID_SIGNATURE_INPUT", 400);
+        try {
+            Mac mac = Mac.getInstance("HmacSHA256");
+            mac.init(new SecretKeySpec(secret, "HmacSHA256"));
+            mac.update((epochSeconds + "." + eventId + ".").getBytes(StandardCharsets.US_ASCII));
+            return "v1=" + HexFormat.of().formatHex(mac.doFinal(body));
+        } catch (GeneralSecurityException ex) { throw new IllegalStateException(ex); }
+    }
+    public static boolean verify(byte[] secret, long timestamp, UUID eventId, byte[] body,
+                                 String signature, Clock clock) {
+        if (signature == null || !signature.matches("v1=[0-9a-f]{64}")) return false;
+        long now = clock.instant().getEpochSecond();
+        if (timestamp < now - 300 || timestamp > now + 300) return false;
+        byte[] expected = sign(secret, timestamp, eventId, body).getBytes(StandardCharsets.US_ASCII);
+        return MessageDigest.isEqual(expected, signature.getBytes(StandardCharsets.US_ASCII));
+    }
+}
