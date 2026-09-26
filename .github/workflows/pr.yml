@@ -73,6 +73,7 @@ jobs:
         with:
           name: ledgerguard-fast-evidence-${{ github.sha }}
           if-no-files-found: warn
+          include-hidden-files: true
           retention-days: 14
           path: |
             .evidence/

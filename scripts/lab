@@ -1,9 +1,7 @@
 #!/usr/bin/env python3
 """LedgerGuard deterministic developer and CI control surface."""
 from __future__ import annotations
-import argparse
 import json
-import os
 import secrets
 import shutil
 import subprocess
@@ -61,7 +59,10 @@ def docker_ready() -> bool:
 def compose_available() -> bool:
     if not shutil.which("docker"):
         return False
-    return run(["docker", "compose", "version"], check=False, capture=True).returncode == 0
+    try:
+        return run(["docker", "compose", "version"], check=False, capture=True).returncode == 0
+    except OSError:
+        return False
 
 
 def ensure_environment() -> dict[str, str]:
@@ -94,6 +95,11 @@ def read_environment() -> dict[str, str]:
     return values
 
 
+def api_base_url() -> str:
+    values = ensure_environment()
+    return f"http://127.0.0.1:{values.get('LEDGER_HTTP_PORT', '8080')}"
+
+
 def compose(*arguments: str, check: bool = True, capture: bool = False, input_text: str | None = None) -> subprocess.CompletedProcess[str]:
     ensure_environment()
     command = ["docker", "compose", "--env-file", str(ENV_FILE), "-f", str(COMPOSE), *arguments]
@@ -109,15 +115,19 @@ def get_json(url: str, timeout: float = 3.0) -> dict[str, object]:
 def wait_for_readiness(seconds: int = 210) -> dict[str, object]:
     deadline = time.monotonic() + seconds
     latest = "not attempted"
+    base = api_base_url()
     while time.monotonic() < deadline:
         try:
-            health = get_json("http://127.0.0.1:8080/actuator/health/readiness")
-            system = get_json("http://127.0.0.1:8080/api/v1/system")
+            health = get_json(f"{base}/actuator/health/readiness")
+            system = get_json(f"{base}/api/v1/system")
             if health.get("status") == "UP" and system.get("databaseRole") == "ledger_runtime":
                 return system
             latest = f"health={health!r} system={system!r}"
-        except (urllib.error.URLError, TimeoutError, json.JSONDecodeError) as failure:
-            latest = str(failure)
+        except (urllib.error.URLError, OSError, json.JSONDecodeError) as failure:
+            # A newly started JVM can accept and reset an early socket before the
+            # HTTP server is ready. Treat all connection-level startup failures as
+            # transient until the bounded readiness deadline expires.
+            latest = f"{type(failure).__name__}: {failure}"
         time.sleep(2)
     raise RuntimeError(f"LedgerGuard did not become ready: {latest}")
 
@@ -165,10 +175,12 @@ def command_up() -> int:
         capture_logs()
         print(f"STARTUP FAILED: {failure}", file=sys.stderr)
         return 1
+    base = api_base_url()
+    management_port = ensure_environment().get("LEDGER_RABBIT_MANAGEMENT_PORT", "15672")
     print("LedgerGuard foundation is ready (synthetic money only).")
-    print("API health: http://127.0.0.1:8080/actuator/health/readiness")
-    print("System boundary: http://127.0.0.1:8080/api/v1/system")
-    print("RabbitMQ management: http://127.0.0.1:15672")
+    print(f"API health: {base}/actuator/health/readiness")
+    print(f"System boundary: {base}/api/v1/system")
+    print(f"RabbitMQ management: http://127.0.0.1:{management_port}")
     print(f"Database runtime role: {system.get('databaseRole')}")
     print("Authentication/UI are intentionally not claimed in this P01/P02 milestone.")
     return 0
@@ -187,13 +199,14 @@ def command_status() -> int:
         print("LedgerGuard environment is not initialized.")
         return 2
     compose("ps")
+    base = api_base_url()
     try:
         print(json.dumps({
-            "readiness": get_json("http://127.0.0.1:8080/actuator/health/readiness"),
-            "system": get_json("http://127.0.0.1:8080/api/v1/system"),
+            "readiness": get_json(f"{base}/actuator/health/readiness"),
+            "system": get_json(f"{base}/api/v1/system"),
         }, indent=2))
         return 0
-    except (urllib.error.URLError, TimeoutError, json.JSONDecodeError) as failure:
+    except (urllib.error.URLError, OSError, json.JSONDecodeError) as failure:
         print(f"API not ready: {failure}", file=sys.stderr)
         return 1
 
