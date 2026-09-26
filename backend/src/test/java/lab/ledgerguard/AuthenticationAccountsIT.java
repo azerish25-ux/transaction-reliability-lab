@@ -292,7 +292,12 @@ class AuthenticationAccountsIT {
     @ParameterizedTest @ValueSource(strings={"limit=0","limit=101","offset=-1","offset=10001","limit=oops","offset=99999999999999"})
     void P0319_paginationBounds(String query) { User u=user();status(400,u.browser.call("GET","/accounts?"+query,null)); }
     @Test void P0320_paginationIsStableAndOwnerScoped() {
-        User u=user();for(int i=0;i<3;i++)account(u,"Wallet "+i,"CAD");
+        User u=user();String csrfCookie=u.browser.cookies.get("LG-CSRF");
+        for(int i=0;i<3;i++) {
+            account(u,"Wallet "+i,"CAD");
+            assertTrue(Objects.equals(csrfCookie,u.browser.cookies.get("LG-CSRF")),"Ordinary commands must not rotate or delete CSRF cookies");
+            status(200,u.browser.call("GET","/auth/me",null));
+        }
         Response a=u.browser.call("GET","/accounts?limit=2",null),again=u.browser.call("GET","/accounts?limit=2",null),b=u.browser.call("GET","/accounts?limit=2&offset=2",null);
         assertEquals(a.jsonPath().getList("items.id"),again.jsonPath().getList("items.id"));assertTrue(a.jsonPath().getBoolean("hasMore"));assertFalse(b.jsonPath().getBoolean("hasMore"));
         Set<String> ids=new HashSet<>(a.jsonPath().getList("items.id"));ids.addAll(b.jsonPath().getList("items.id"));assertEquals(3,ids.size());
@@ -324,8 +329,10 @@ class AuthenticationAccountsIT {
     @Test void P0325_accountIdentityImmutableEvenToOwner() throws Exception {
         User u=user();String id=account(u,"Immutable","CAD");
         for(String update:List.of("currency='USD'","owner_id='"+historicalUser+"'","kind='SANDBOX_FUNDING_ASSET'","public_ref='changed'")){
-            try(Connection c=owner();Statement s=c.createStatement()){assertEquals("23514",assertThrows(SQLException.class,()->s.execute("UPDATE ledger.accounts SET "+update+" WHERE id='"+id+"'")).getSQLState());}
+            // V4 already defines this immutable-identity permission contract as SQLSTATE 42501.
+            try(Connection c=owner();Statement s=c.createStatement()){assertEquals("42501",assertThrows(SQLException.class,()->s.execute("UPDATE ledger.accounts SET "+update+" WHERE id='"+id+"'")).getSQLState());}
         }
+        assertEquals(1,count("SELECT count(*) FROM ledger.accounts WHERE id=? AND owner_id=? AND currency='CAD' AND kind='WALLET_LIABILITY'",UUID.fromString(id),u.id));
     }
     @Test void P0326_largeChunkedBodyAndMalformedJsonRejected() throws Exception {
         User u=user();status(400,u.browser.call("POST","/accounts","{invalid"));

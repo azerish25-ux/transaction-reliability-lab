@@ -17,6 +17,7 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.session.NullAuthenticatedSessionStrategy;
 import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
 import org.springframework.security.web.csrf.CsrfFilter;
 import org.springframework.security.web.header.writers.ReferrerPolicyHeaderWriter;
@@ -42,7 +43,11 @@ public class FoundationSecurityConfiguration {
             SecurityEvents events,ObjectMapper json,CookieCsrfTokenRepository csrf) throws Exception {
         http.sessionManagement(session->session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .requestCache(AbstractHttpConfigurer::disable)
-            .csrf(config->config.csrfTokenRepository(csrf))
+            // JWT verification on each request is not a new login. AuthController explicitly
+            // rotates CSRF after successful login/logout; do not rotate after every account read/write.
+            // CSRF validation and the default XOR/BREACH token handler remain enabled.
+            .csrf(config->config.csrfTokenRepository(csrf)
+                .sessionAuthenticationStrategy(new NullAuthenticatedSessionStrategy()))
             .authorizeHttpRequests(authorize->authorize
                 .requestMatchers(HttpMethod.GET,"/actuator/health/**","/actuator/info","/api/v1/system","/api/v1/openapi.json","/api/v1/auth/csrf").permitAll()
                 .requestMatchers(HttpMethod.POST,"/api/v1/auth/register","/api/v1/auth/login").permitAll()
