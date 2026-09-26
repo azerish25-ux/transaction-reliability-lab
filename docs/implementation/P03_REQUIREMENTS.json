@@ -1,0 +1,21 @@
+{
+  "phase": "P03",
+  "sourceContract": "docs/implementation/MASTER_SPEC.md",
+  "scope": "Authentication, sessions, accounts and their HTTP contracts only. These scoped requirements do not complete broader payment, scheduling, browser, security-scanning or release obligations in REQUIREMENTS.yaml.",
+  "requirements": [
+    {"id":"P03-R01","sections":["3","13"],"statement":"Normalized registration, hashed passwords, concurrent identity uniqueness and no caller-selected role.","tests":{"AuthenticationAccountsIT":["P0301","P0302","P0303","P0304"],"SecuritySettingsTest":["P03U07"]}},
+    {"id":"P03-R02","sections":["13"],"statement":"Validate signed cookie sessions, all required claims, allowed algorithm, JWT expiry and persisted expiry through actual HTTP.","tests":{"AuthenticationAccountsIT":["P0305","P0306","P0307","P0308","P0322"]}},
+    {"id":"P03-R03","sections":["13"],"statement":"Durable logout revocation across independent processes and restart; disabled-user sessions are rejected.","tests":{"AuthenticationAccountsIT":["P0309","P0310","P0324"]}},
+    {"id":"P03-R04","sections":["13"],"statement":"CSRF is required on authentication and account commands, rotates on login/logout and remains usable during repeated ordinary commands.","tests":{"AuthenticationAccountsIT":["P0311","P0312","P0313","P0320"]}},
+    {"id":"P03-R05","sections":["13"],"statement":"Required provisioned keys, bounded authentication settings, secure normal cookies and explicit sandbox exceptions.","tests":{"SecuritySettingsTest":["P03U01","P03U02","P03U03","P03U04","P03U05","P03U06"],"AuthenticationAccountsIT":["P0305","P0329"]}},
+    {"id":"P03-R06","sections":["3","5","13"],"statement":"Multiple owner-assigned zero-balance wallets support CAD/USD/JPY/KWD, reject mass assignment and use exact decimal-string balances.","tests":{"AuthenticationAccountsIT":["P0314","P0318","P0320"],"SecuritySettingsTest":["P03U08"],"auth-client":["P03TS05"]}},
+    {"id":"P03-R07","sections":["13","14","15"],"statement":"Owner-scoped account and nested-history queries reveal only the owner's economic effect.","tests":{"AuthenticationAccountsIT":["P0315","P0317","P0320"]}},
+    {"id":"P03-R08","sections":["13","14"],"statement":"Recipient lookup reveals only active public routing information and grants no private account access.","tests":{"AuthenticationAccountsIT":["P0316"]}},
+    {"id":"P03-R09","sections":["13","16"],"statement":"Database-backed ADMIN authority protects the real security-event feed and grants no generic customer spending or account creation.","tests":{"AuthenticationAccountsIT":["P0321","P0324"]}},
+    {"id":"P03-R10","sections":["13"],"statement":"Authentication throttling persists across instances and ignores spoofed forwarded addresses.","tests":{"AuthenticationAccountsIT":["P0323"]}},
+    {"id":"P03-R11","sections":["13","14"],"statement":"Bound pagination and request bodies, reject malformed or unknown input fields and return safe headers/errors.","tests":{"AuthenticationAccountsIT":["P0303","P0318","P0319","P0326","P0329"],"auth-client":["P03TS04"]}},
+    {"id":"P03-R12","sections":["5","6","13","22"],"statement":"Retain immutable account identity and runtime financial permissions; preserve historical V5 users/accounts through V6.","tests":{"AuthenticationAccountsIT":["P0324","P0325","P0327"]}},
+    {"id":"P03-R13","sections":["14"],"statement":"Serve the implemented OpenAPI and verify account wire fields without claiming later HTTP groups are complete.","tests":{"AuthenticationAccountsIT":["P0328"]}},
+    {"id":"P03-R14","sections":["13","14","15"],"statement":"The real TypeScript API client handles empty logout, CSRF refresh and registration without implicit login.","tests":{"auth-client":["P03TS01","P03TS02","P03TS03","P03TS06"]}}
+  ]
+}

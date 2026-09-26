@@ -1,34 +1,30 @@
-# Evidence index — verified foundation, overall NO_GO
+# Evidence index — P03 verified, full product NO_GO
 
-The newest verified source is `cb9930168ffdc793a5759f754a39685369620422`. Its permanent summary is [Verified P01/P02 fast lane](fast-lane-cb993016.md), with a [machine-readable record](fast-lane-cb993016.json). GitHub Actions run [36267641798](https://github.com/azerish25-ux/transaction-reliability-lab/actions/runs/36267641798) completed successfully for that exact clean source SHA.
+## Current P03 evidence
 
-## Current executed evidence
+Verified implementation `8ee1e1f91a86c11e33468d764b639b425b3e12a7` passed [run 36270965725](https://github.com/azerish25-ux/transaction-reliability-lab/actions/runs/36270965725), including both verification and required gate.
 
-| Executed check | Actual result | Boundary |
-|---|---|---|
-| `./scripts/lab test unit`: standalone Java | 120 passed, 0 failed/errors/skipped | Java 21 case runner; deterministic model seed 74021 |
-| `./scripts/lab test unit`: TypeScript | 44 passed, 0 failed | Production TS money/client/intent modules with injected Fetch/storage |
-| Maven JUnit core | 120 passed, 0 failed/errors/skipped | Same Java case bodies through JUnit Jupiter; not additional unique tests |
-| PostgreSQL/Testcontainers integration | 11 passed, 0 failed/errors/skipped | PostgreSQL 17.11, real commits, independent connections and role boundaries |
-| Flyway | Five migrations validated/applied | Fresh schema reached version v5 |
-| Compose foundation | Build/start/readiness/seed/teardown passed | API, PostgreSQL and RabbitMQ healthy; API used `ledger_runtime` |
-| Independent reconciliation | Two runs, zero discrepancies each | REPEATABLE READ / READ ONLY snapshot oracle |
-| Literal high-signal secret scan | 180 tracked text files, zero findings | Limited pattern scan; not comprehensive security assurance |
-| Required aggregate CI gate | Passed | Missing/failed verification job would fail the lane |
+- [Durable human-readable P03 report](p03-8ee1e1f.md)
+- [Machine-readable result and report hashes](p03-8ee1e1f.json)
+- [Scoped requirements/test-ID source](../implementation/P03_REQUIREMENTS.json)
+- [Authentication architecture and limits](../architecture/adr/0012-p03-authentication.md)
 
-The historical component evidence remains available: [Java XML](component/java.xml), [client XML](component/client.xml), [combined log](component/unit.log), [unit-probe summary](unit-probes/summary.json) and [scoped bug reports](../testing/bugs/README.md). Those records retain their original earlier source identity and are not silently relabeled as current full-stack Dxx evidence.
+Actual results: 120 core JUnit cases, 13 security-configuration cases, 58 live HTTP authentication/account cases, 11 PostgreSQL financial integration cases, 44 existing plus six new TypeScript cases and nine separate live Compose checks. All passed. Core bodies also ran standalone and are not double-counted. Six migrations, restricted runtime, synthetic fixture login, two independent zero-discrepancy reconciliations, limited literal scan and teardown passed.
 
-## Resolved findings in this milestone
+Raw artifact `10915292636` contains 50 files, 92,336 bytes and SHA-256 `11df5bea2eae448180c1ba5b254bb94e79fbadc044b41ef510a9d20de1a215f4`. It expires 2026-10-10; the durable reports preserve scope and provenance. Per-candidate CI artifacts additionally include the generated test/requirement matrix after the traceability update.
 
-- A real `execute_command` SQL ambiguity found by the first PostgreSQL run was repaired through additive Flyway V5; the eleven database tests then passed.
-- A transient JVM-startup socket reset exposed an overly narrow readiness exception boundary; the bounded poll was repaired and the complete clean Compose lane then passed.
+## Preserved P01/P02 and earlier component evidence
 
-## Still unexecuted or incomplete
+The earlier foundation source `cb9930168ffdc793a5759f754a39685369620422` passed [run 36267641798](https://github.com/azerish25-ux/transaction-reliability-lab/actions/runs/36267641798). Its [human-readable](fast-lane-cb993016.md) and [JSON](fast-lane-cb993016.json) records retain their original five-migration/120-Java/44-TypeScript/11-PostgreSQL scope.
 
-Spring authentication/CSRF/ownership APIs, live transfer/payment HTTP paths, RabbitMQ publisher/consumer processing, worker recovery, webhook sender/receiver, scheduler execution, the React product UI, Pact, real Playwright/axe journeys, ZAP, complete F01–F08, complete D01–D24, data-bearing upgrade/backup restore, reference k6, nightly/release lanes and the demonstration video remain open. Five exploratory charters are prepared but not represented as human execution. No public application, release tag, security certification, accessibility conformance or performance claim exists.
+Historical component records remain: [Java XML](component/java.xml), [client XML](component/client.xml), [combined log](component/unit.log), [unit-probe summary](unit-probes/summary.json) and [scoped bug reports](../testing/bugs/README.md). These are not relabeled current full-stack Dxx evidence.
 
-## Provenance
+## Honest failure history
 
-The verified run used Ubuntu 24.04.5, Java 21.0.12+1, Node 22.23.2, npm 10.9.8, Docker 28.0.4, Testcontainers 1.21.4 and PostgreSQL 17.11. The retained Actions artifact contains 39 files, is 73,969 bytes, has SHA-256 `61a1903b6904e748e38cd8f2a50b3240a252ef975b9228f7512f312c93275b78`, and expires 2026-10-10. Its expiry is why this compact durable summary is committed.
+P03 execution caught a duplicate migration trigger, an ordinary-request CSRF rotation defect, and an incorrect test SQLSTATE assumption. The P03 report links failed source/run identities and the passing correction. Earlier foundation execution caught financial-command SQL ambiguity and a startup connection-reset boundary. No failed run is hidden or counted as a successful seeded-defect experiment.
 
-Older environment/blocker records remain historical evidence of their original execution environment; they are superseded for current GitHub write, PostgreSQL and Compose capability by the verified run above.
+## Remaining evidence
+
+Live transfer/payment HTTP workflows, RabbitMQ publisher/consumer recovery, webhook delivery, scheduler execution, the React UI, Pact, Playwright/axe, ZAP, complete F01–F08/D01–D24, full financial-data upgrade/backup restore, reference k6, nightly/release lanes and video remain incomplete. The P03 V5-to-V6 user/account preservation test does not replace the full financial-history migration campaign. Prepared exploratory charters are not claimed as performed human testing.
+
+No public application, release tag, security certification, accessibility conformance or measured performance claim exists. Environment limitations from earlier local attempts remain historical; actual GitHub Actions results are the current evidence for Docker/PostgreSQL/Compose execution.

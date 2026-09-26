@@ -1,33 +1,73 @@
 #!/usr/bin/env python3
-"""Reject missing, skipped, failed or accidentally undiscovered P03/regression test suites."""
+"""Require real passing suites and derive scoped requirements evidence from JUnit XML."""
 import json
 import subprocess
 import xml.etree.ElementTree as ET
+from datetime import datetime, timezone
 from pathlib import Path
 
 root = Path(__file__).resolve().parent.parent
 required = {
-    "backend/target/surefire-reports/TEST-lab.ledgerguard.CoreTest.xml": 120,
-    "backend/target/surefire-reports/TEST-lab.ledgerguard.SecuritySettingsTest.xml": 13,
-    "backend/target/failsafe-reports/TEST-lab.ledgerguard.PostgresFinancialIT.xml": 11,
-    "backend/target/failsafe-reports/TEST-lab.ledgerguard.AuthenticationAccountsIT.xml": 58,
-    ".evidence/client/results.xml": 44,
-    ".evidence/client/auth-results.xml": 6,
+    "backend/target/surefire-reports/TEST-lab.ledgerguard.CoreTest.xml": ("CoreTest", 120),
+    "backend/target/surefire-reports/TEST-lab.ledgerguard.SecuritySettingsTest.xml": ("SecuritySettingsTest", 13),
+    "backend/target/failsafe-reports/TEST-lab.ledgerguard.PostgresFinancialIT.xml": ("PostgresFinancialIT", 11),
+    "backend/target/failsafe-reports/TEST-lab.ledgerguard.AuthenticationAccountsIT.xml": ("AuthenticationAccountsIT", 58),
+    ".evidence/client/results.xml": ("client", 44),
+    ".evidence/client/auth-results.xml": ("auth-client", 6),
 }
-rows=[]
-for relative, minimum in required.items():
-    file=root/relative
+rows = []
+executed = {}
+for relative, (name, minimum) in required.items():
+    file = root / relative
     if not file.is_file():
         raise SystemExit(f"Missing required test result: {relative}")
-    suite=ET.parse(file).getroot()
-    counts={key:int(suite.get(key,"0")) for key in ["tests","failures","errors","skipped"]}
-    if counts["tests"]<minimum or any(counts[key] for key in ["failures","errors","skipped"]):
-        raise SystemExit(f"Required suite did not pass with expected discovery: {relative}: {counts}")
-    rows.append({"suite":relative,**counts})
-sha=subprocess.check_output(["git","rev-parse","HEAD"],cwd=root,text=True).strip()
-dirty=bool(subprocess.check_output(["git","status","--porcelain","--untracked-files=no"],cwd=root,text=True).strip())
-report={"sourceSha":sha,"trackedTreeDirty":dirty,"status":"VERIFIED_PASS","suites":rows,
-        "scope":"P03 security/accounts plus existing foundation regressions; not P04-P11 or release readiness"}
-out=root/".evidence/p03";out.mkdir(parents=True,exist_ok=True)
-(out/"test-summary.json").write_text(json.dumps(report,indent=2)+"\n")
-print(json.dumps(report,indent=2))
+    suite = ET.parse(file).getroot()
+    counts = {key: int(suite.get(key, "0")) for key in ["tests", "failures", "errors", "skipped"]}
+    cases = suite.findall(".//testcase")
+    if counts["tests"] < minimum or len(cases) != counts["tests"] or any(counts[key] for key in ["failures", "errors", "skipped"]):
+        raise SystemExit(f"Required suite failed or has missing discovery: {relative}: {counts}")
+    for case in cases:
+        if any(case.find(tag) is not None for tag in ["failure", "error", "skipped"]):
+            raise SystemExit(f"Non-passing case in {relative}: {case.get('name')}")
+    executed[name] = [case.get("name", "") for case in cases]
+    rows.append({"suite": relative, **counts})
+
+manifest = json.loads((root / "docs/implementation/P03_REQUIREMENTS.json").read_text())
+if not (root / manifest["sourceContract"]).is_file():
+    raise SystemExit("Missing original source contract")
+traceability = []
+seen = set()
+for requirement in manifest["requirements"]:
+    identity = requirement["id"]
+    if identity in seen:
+        raise SystemExit(f"Duplicate requirement: {identity}")
+    seen.add(identity)
+    matches = []
+    for suite_name, prefixes in requirement["tests"].items():
+        for prefix in prefixes:
+            actual = [name for name in executed.get(suite_name, [])
+                      if name.startswith(prefix + "_") or name.startswith(prefix + "-")]
+            if not actual:
+                raise SystemExit(f"No executed oracle for {identity}: {suite_name}/{prefix}")
+            matches.extend({"suite": suite_name, "test": name} for name in actual)
+    if not matches:
+        raise SystemExit(f"Requirement has no executed oracle: {identity}")
+    traceability.append({"id": identity, "statement": requirement["statement"], "status": "VERIFIED_PASS", "tests": matches})
+
+sha = subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=root, text=True).strip()
+dirty = bool(subprocess.check_output(["git", "status", "--porcelain", "--untracked-files=no"], cwd=root, text=True).strip())
+report = {"sourceSha": sha, "trackedTreeDirty": dirty, "timestamp": datetime.now(timezone.utc).isoformat(),
+          "status": "VERIFIED_PASS", "suites": rows, "requirements": traceability,
+          "scope": "P03 test scope plus foundation regressions. Compose smoke is separately recorded. Not full product or release readiness."}
+out = root / ".evidence/p03"
+out.mkdir(parents=True, exist_ok=True)
+(out / "test-summary.json").write_text(json.dumps(report, indent=2) + "\n")
+matrix = ["# Executed P03 requirements", "", f"Source: `{sha}`; tracked tree dirty: `{dirty}`.", "",
+          "| Requirement | Executed cases | Result |", "|---|---:|---|"]
+for item in traceability:
+    matrix.append(f"| {item['id']} | {len(item['tests'])} | {item['status']} |")
+matrix.extend(["", "Exact case names, report paths, source identity and timestamp are in test-summary.json.",
+               "Requirements share tests; these counts must not be summed as unique cases."])
+(out / "requirements-matrix.md").write_text("\n".join(matrix) + "\n")
+print(json.dumps({key: value for key, value in report.items() if key != "requirements"}, indent=2))
+print(f"Verified {len(traceability)} scoped requirements against actually executed test cases.")

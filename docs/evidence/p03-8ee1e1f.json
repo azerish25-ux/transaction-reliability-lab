@@ -1,0 +1,31 @@
+{
+  "phase":"P03",
+  "phaseStatus":"VERIFIED_PASS",
+  "productStatus":"INCOMPLETE",
+  "releaseDecision":"NO_GO",
+  "repository":"azerish25-ux/transaction-reliability-lab",
+  "branch":"main",
+  "sourceSha":"8ee1e1f91a86c11e33468d764b639b425b3e12a7",
+  "sourceTree":"d53a6c9432298e7f5f521cdc3183603a12302512",
+  "trackedTreeDirty":false,
+  "workflow":{"runId":36270965725,"event":"push","verificationJobId":108484709639,"gateJobId":108485265060,"verification":"SUCCESS","gate":"SUCCESS","completedAt":"2026-09-26T20:55:21Z"},
+  "suites":[
+    {"name":"CoreTest","tests":120,"failures":0,"errors":0,"skipped":0,"reportSha256":"a9ac520b1ac8904deeecee11ea11724eb08b519a164f11498a580eac72132130"},
+    {"name":"SecuritySettingsTest","tests":13,"failures":0,"errors":0,"skipped":0,"reportSha256":"6bc9c8cc09e420e19f6f70243815d5e68a4800bddb00f6e534140cf1ff83b84c"},
+    {"name":"PostgresFinancialIT","tests":11,"failures":0,"errors":0,"skipped":0,"reportSha256":"7f89b592eed0a9e2e6503610e28b74d6ddf1e3a2d863cd4d1956214abc652315"},
+    {"name":"AuthenticationAccountsIT","tests":58,"failures":0,"errors":0,"skipped":0,"reportSha256":"a24776399552186f063f80fcc63482089d36638ec1db797d26fceaafedc3f579"},
+    {"name":"client","tests":44,"failures":0,"errors":0,"skipped":0,"reportSha256":"6e04c1dc155db49059d8c3ca7175ebf02f53039b4c20d2734ac2b2e2728afe19"},
+    {"name":"auth-client","tests":6,"failures":0,"errors":0,"skipped":0,"reportSha256":"0af4b5aae48cc9366062caa58b78778f96433a9f5a3f5dd303e8697745c23121"}
+  ],
+  "standaloneCore":{"tests":120,"status":"PASS","sameCasesAsCoreTest":true,"additionalUniqueCases":0},
+  "compose":{"status":"PASS","authChecks":9,"authTimestamp":"2026-09-26T20:55:09.282940+00:00","migrations":6,"runtimeRole":"ledger_runtime","reconciliationRuns":2,"discrepancies":0},
+  "literalScan":{"files":208,"findings":0,"scope":"Configured literal patterns only"},
+  "artifact":{"id":10915292636,"name":"ledgerguard-fast-evidence-8ee1e1f91a86c11e33468d764b639b425b3e12a7","files":50,"bytes":92336,"sha256":"11df5bea2eae448180c1ba5b254bb94e79fbadc044b41ef510a9d20de1a215f4","expiresAt":"2026-10-10T20:55:11Z","downloadAndHashVerified":true},
+  "priorFailures":[
+    {"runId":36270455110,"sourceSha":"bf4ebf6af8391c1172d8d59be171fccb0648beab","finding":"V6 duplicate existing account trigger; migration rolled back"},
+    {"runId":36270610899,"sourceSha":"299590976f3f2952ebfbd70b5229f73fdfecafcf","finding":"Repeated-request CSRF rotation and incorrect test SQLSTATE expectation","httpPassed":56,"httpFailed":2,"financialPassed":11}
+  ],
+  "publicApplication":false,
+  "releaseTag":null,
+  "limitations":["P04-P11 incomplete","No React or actual browser/a11y campaign","No full scanner/Pact/performance/restore campaign","V5 upgrade proof covers historical user/accounts, not all financial history","No public TLS deployment","No independent certification"]
+}
