@@ -1,0 +1,141 @@
+{
+  "schemaVersion": 1,
+  "status": "VERIFIED_PASS",
+  "scope": "P01 reproducible foundation and current P02 financial-core verification",
+  "source": {
+    "repository": "azerish25-ux/transaction-reliability-lab",
+    "branch": "main",
+    "commit": "cb9930168ffdc793a5759f754a39685369620422",
+    "tree": "b958f1c96f8540f5bd766ffcffa7339cae2830b1",
+    "dirtyTree": false
+  },
+  "workflow": {
+    "name": "LedgerGuard fast verification",
+    "runId": 36267641798,
+    "runNumber": 3,
+    "event": "push",
+    "startedAt": "2026-09-26T19:54:07Z",
+    "completedAt": "2026-09-26T19:56:20Z",
+    "conclusion": "success",
+    "jobs": [
+      {
+        "id": 108475257072,
+        "name": "Build, financial core, database and Compose smoke",
+        "conclusion": "success"
+      },
+      {
+        "id": 108475591888,
+        "name": "Required fast-lane gate",
+        "conclusion": "success"
+      }
+    ]
+  },
+  "environment": {
+    "runnerImage": "ubuntu-24.04",
+    "operatingSystem": "Ubuntu 24.04.5 LTS",
+    "java": "Temurin 21.0.12+1",
+    "node": "22.23.2",
+    "npm": "10.9.8",
+    "dockerServer": "28.0.4",
+    "runnerMemoryMb": 15993,
+    "postgresql": "17.11",
+    "testcontainers": "1.21.4"
+  },
+  "verification": {
+    "standaloneJava": {
+      "command": "./scripts/lab test unit",
+      "tests": 120,
+      "passed": 120,
+      "failed": 0,
+      "errors": 0,
+      "skipped": 0,
+      "seed": 74021
+    },
+    "typescriptClient": {
+      "command": "./scripts/lab test unit",
+      "tests": 44,
+      "passed": 44,
+      "failed": 0
+    },
+    "junitCore": {
+      "command": "./mvnw -B -ntp -f backend/pom.xml verify",
+      "tests": 120,
+      "passed": 120,
+      "failed": 0,
+      "errors": 0,
+      "skipped": 0,
+      "note": "JUnit adapter executes the same Java case bodies as the standalone run and is not an additional 120 unique cases."
+    },
+    "postgresFinancialIntegration": {
+      "command": "./mvnw -B -ntp -f backend/pom.xml verify",
+      "tests": 11,
+      "passed": 11,
+      "failed": 0,
+      "errors": 0,
+      "skipped": 0,
+      "boundary": "real PostgreSQL committed transactions through independent connections"
+    },
+    "flyway": {
+      "validatedMigrations": 5,
+      "appliedMigrations": 5,
+      "resultingVersion": 5
+    },
+    "compose": {
+      "command": "./scripts/lab up",
+      "build": "success",
+      "servicesHealthy": ["api", "postgres", "rabbitmq"],
+      "databaseRuntimeRole": "ledger_runtime",
+      "applicationStatus": "FOUNDATION_READY",
+      "syntheticMoneyOnly": true,
+      "seededUsers": 4,
+      "seededAccounts": 11,
+      "seededWalletAccounts": 7,
+      "result": "success"
+    },
+    "reconciliation": {
+      "command": "./scripts/lab reconcile",
+      "executions": 2,
+      "discrepanciesEachRun": 0,
+      "isolation": "REPEATABLE READ READ ONLY",
+      "result": "success"
+    },
+    "secretScan": {
+      "command": "./scripts/scan-secrets",
+      "filesScanned": 180,
+      "findings": 0,
+      "result": "PASS",
+      "limitation": "High-signal literal pattern scan, not a complete security assessment."
+    },
+    "teardown": {
+      "command": "./scripts/lab down",
+      "result": "success"
+    }
+  },
+  "artifact": {
+    "id": 10913469364,
+    "name": "ledgerguard-fast-evidence-cb9930168ffdc793a5759f754a39685369620422",
+    "sizeBytes": 73969,
+    "digest": "sha256:61a1903b6904e748e38cd8f2a50b3240a252ef975b9228f7512f312c93275b78",
+    "expiresAt": "2026-10-10T19:56:09Z",
+    "fileCount": 39
+  },
+  "findingsResolvedDuringMilestone": [
+    {
+      "sourceRunId": 36267116956,
+      "finding": "PostgreSQL rejected an unqualified accounts.status predicate because execute_command also declared a local status variable.",
+      "fixCommit": "e614cdde88336e535f4d6c7c8e5052a0b62659a6",
+      "fix": "Additive Flyway V5 guarded function-definition repair; migration history and V2 checksum preserved."
+    },
+    {
+      "sourceRunId": 36267330328,
+      "finding": "A transient connection reset during JVM startup escaped the bounded readiness poll.",
+      "fixCommit": "cb9930168ffdc793a5759f754a39685369620422",
+      "fix": "Treat connection-level startup errors as transient until the readiness deadline and retain hidden service logs."
+    }
+  ],
+  "limitations": [
+    "This is not proof of complete G01-G16 release readiness.",
+    "Authentication, product REST APIs, RabbitMQ business processing, React UI, complete defect/fault campaigns, security/accessibility/performance suites, migration/restore proof and video remain incomplete.",
+    "No public full-stack deployment or release tag exists."
+  ]
+}

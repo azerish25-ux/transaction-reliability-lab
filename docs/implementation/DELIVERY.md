@@ -1,26 +1,56 @@
-# Delivery record — P01/P02 source candidate
+# Delivery record — verified P01/P02 foundation
 
 Repository: `azerish25-ux/transaction-reliability-lab`  
 Branch: `main`  
-Observed parent: `1c2aaf42d66d176edbf5e3306a9dbfadc90db32e`
+Verified clean source: `cb9930168ffdc793a5759f754a39685369620422`  
+Source tree: `b958f1c96f8540f5bd766ffcffa7339cae2830b1`
 
-## Delivery mechanism
+## GitHub delivery
 
-The owner-linked GitHub integration provides Git blob/tree/commit/ref operations. This milestone is constructed as a normal child of the observed `main` head and published with a non-forced fast-forward ref update. Remote source and workflow files, branch head and candidate workflow runs must be re-read after publication; tool acceptance alone is not treated as proof.
+The owner-linked GitHub Git-data route created ordinary source/workflow commits and advanced `main` only through non-forced fast-forward ref updates. Remote branch identity and ancestry were re-read after publication.
 
-## Candidate contents
+Milestone commits:
 
-- Reproducible Maven/Node dependency entry points.
-- Executable Spring Boot foundation.
-- PostgreSQL/RabbitMQ Compose environment with migration/runtime role separation.
-- Balanced idempotent synthetic fixture seed.
-- Independent failing reconciliation oracle.
-- Permanent fast CI workflow and aggregate gate.
-- Updated developer CLI and truthful status documentation.
+1. `e91161e2f77b39c5dd59a878102db1cac40fecea` — executable Spring/Compose/CI foundation.
+2. `e614cdde88336e535f4d6c7c8e5052a0b62659a6` — additive Flyway V5 repair for the SQL ambiguity detected by execution.
+3. `cb9930168ffdc793a5759f754a39685369620422` — bounded readiness retry and retained hidden service evidence.
 
-## Verification state at source commit creation
+## Verified workflow
 
-- Local environment: Java/Node syntax and static file validation are possible; Docker/Maven dependency execution is unavailable there.
-- Docker-dependent proof is intentionally delegated to the repository's authorized GitHub Actions runner, not replaced by H2, SQLite or mocks.
-- Final commit SHA, workflow run ID/job conclusions and artifact identity are appended in a later evidence-only update only after they actually exist.
-- No release tag or public full-stack deployment is created because G01–G16 are not complete.
+- Workflow: `LedgerGuard fast verification`
+- Run: [36267641798](https://github.com/azerish25-ux/transaction-reliability-lab/actions/runs/36267641798)
+- Event: `push`
+- Exact head SHA: `cb9930168ffdc793a5759f754a39685369620422`
+- Verification job `108475257072`: SUCCESS
+- Required aggregate gate `108475591888`: SUCCESS
+- Started: 2026-09-26 19:54:07 UTC
+- Completed: 2026-09-26 19:56:20 UTC
+
+Executed results:
+
+- 120/120 standalone Java cases passed.
+- 44/44 TypeScript cases passed.
+- 120/120 JUnit Jupiter cases passed; these adapt the same Java case bodies and are not additional unique tests.
+- 11/11 PostgreSQL/Testcontainers financial integration cases passed.
+- Five Flyway migrations validated/applied.
+- Compose configuration, clean image build, three-service health, restricted runtime role, deterministic seed, two zero-discrepancy reconciliations and teardown passed.
+- The configured literal secret scan checked 180 tracked text files with zero findings.
+
+## Artifact
+
+- ID: `10913469364`
+- Name: `ledgerguard-fast-evidence-cb9930168ffdc793a5759f754a39685369620422`
+- Files: 39
+- Size: 73,969 bytes
+- Digest: `sha256:61a1903b6904e748e38cd8f2a50b3240a252ef975b9228f7512f312c93275b78`
+- Expiry: 2026-10-10 19:56:09 UTC
+
+The durable summary is committed under `docs/evidence/`; the expiring artifact is supplementary. This evidence/documentation update is intentionally separate from the tested source SHA, avoiding an impossible self-referential evidence claim.
+
+## Delivery boundaries
+
+- Repository source and one permanent fast CI lane: delivered and verified.
+- Versioned release: none; mandatory release gates are incomplete.
+- Public full-stack application: none.
+- Nightly/release lanes, video and complete evidence package: not delivered yet.
+- No release tag is created for this incomplete milestone.

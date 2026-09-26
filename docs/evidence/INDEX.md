@@ -1,28 +1,34 @@
-# Evidence index — partial implementation, NO_GO
+# Evidence index — verified foundation, overall NO_GO
 
-Tested code commit: `a74d930987639f3bcfaf03038947537412599fda`. Source tree and environment are in [run.json](component/run.json); input file hashes are in [source-inputs.json](source-inputs.json). The run started from a clean tree. Later evidence/documentation commits are not represented as the tested code SHA.
+The newest verified source is `cb9930168ffdc793a5759f754a39685369620422`. Its permanent summary is [Verified P01/P02 fast lane](fast-lane-cb993016.md), with a [machine-readable record](fast-lane-cb993016.json). GitHub Actions run [36267641798](https://github.com/azerish25-ux/transaction-reliability-lab/actions/runs/36267641798) completed successfully for that exact clean source SHA.
+
+## Current executed evidence
 
 | Executed check | Actual result | Boundary |
 |---|---|---|
-| `./scripts/lab test unit`: Java | 120 passed, 0 failed, 0 errors, 0 skipped | Java 21 standalone runner; not Jupiter engine |
-| `./scripts/lab test unit`: TypeScript | 44 passed, 0 failed, 0 errors, 0 skipped | Actual production TS utilities/client; injected Fetch/storage, not live HTTP/browser |
-| Component source probes | 7 DETECTED; each baseline/restoration passed, mutant assertion failed | UNIT_COMPONENT_ONLY; full-stack Dxx detections = 0 |
-| Review regression | Initially 43 pass / 1 fail; after fix 44 pass | Unintentional client 5xx uncertainty bug, not an infrastructure experiment |
+| `./scripts/lab test unit`: standalone Java | 120 passed, 0 failed/errors/skipped | Java 21 case runner; deterministic model seed 74021 |
+| `./scripts/lab test unit`: TypeScript | 44 passed, 0 failed | Production TS money/client/intent modules with injected Fetch/storage |
+| Maven JUnit core | 120 passed, 0 failed/errors/skipped | Same Java case bodies through JUnit Jupiter; not additional unique tests |
+| PostgreSQL/Testcontainers integration | 11 passed, 0 failed/errors/skipped | PostgreSQL 17.11, real commits, independent connections and role boundaries |
+| Flyway | Five migrations validated/applied | Fresh schema reached version v5 |
+| Compose foundation | Build/start/readiness/seed/teardown passed | API, PostgreSQL and RabbitMQ healthy; API used `ledger_runtime` |
+| Independent reconciliation | Two runs, zero discrepancies each | REPEATABLE READ / READ ONLY snapshot oracle |
+| Literal high-signal secret scan | 180 tracked text files, zero findings | Limited pattern scan; not comprehensive security assurance |
+| Required aggregate CI gate | Passed | Missing/failed verification job would fail the lane |
 
-[Java results](component/java.xml) · [client results](component/client.xml) · [combined log](component/unit.log) · [probe summary](unit-probes/summary.json) · [eight scoped reports](../testing/bugs/README.md).
+The historical component evidence remains available: [Java XML](component/java.xml), [client XML](component/client.xml), [combined log](component/unit.log), [unit-probe summary](unit-probes/summary.json) and [scoped bug reports](../testing/bugs/README.md). Those records retain their original earlier source identity and are not silently relabeled as current full-stack Dxx evidence.
 
-The 164 unique component cases are not inflated by counting repeat executions and the 21 baseline/mutant/restoration runs again. The Java arithmetic oracle executes 50,000 deterministic steps; the TypeScript round-trip case checks 10,000 generated values in four currencies. These are component models, not full-system throughput or property-test proof.
+## Resolved findings in this milestone
 
-## Unexecuted or missing
+- A real `execute_command` SQL ambiguity found by the first PostgreSQL run was repaired through additive Flyway V5; the eleven database tests then passed.
+- A transient JVM-startup socket reset exposed an overly narrow readiness exception boundary; the bounded poll was repaired and the complete clean Compose lane then passed.
 
-PostgreSQL/Flyway/JUnit/Testcontainers: source-written but not resolved/compiled/executed. RabbitMQ/Toxiproxy, Spring HTTP/security, Pact, actual browser/axe, ZAP, all F01–F08, all complete D01–D24, migration/restore, reference k6, three CI lanes and video: no executed evidence. The five exploratory charters are prepared, not performed. Eight scoped findings are not the required complete ten-report integrated-product set. No screenshots, scans, benchmark numbers or passing CI badges were invented.
+## Still unexecuted or incomplete
 
-## Provenance and reuse
+Spring authentication/CSRF/ownership APIs, live transfer/payment HTTP paths, RabbitMQ publisher/consumer processing, worker recovery, webhook sender/receiver, scheduler execution, the React product UI, Pact, real Playwright/axe journeys, ZAP, complete F01–F08, complete D01–D24, data-bearing upgrade/backup restore, reference k6, nightly/release lanes and the demonstration video remain open. Five exploratory charters are prepared but not represented as human execution. No public application, release tag, security certification, accessibility conformance or performance claim exists.
 
-The preserved red logs are expected negative controls or the actual pre-fix regression. Missing test discovery, setup errors, timeout and failed cleanup are different classifications and cannot count as a detection. Original and mutant source bytes, case ID, command, timestamps, return codes and hashes are retained. Current code must still match the source-input manifest before these results are reused. Evidence-only commits may follow the tested commit; after implementation inputs change, rerun and refresh evidence instead of relabeling old reports.
+## Provenance
 
-No live credentials are present. Test signature vectors and synthetic IDs are public deterministic fixtures. There is no demo video/public app URL/CI run URL because those artifacts were not produced.
+The verified run used Ubuntu 24.04.5, Java 21.0.12+1, Node 22.23.2, npm 10.9.8, Docker 28.0.4, Testcontainers 1.21.4 and PostgreSQL 17.11. The retained Actions artifact contains 39 files, is 73,969 bytes, has SHA-256 `61a1903b6904e748e38cd8f2a50b3240a252ef975b9228f7512f312c93275b78`, and expires 2026-10-10. Its expiry is why this compact durable summary is committed.
 
-## Environment and delivery checks
-
-[Environment doctor](environment-doctor.json), [database entry blocker](database-attempt.log), [up blocker](up-attempt.log), [remote re-read](remote-verification.json) and [limited literal-secret scan](literal-secret-scan.json). The infrastructure commands returned exit status 2, not a passing integration result. The limited scan found no configured literal patterns; this does not satisfy security/scanner gates.
+Older environment/blocker records remain historical evidence of their original execution environment; they are superseded for current GitHub write, PostgreSQL and Compose capability by the verified run above.
