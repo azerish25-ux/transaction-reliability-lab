@@ -1,5 +1,30 @@
 name: ${COMPOSE_PROJECT_NAME:-ledgerguard}
 
+x-ledger-runtime: &ledger-runtime
+  LEDGER_SANDBOX_HTTP: "true"
+  LEDGER_AUTH_KEY: ${LEDGER_AUTH_KEY:?LEDGER_AUTH_KEY is required}
+  LEDGER_DATABASE_URL: jdbc:postgresql://postgres:5432/${POSTGRES_DB:-ledgerguard}
+  LEDGER_RUNTIME_USER: ledger_runtime
+  LEDGER_RUNTIME_PASSWORD: ${LEDGER_RUNTIME_PASSWORD:?LEDGER_RUNTIME_PASSWORD is required}
+
+x-ledger-rabbit: &ledger-rabbit
+  LEDGER_RABBIT_HOST: rabbitmq
+  LEDGER_RABBIT_PORT: 5672
+  LEDGER_RABBIT_USER: ${RABBITMQ_DEFAULT_USER:-ledgerguard}
+  LEDGER_RABBIT_PASSWORD: ${RABBITMQ_DEFAULT_PASS:?RABBITMQ_DEFAULT_PASS is required}
+  LEDGER_RABBIT_VHOST: ${RABBITMQ_DEFAULT_VHOST:-/ledgerguard}
+
+x-service-security: &service-security
+  read_only: true
+  tmpfs:
+    - /tmp
+  security_opt:
+    - no-new-privileges:true
+  restart: unless-stopped
+  stop_grace_period: 25s
+  networks:
+    - ledgerguard
+
 services:
   postgres:
     image: postgres:17.11-bookworm
@@ -48,30 +73,24 @@ services:
       - ledgerguard
 
   api:
+    <<: *service-security
     build:
       context: .
       dockerfile: infra/docker/Dockerfile.backend
     environment:
+      <<: *ledger-runtime
       SPRING_PROFILES_ACTIVE: sandbox
-      LEDGER_SANDBOX_HTTP: "true"
-      LEDGER_AUTH_KEY: ${LEDGER_AUTH_KEY:?LEDGER_AUTH_KEY is required}
-      LEDGER_DATABASE_URL: jdbc:postgresql://postgres:5432/${POSTGRES_DB:-ledgerguard}
+      LEDGER_PROCESS_NAME: LedgerGuard-API
       LEDGER_MIGRATION_URL: jdbc:postgresql://postgres:5432/${POSTGRES_DB:-ledgerguard}
       LEDGER_OWNER_USER: ledger_owner
       LEDGER_OWNER_PASSWORD: ${LEDGER_OWNER_PASSWORD:?LEDGER_OWNER_PASSWORD is required}
-      LEDGER_RUNTIME_USER: ledger_runtime
-      LEDGER_RUNTIME_PASSWORD: ${LEDGER_RUNTIME_PASSWORD:?LEDGER_RUNTIME_PASSWORD is required}
-      LEDGER_RABBIT_HOST: rabbitmq
-      LEDGER_RABBIT_PORT: 5672
-      LEDGER_RABBIT_USER: ${RABBITMQ_DEFAULT_USER:-ledgerguard}
-      LEDGER_RABBIT_PASSWORD: ${RABBITMQ_DEFAULT_PASS:?RABBITMQ_DEFAULT_PASS is required}
-      LEDGER_RABBIT_VHOST: ${RABBITMQ_DEFAULT_VHOST:-/ledgerguard}
+      LEDGER_MESSAGING_ENABLED: "false"
+      LEDGER_OUTBOX_PUBLISHER_ENABLED: "false"
+      LEDGER_PAYMENT_WORKER_ENABLED: "false"
     ports:
       - "127.0.0.1:${LEDGER_HTTP_PORT:-8080}:8080"
     depends_on:
       postgres:
-        condition: service_healthy
-      rabbitmq:
         condition: service_healthy
     healthcheck:
       test: ["CMD", "curl", "--fail", "--silent", "http://localhost:8080/actuator/health/readiness"]
@@ -79,14 +98,69 @@ services:
       timeout: 3s
       retries: 30
       start_period: 20s
-    restart: unless-stopped
-    read_only: true
-    tmpfs:
-      - /tmp
-    security_opt:
-      - no-new-privileges:true
-    networks:
-      - ledgerguard
+
+  outbox-publisher:
+    <<: *service-security
+    build:
+      context: .
+      dockerfile: infra/docker/Dockerfile.backend
+    environment:
+      <<: [*ledger-runtime, *ledger-rabbit]
+      SPRING_PROFILES_ACTIVE: sandbox
+      SPRING_MAIN_WEB_APPLICATION_TYPE: none
+      LEDGER_PROCESS_NAME: LedgerGuard-Outbox
+      LEDGER_FLYWAY_ENABLED: "false"
+      LEDGER_MESSAGING_ENABLED: "true"
+      LEDGER_OUTBOX_PUBLISHER_ENABLED: "true"
+      LEDGER_PAYMENT_WORKER_ENABLED: "false"
+      LEDGER_DATABASE_POOL_SIZE: 6
+    depends_on:
+      api:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+
+  payment-worker-a:
+    <<: *service-security
+    build:
+      context: .
+      dockerfile: infra/docker/Dockerfile.backend
+    environment:
+      <<: [*ledger-runtime, *ledger-rabbit]
+      SPRING_PROFILES_ACTIVE: sandbox
+      SPRING_MAIN_WEB_APPLICATION_TYPE: none
+      LEDGER_PROCESS_NAME: LedgerGuard-Worker-A
+      LEDGER_FLYWAY_ENABLED: "false"
+      LEDGER_MESSAGING_ENABLED: "true"
+      LEDGER_OUTBOX_PUBLISHER_ENABLED: "false"
+      LEDGER_PAYMENT_WORKER_ENABLED: "true"
+      LEDGER_DATABASE_POOL_SIZE: 8
+    depends_on:
+      api:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+
+  payment-worker-b:
+    <<: *service-security
+    build:
+      context: .
+      dockerfile: infra/docker/Dockerfile.backend
+    environment:
+      <<: [*ledger-runtime, *ledger-rabbit]
+      SPRING_PROFILES_ACTIVE: sandbox
+      SPRING_MAIN_WEB_APPLICATION_TYPE: none
+      LEDGER_PROCESS_NAME: LedgerGuard-Worker-B
+      LEDGER_FLYWAY_ENABLED: "false"
+      LEDGER_MESSAGING_ENABLED: "true"
+      LEDGER_OUTBOX_PUBLISHER_ENABLED: "false"
+      LEDGER_PAYMENT_WORKER_ENABLED: "true"
+      LEDGER_DATABASE_POOL_SIZE: 8
+    depends_on:
+      api:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
 
   seed:
     image: postgres:17.11-bookworm

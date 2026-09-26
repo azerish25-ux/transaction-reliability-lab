@@ -43,6 +43,12 @@ class PostgresFinancialIT {
     static long scalar(Connection c,String sql,Object... args) throws SQLException {
         try(PreparedStatement p=c.prepareStatement(sql)){for(int i=0;i<args.length;i++)p.setObject(i+1,args[i]);try(ResultSet r=p.executeQuery()){r.next();return r.getLong(1);}}
     }
+    static String text(Connection c,String sql,Object... args) throws SQLException {
+        try(PreparedStatement p=c.prepareStatement(sql)){for(int i=0;i<args.length;i++)p.setObject(i+1,args[i]);try(ResultSet r=p.executeQuery()){r.next();return r.getString(1);}}
+    }
+    static void call(Connection c,String sql,Object... args) throws SQLException {
+        try(PreparedStatement p=c.prepareStatement(sql)){for(int i=0;i<args.length;i++)p.setObject(i+1,args[i]);p.execute();}
+    }
     static Fixture fixture() throws SQLException {
         try(Connection c=owner()) {
             c.setAutoCommit(false);
@@ -78,6 +84,8 @@ class PostgresFinancialIT {
         for(String sql:List.of("UPDATE ledger.account_balances SET posted_minor=1 WHERE account_id='"+f.source+"'",
             "DELETE FROM ledger.journal_entries","UPDATE ledger.audit_records SET action='forged'",
             "SELECT ledger._post(gen_random_uuid(),'TRANSFER','"+f.source+"','"+f.target+"',1,'CAD')",
+            "UPDATE ledger.outbox_events SET payload='{}'::jsonb",
+            "UPDATE ledger.payment_projection SET state='FAILED'",
             "INSERT INTO ledger.journals(operation_id,kind,currency) VALUES(gen_random_uuid(),'TRANSFER','CAD')")) {
             try(Connection c=runtime();Statement s=c.createStatement()) {SQLException e=assertThrows(SQLException.class,()->s.execute(sql));assertEquals("42501",e.getSQLState());}
         }
@@ -134,4 +142,13 @@ class PostgresFinancialIT {
     @Test void PG11_registeredIdentityCannotBecomeAdministrator() throws Exception {
         try(Connection c=runtime()){UUID registered=uuid(c,"SELECT ledger.register_customer(?,'offline-db-test-hash-not-for-login-000000000000000','New user')",UUID.randomUUID()+"@example.test");assertEquals(1,scalar(c,"SELECT count(*) FROM ledger.app_users WHERE id=? AND role='CUSTOMER'",registered));assertEquals(0,scalar(c,"SELECT count(*) FROM ledger.accounts WHERE owner_id=?",registered));}
     }
+    @Test void PG12_projectionUsesEventDeduplicationAndAggregateVersionAuthority() throws Exception {
+        Fixture f=fixture();UUID payment=id(commands.execute(f.alice,"PAYMENT",null,UUID.randomUUID().toString(),intent(f,2500),UUID.randomUUID()));UUID pending=UUID.randomUUID();
+        try(Connection c=runtime()){assertEquals("APPLIED",text(c,"SELECT ledger.apply_payment_projection(?,?,1,'PENDING')",pending,payment));assertEquals("DUPLICATE",text(c,"SELECT ledger.apply_payment_projection(?,?,1,'PENDING')",pending,payment));commands.settle(UUID.randomUUID(),payment,UUID.randomUUID());UUID settled=UUID.randomUUID();assertEquals("APPLIED",text(c,"SELECT ledger.apply_payment_projection(?,?,2,'SETTLED')",settled,payment));assertEquals("STALE",text(c,"SELECT ledger.apply_payment_projection(?,?,1,'PENDING')",UUID.randomUUID(),payment));assertEquals("INVALID_TRANSITION",text(c,"SELECT ledger.apply_payment_projection(?,?,3,'FAILED')",UUID.randomUUID(),payment));assertEquals("FUTURE",text(c,"SELECT ledger.apply_payment_projection(?,?,99,'SETTLED')",UUID.randomUUID(),payment));assertEquals("SETTLED",text(c,"SELECT state FROM ledger.payment_projection WHERE payment_id=?",payment));assertEquals(2,scalar(c,"SELECT aggregate_version FROM ledger.payment_projection WHERE payment_id=?",payment));}
+    }
+    @Test void PG13_failedWorkReplayIsAdminAuthorizedAuditedAndIdentityPreserving() throws Exception {
+        Fixture f=fixture();UUID event=UUID.randomUUID(),work;String envelope=JSON.writeValueAsString(Map.of("eventId",event.toString(),"eventType","payment.requested","schemaVersion",1,"aggregateId",UUID.randomUUID().toString(),"aggregateVersion",1,"correlationId",UUID.randomUUID().toString(),"occurredAt","2026-01-01T00:00:00Z","payload",Map.of()));
+        try(Connection c=runtime()){work=uuid(c,"SELECT ledger.record_failed_work('payment-settler-v1',?,'ledgerguard.retry.v1','payment-settler',?::jsonb,'POISON',6)",event,envelope);SQLException denied=assertThrows(SQLException.class,()->call(c,"SELECT ledger.request_failed_replay(?,?,?)",f.alice,work,UUID.randomUUID()));assertEquals("P4030",denied.getSQLState());call(c,"SELECT ledger.request_failed_replay(?,?,?)",f.admin,work,UUID.randomUUID());UUID owner=UUID.randomUUID();try(PreparedStatement p=c.prepareStatement("SELECT id,event_id FROM ledger.claim_failed_replays(?,10,30)")){p.setObject(1,owner);try(ResultSet r=p.executeQuery()){assertTrue(r.next());assertEquals(work,r.getObject(1,UUID.class));assertEquals(event,r.getObject(2,UUID.class));assertFalse(r.next());}}call(c,"SELECT ledger.complete_failed_replay(?,?,true,'',?)",work,owner,UUID.randomUUID());assertEquals("REPUBLISHED",text(c,"SELECT state FROM ledger.failed_work WHERE id=?",work));assertEquals(2,scalar(c,"SELECT count(*) FROM ledger.failed_work_replay_audit WHERE work_id=?",work));}
+    }
+
 }

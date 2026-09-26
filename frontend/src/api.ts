@@ -11,6 +11,8 @@ export interface Receipt { operationId: string; state: string; journalId?: strin
 export interface Intent { sourceId: string; recipientRef: string; amountMinor: string; currency: Currency; }
 export interface TransferReceipt { id: string; kind: 'TRANSFER'; state: 'SETTLED'; journalId: string; amountMinor: string; currency: Currency; }
 export interface TransferRecord { id: string; sourceId: string; recipientRef: string; amountMinor: string; currency: Currency; state: 'SETTLED'; journalId: string; createdAt: string; }
+export interface PaymentReceipt { id: string; kind: 'PAYMENT'; state: 'PENDING'; amountMinor: string; currency: Currency; }
+export interface PaymentRecord { id: string; direction: 'OUTGOING' | 'INCOMING'; accountId: string; counterpartyRef: string; amountMinor: string; currency: Currency; state: 'PENDING' | 'SETTLED' | 'FAILED' | 'CANCELLED'; version: string; adjustmentState: 'NONE' | 'PARTIALLY_REFUNDED' | 'FULLY_REFUNDED' | 'REVERSED'; journalId?: string; failureCode?: string; projectionState?: 'PENDING' | 'SETTLED' | 'FAILED' | 'CANCELLED'; projectionVersion?: string; createdAt: string; updatedAt: string; }
 export interface CommandResponse<T> { status: number; body: T; replayed: boolean; }
 export class ApiError extends Error {
   constructor(readonly status: number, readonly problem: Problem) { super(problem.message); this.name = 'ApiError'; }
@@ -30,6 +32,7 @@ export function normalizeTransferIntent(input: Intent): Intent {
   if (!/^LG-[0-9a-f]{32}$/i.test(normalized.recipientRef)) throw new TypeError('Invalid transfer recipient reference');
   return Object.freeze({ ...normalized, recipientRef: `LG-${normalized.recipientRef.slice(3).toLowerCase()}` });
 }
+export const normalizePaymentIntent = normalizeTransferIntent;
 
 export class ApiClient {
   private csrf: { headerName: string; token: string } | undefined;
@@ -70,6 +73,17 @@ export class ApiClient {
   transfers(limit = 50, offset = 0): Promise<Page<TransferRecord>> {
     if (!Number.isInteger(limit) || limit < 1 || limit > 100 || !Number.isInteger(offset) || offset < 0 || offset > 10000) throw new TypeError('Invalid pagination');
     return this.get<Page<TransferRecord>>(`/transfers?limit=${limit}&offset=${offset}`);
+  }
+  payment(input: Intent, key: string): Promise<CommandResponse<PaymentReceipt>> {
+    return this.command<PaymentReceipt>('/payments', normalizePaymentIntent(input), key);
+  }
+  paymentById(id: string): Promise<PaymentRecord> {
+    if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id)) throw new TypeError('Invalid payment identity');
+    return this.get<PaymentRecord>(`/payments/${id.toLowerCase()}`);
+  }
+  payments(limit = 50, offset = 0): Promise<Page<PaymentRecord>> {
+    if (!Number.isInteger(limit) || limit < 1 || limit > 100 || !Number.isInteger(offset) || offset < 0 || offset > 10000) throw new TypeError('Invalid pagination');
+    return this.get<Page<PaymentRecord>>(`/payments?limit=${limit}&offset=${offset}`);
   }
   async command<T>(path: string, body: unknown, key?: string): Promise<CommandResponse<T>> {
     if (!this.csrf) await this.csrfToken();

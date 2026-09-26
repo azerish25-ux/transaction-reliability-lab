@@ -1,122 +1,212 @@
 #!/usr/bin/env python3
-"""Live Compose P04 smoke. Passwords, JWTs and CSRF values never enter evidence."""
+"""Live Compose P05 smoke: real API, PostgreSQL, RabbitMQ, publisher/worker crashes and recovery."""
+import base64
 import copy
 import http.cookiejar
 import json
 import secrets
 import subprocess
+import time
 import urllib.error
+import urllib.parse
 import urllib.request
 import uuid
 from datetime import datetime, timezone
 from pathlib import Path
 
-ROOT = Path(__file__).resolve().parent.parent
-VALUES = dict(line.split("=", 1) for line in (ROOT / ".ledgerguard/runtime.env").read_text().splitlines()
-              if line and not line.startswith("#"))
-BASE = "http://127.0.0.1:" + VALUES.get("LEDGER_HTTP_PORT", "8080") + "/api/v1"
+ROOT=Path(__file__).resolve().parent.parent
+ENV=ROOT/".ledgerguard/runtime.env"
+VALUES=dict(line.split("=",1) for line in ENV.read_text().splitlines() if line and not line.startswith("#"))
+BASE="http://127.0.0.1:"+VALUES.get("LEDGER_HTTP_PORT","8080")+"/api/v1"
+COMPOSE=["docker","compose","--env-file",str(ENV),"-f",str(ROOT/"compose.yaml")]
 
 class Browser:
     def __init__(self):
-        self.jar = http.cookiejar.CookieJar()
-        self.opener = urllib.request.build_opener(urllib.request.HTTPCookieProcessor(self.jar))
-        self.token = None
-
-    def call(self, path, body=None, method=None, headers=None):
-        request_headers = {"Accept": "application/json", **(headers or {})}
-        if self.token:
-            request_headers["X-XSRF-TOKEN"] = self.token
-        data = None
+        self.jar=http.cookiejar.CookieJar();self.opener=urllib.request.build_opener(urllib.request.HTTPCookieProcessor(self.jar));self.token=None
+    def call(self,path,body=None,method=None,headers=None):
+        request_headers={"Accept":"application/json",**(headers or {})}
+        if self.token: request_headers["X-XSRF-TOKEN"]=self.token
+        data=None
         if body is not None:
-            request_headers["Content-Type"] = "application/json"
-            data = json.dumps(body, separators=(",", ":")).encode()
-        request = urllib.request.Request(BASE + path, data=data, headers=request_headers,
-                                         method=method or ("POST" if body is not None else "GET"))
-        try:
-            response = self.opener.open(request, timeout=15)
-        except urllib.error.HTTPError as error:
-            response = error
+            request_headers["Content-Type"]="application/json";data=json.dumps(body,separators=(",",":")).encode()
+        request=urllib.request.Request(BASE+path,data=data,headers=request_headers,method=method or ("POST" if body is not None else "GET"))
+        try: response=self.opener.open(request,timeout=20)
+        except urllib.error.HTTPError as error: response=error
         with response:
-            raw = response.read()
-            return response.status, json.loads(raw) if raw else None, dict(response.headers.items())
-
+            raw=response.read();return response.status,json.loads(raw) if raw else None,dict(response.headers.items())
     def csrf(self):
-        status, body, _ = self.call("/auth/csrf")
-        assert status == 200, "CSRF acquisition failed"
-        self.token = body["token"]
+        status,body,_=self.call("/auth/csrf");assert status==200,"CSRF acquisition failed";self.token=body["token"]
+    def login(self,email,password):
+        self.csrf();status,body,_=self.call("/auth/login",{"email":email,"password":password});assert status==200,"Fixture login failed";self.csrf();return body
 
-    def login(self, email, password):
-        self.csrf()
-        status, body, _ = self.call("/auth/login", {"email": email, "password": password})
-        assert status == 200, "Fixture login failed"
-        self.csrf()
-        return body
+def compose(*args,check=True,capture=False):
+    return subprocess.run([*COMPOSE,*args],cwd=ROOT,text=True,check=check,capture_output=capture)
 
-checks = []
-def check(name, condition):
-    if not condition:
-        raise AssertionError(name)
-    checks.append({"test": name, "status": "PASS"})
+def sql(query):
+    result=compose("exec","-T","-e",f"PGPASSWORD={VALUES['LEDGER_OWNER_PASSWORD']}","postgres","psql","-X","-A","-t","-q","-v","ON_ERROR_STOP=1","-U","ledger_owner","-d",VALUES["POSTGRES_DB"],"-c",query,capture=True)
+    return result.stdout.strip()
 
-alice = Browser()
-identity = alice.login("alice@example.test", VALUES["LEDGER_DEMO_PASSWORD"])
-check("seeded-customer-login", identity["role"] == "CUSTOMER")
-status, accounts, _ = alice.call("/accounts")
-check("real-seeded-account-balances", status == 200 and len(accounts["items"]) == 5
-      and all(isinstance(a["postedMinor"], str) for a in accounts["items"]))
-check("cross-customer-denial", alice.call("/accounts/20000000-0000-0000-0000-000000000001")[0] == 404)
-check("customer-admin-denial", alice.call("/admin/security-events")[0] == 403)
+def wait_sql(query,expected,seconds=45):
+    deadline=time.monotonic()+seconds;latest=None
+    while time.monotonic()<deadline:
+        latest=sql(query)
+        if latest==str(expected): return latest
+        time.sleep(.5)
+    raise AssertionError(f"SQL condition did not reach {expected!r}; last={latest!r}; query={query}")
 
-source = "10000000-0000-0000-0000-000000000001"
-recipient = "LG-20000000000000000000000000000001"
-before = int(alice.call("/accounts/" + source)[1]["postedMinor"])
-transfer_body = {"sourceId": source, "recipientRef": recipient, "amountMinor": "1250", "currency": "CAD"}
-status, receipt, headers = alice.call("/transfers", transfer_body,
-                                      headers={"Idempotency-Key": "compose-smoke-transfer-v1"})
-check("immediate-transfer-command", status == 201 and receipt["state"] == "SETTLED"
-      and receipt["amountMinor"] == "1250")
-replayed = headers.get("Idempotency-Replayed", headers.get("Idempotency-replayed", "")).lower() == "true"
-after = int(alice.call("/accounts/" + source)[1]["postedMinor"])
-check("transfer-balance-effect", after == (before if replayed else before - 1250))
-status2, receipt2, headers2 = alice.call("/transfers", transfer_body,
-                                        headers={"Idempotency-Key": "compose-smoke-transfer-v1"})
-check("durable-transfer-replay", status2 == 201 and receipt2 == receipt
-      and headers2.get("Idempotency-Replayed", headers2.get("Idempotency-replayed", "")).lower() == "true")
-check("owner-transfer-read", alice.call("/transfers/" + receipt["id"])[0] == 200)
+def wait_payment(browser,payment_id,state,projection=None,seconds=60):
+    deadline=time.monotonic()+seconds;latest=None
+    while time.monotonic()<deadline:
+        status,latest,_=browser.call("/payments/"+payment_id)
+        if status==200 and latest["state"]==state and (projection is None or latest.get("projectionState")==projection): return latest
+        time.sleep(.5)
+    raise AssertionError(f"Payment {payment_id} did not reach {state}/{projection}; last={latest}")
 
-bob = Browser()
-bob.login("bob@example.test", VALUES["LEDGER_DEMO_PASSWORD"])
-check("cross-customer-transfer-denial", bob.call("/transfers/" + receipt["id"])[0] == 404)
+def wait_rabbit(seconds=60):
+    deadline=time.monotonic()+seconds
+    while time.monotonic()<deadline:
+        if compose("exec","-T","rabbitmq","rabbitmq-diagnostics","-q","ping",check=False).returncode==0:return
+        time.sleep(1)
+    raise AssertionError("RabbitMQ did not become healthy")
 
-admin = Browser()
-admin.login("admin@example.test", VALUES["LEDGER_DEMO_PASSWORD"])
-check("real-admin-security-feed", admin.call("/admin/security-events")[0] == 200)
-check("administrator-cannot-transfer", admin.call("/transfers", transfer_body,
-      headers={"Idempotency-Key": "admin-compose-spend-v1"})[0] == 403)
+def rabbit_publish(routing,payload,event_id):
+    vhost=urllib.parse.quote(VALUES["RABBITMQ_DEFAULT_VHOST"],safe="")
+    exchange=urllib.parse.quote("ledgerguard.events.v1",safe="")
+    url=f"http://127.0.0.1:{VALUES.get('LEDGER_RABBIT_MANAGEMENT_PORT','15672')}/api/exchanges/{vhost}/{exchange}/publish"
+    token=base64.b64encode(f"{VALUES['RABBITMQ_DEFAULT_USER']}:{VALUES['RABBITMQ_DEFAULT_PASS']}".encode()).decode()
+    body={"properties":{"delivery_mode":2,"message_id":event_id,"content_type":"application/json"},"routing_key":routing,"payload":payload,"payload_encoding":"string"}
+    request=urllib.request.Request(url,data=json.dumps(body).encode(),headers={"Authorization":"Basic "+token,"Content-Type":"application/json"},method="POST")
+    with urllib.request.urlopen(request,timeout=15) as response:
+        result=json.loads(response.read())
+    assert result.get("routed") is True,result
 
-new = Browser()
-new.csrf()
-email = str(uuid.uuid4()) + "@example.test"
-password = secrets.token_urlsafe(24)
-check("real-registration", new.call("/auth/register", {"email": email, "password": password,
-      "displayName": "Compose smoke"})[0] == 201)
-new.login(email, password)
-status, account, _ = new.call("/accounts", {"name": "Zero balance", "currency": "KWD"})
-check("new-account-zero", status == 201 and account["postedMinor"] == "0" and account["availableMinor"] == "0")
+checks=[]
+def check(name,condition):
+    if not condition: raise AssertionError(name)
+    checks.append({"test":name,"status":"PASS"})
 
-saved = Browser()
-for cookie in new.jar:
-    saved.jar.set_cookie(copy.copy(cookie))
-check("logout-empty-response", new.call("/auth/logout", method="POST")[:2] == (204, None))
-check("copied-cookie-revoked", saved.call("/auth/me")[0] == 401)
+def unique(prefix): return prefix+"-"+uuid.uuid4().hex
 
-report = {
-    "sourceSha": subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=ROOT, text=True).strip(),
-    "timestamp": datetime.now(timezone.utc).isoformat(),
-    "scope": "real Docker Compose P04 authentication/account/transfer smoke",
-    "checks": checks,
-}
-out = ROOT / ".evidence/transfer-compose"
-out.mkdir(parents=True, exist_ok=True)
-(out / "results.json").write_text(json.dumps(report, indent=2) + "\n")
-print(json.dumps(report, indent=2))
+running=set(compose("ps","--status","running","--services",capture=True).stdout.split())
+check("two-independent-workers-running",{"payment-worker-a","payment-worker-b","outbox-publisher"}.issubset(running))
+
+alice=Browser();identity=alice.login("alice@example.test",VALUES["LEDGER_DEMO_PASSWORD"])
+check("seeded-customer-login",identity["role"]=="CUSTOMER")
+status,accounts,_=alice.call("/accounts")
+check("real-seeded-account-balances",status==200 and len(accounts["items"])==5 and all(isinstance(a["postedMinor"],str) for a in accounts["items"]))
+check("cross-customer-denial",alice.call("/accounts/20000000-0000-0000-0000-000000000001")[0]==404)
+check("customer-admin-denial",alice.call("/admin/security-events")[0]==403)
+
+source="10000000-0000-0000-0000-000000000001";recipient="LG-20000000000000000000000000000001"
+before=int(alice.call("/accounts/"+source)[1]["postedMinor"])
+transfer_body={"sourceId":source,"recipientRef":recipient,"amountMinor":"125","currency":"CAD"};transfer_key=unique("compose-transfer")
+status,receipt,headers=alice.call("/transfers",transfer_body,headers={"Idempotency-Key":transfer_key})
+check("immediate-transfer-command",status==201 and receipt["state"]=="SETTLED")
+check("immediate-transfer-balance",int(alice.call("/accounts/"+source)[1]["postedMinor"])==before-125)
+status2,receipt2,headers2=alice.call("/transfers",transfer_body,headers={"Idempotency-Key":transfer_key})
+check("durable-transfer-replay",status2==201 and receipt2==receipt and headers2.get("Idempotency-Replayed",headers2.get("Idempotency-replayed","")).lower()=="true")
+
+# Acceptance is PostgreSQL-only: stop all messaging processes, then inspect PENDING/hold/outbox before settlement.
+compose("stop","outbox-publisher","payment-worker-a","payment-worker-b")
+payment_body={"sourceId":source,"recipientRef":recipient,"amountMinor":"1500","currency":"CAD"};payment_key=unique("compose-payment")
+posted_before=int(alice.call("/accounts/"+source)[1]["postedMinor"])
+status,pending,headers=alice.call("/payments",payment_body,headers={"Idempotency-Key":payment_key})
+check("payment-accepted-without-publisher",status==202 and pending["state"]=="PENDING")
+payment_id=pending["id"]
+status,replayed,replay_headers=alice.call("/payments",payment_body,headers={"Idempotency-Key":payment_key})
+check("durable-payment-replay",status==202 and replayed==pending and replay_headers.get("Idempotency-Replayed",replay_headers.get("Idempotency-replayed","")).lower()=="true")
+current=alice.call("/payments/"+payment_id)[1]
+check("pending-hold-visible",current["state"]=="PENDING" and current.get("journalId") is None)
+check("acceptance-reserves-without-posting",sql(f"SELECT posted_minor||':'||reserved_minor FROM ledger.account_balances WHERE account_id='{source}'")==f"{posted_before}:1500" and sql(f"SELECT count(*) FROM ledger.journals WHERE operation_id='{payment_id}'")=="0")
+check("acceptance-atomic-artifacts",sql(f"SELECT (SELECT count(*) FROM ledger.payments WHERE id='{payment_id}')||':'||(SELECT count(*) FROM ledger.holds WHERE payment_id='{payment_id}' AND state='ACTIVE')||':'||(SELECT count(*) FROM ledger.audit_records WHERE aggregate_id='{payment_id}' AND action='PAYMENT_ACCEPTED')||':'||(SELECT count(*) FROM ledger.outbox_events WHERE aggregate_id='{payment_id}' AND event_type='payment.requested')")=="1:1:1:1")
+compose("up","-d","outbox-publisher","payment-worker-a","payment-worker-b")
+settled=wait_payment(alice,payment_id,"SETTLED","SETTLED")
+check("rabbit-settlement-and-projection",settled["journalId"] and settled["projectionVersion"]==settled["version"])
+check("settlement-consumes-hold-once",sql(f"SELECT (SELECT count(*) FROM ledger.journals WHERE operation_id='{payment_id}')||':'||(SELECT state FROM ledger.holds WHERE payment_id='{payment_id}')||':'||(SELECT reserved_minor FROM ledger.account_balances WHERE account_id='{source}')")=="1:CONSUMED:0")
+
+# Each worker must make progress independently; this proves two runnable instances rather than two idle containers.
+compose("stop","payment-worker-a")
+status,worker_b_payment,_=alice.call("/payments",{"sourceId":source,"recipientRef":recipient,"amountMinor":"50","currency":"CAD"},headers={"Idempotency-Key":unique("worker-b-only")})
+check("worker-b-acceptance",status==202);wait_payment(alice,worker_b_payment["id"],"SETTLED","SETTLED")
+check("worker-b-settles-independently",sql(f"SELECT count(*) FROM ledger.journals WHERE operation_id='{worker_b_payment['id']}'")=="1")
+compose("up","-d","payment-worker-a");compose("stop","payment-worker-b")
+status,worker_a_payment,_=alice.call("/payments",{"sourceId":source,"recipientRef":recipient,"amountMinor":"50","currency":"CAD"},headers={"Idempotency-Key":unique("worker-a-only")})
+check("worker-a-acceptance",status==202);wait_payment(alice,worker_a_payment["id"],"SETTLED","SETTLED")
+check("worker-a-settles-independently",sql(f"SELECT count(*) FROM ledger.journals WHERE operation_id='{worker_a_payment['id']}'")=="1")
+compose("up","-d","payment-worker-b")
+
+# Broker outage must not take down the API or immediate transfers.
+compose("stop","outbox-publisher","payment-worker-a","payment-worker-b","rabbitmq")
+health=urllib.request.urlopen(BASE.replace('/api/v1','')+"/actuator/health/readiness",timeout=10)
+check("api-ready-during-broker-outage",json.loads(health.read())["status"]=="UP")
+outage_body={"sourceId":source,"recipientRef":recipient,"amountMinor":"700","currency":"CAD"};outage_key=unique("broker-outage")
+status,outage_payment,_=alice.call("/payments",outage_body,headers={"Idempotency-Key":outage_key})
+check("durable-payment-during-broker-outage",status==202 and alice.call("/payments/"+outage_payment["id"])[1]["state"]=="PENDING")
+status,_,_=alice.call("/transfers",{"sourceId":source,"recipientRef":recipient,"amountMinor":"100","currency":"CAD"},headers={"Idempotency-Key":unique("broker-outage-transfer")})
+check("immediate-transfer-during-broker-outage",status==201)
+compose("up","-d","rabbitmq");wait_rabbit();compose("up","-d","outbox-publisher","payment-worker-a","payment-worker-b")
+wait_payment(alice,outage_payment["id"],"SETTLED","SETTLED")
+check("broker-recovery-drains-backlog",sql(f"SELECT count(*) FROM ledger.journals WHERE operation_id='{outage_payment['id']}'")=="1")
+
+# Publisher dies after broker confirm but before marking the outbox row. Lease expiry must republish the same event ID safely.
+wait_sql("SELECT count(*) FROM ledger.outbox_events WHERE published_at IS NULL AND failed_at IS NULL","0",60)
+compose("stop","outbox-publisher")
+publisher_body={"sourceId":source,"recipientRef":recipient,"amountMinor":"500","currency":"CAD"}
+status,publisher_payment,_=alice.call("/payments",publisher_body,headers={"Idempotency-Key":unique("publisher-crash")});check("publisher-crash-payment-accepted",status==202)
+fault=compose("run","--rm","--no-deps","-e","LEDGER_TEST_CRASH_AFTER_PUBLISH_CONFIRM=true","-e","LEDGER_OUTBOX_LEASE_SECONDS=5","outbox-publisher",check=False,capture=True)
+check("publisher-process-died-after-confirm",fault.returncode==86)
+wait_payment(alice,publisher_payment["id"],"SETTLED",None)
+time.sleep(6);compose("up","-d","outbox-publisher")
+wait_sql(f"SELECT CASE WHEN attempts>=2 AND published_at IS NOT NULL THEN 1 ELSE 0 END FROM ledger.outbox_events WHERE aggregate_id='{publisher_payment['id']}' AND event_type='payment.requested'","1",45)
+check("crash-after-confirm-republish-one-effect",sql(f"SELECT count(*) FROM ledger.journals WHERE operation_id='{publisher_payment['id']}'")=="1")
+
+# Worker dies after settlement commit but before Rabbit acknowledgement. Redelivery is inbox/business deduplicated.
+compose("stop","payment-worker-a","payment-worker-b")
+worker_body={"sourceId":source,"recipientRef":recipient,"amountMinor":"600","currency":"CAD"}
+status,worker_payment,_=alice.call("/payments",worker_body,headers={"Idempotency-Key":unique("worker-crash")});check("worker-crash-payment-accepted",status==202)
+wait_sql(f"SELECT CASE WHEN published_at IS NOT NULL THEN 1 ELSE 0 END FROM ledger.outbox_events WHERE aggregate_id='{worker_payment['id']}' AND event_type='payment.requested'","1",45)
+fault=compose("run","--rm","--no-deps","-e","LEDGER_TEST_CRASH_AFTER_SETTLEMENT_COMMIT=true","payment-worker-a",check=False,capture=True)
+check("worker-process-died-after-commit",fault.returncode==87)
+compose("up","-d","payment-worker-a","payment-worker-b")
+wait_payment(alice,worker_payment["id"],"SETTLED","SETTLED")
+check("worker-redelivery-one-financial-effect",sql(f"SELECT (SELECT count(*) FROM ledger.journals WHERE operation_id='{worker_payment['id']}')||':'||(SELECT count(*) FROM ledger.consumer_inbox i JOIN ledger.outbox_events e ON e.id=i.event_id WHERE i.consumer='payment-settler-v1' AND e.aggregate_id='{worker_payment['id']}' AND e.event_type='payment.requested')")=="1:1")
+
+# A logical duplicate with a different message ID and an older snapshot cannot repost or regress projection state.
+stale_event=str(uuid.uuid4());correlation=str(uuid.uuid4())
+stale={"eventId":stale_event,"eventType":"payment.requested","schemaVersion":1,"aggregateId":worker_payment["id"],"aggregateVersion":1,"correlationId":correlation,"occurredAt":datetime.now(timezone.utc).isoformat(),"payload":{"paymentId":worker_payment["id"],"version":1,"state":"PENDING","amountMinor":"600","currency":"CAD","refundedMinor":"0","reversed":False,"journalId":None}}
+rabbit_publish("payment.requested",json.dumps(stale,separators=(",",":")),stale_event)
+wait_sql(f"SELECT count(*) FROM ledger.consumer_inbox WHERE event_id='{stale_event}'","2",45)
+check("different-message-id-cannot-repeat-payment",sql(f"SELECT count(*) FROM ledger.journals WHERE operation_id='{worker_payment['id']}'")=="1")
+check("old-event-cannot-regress-projection",sql(f"SELECT state||':'||aggregate_version FROM ledger.payment_projection WHERE payment_id='{worker_payment['id']}'")=="SETTLED:2")
+
+# Poison work is bounded, inspectable and auditable through the administrator replay path.
+poison_id=str(uuid.uuid4());rabbit_publish("payment.requested",'{"malformed":true}',poison_id)
+wait_sql(f"SELECT count(*) FROM ledger.failed_work WHERE event_id='{poison_id}' AND state='FAILED'","1",45)
+admin=Browser();admin.login("admin@example.test",VALUES["LEDGER_DEMO_PASSWORD"])
+status,failed_page,_=admin.call("/admin/failed-work?limit=100&offset=0")
+work=next(item for item in failed_page["items"] if item["eventId"]==poison_id)
+check("poison-work-admin-inspection",status==200 and work["attempts"]==1)
+status,replay_response,_=admin.call(f"/admin/failed-work/{work['id']}/replay",{},method="POST")
+check("audited-replay-request",status==202 and replay_response["state"]=="REPLAY_REQUESTED")
+wait_sql(f"SELECT count(*) FROM ledger.failed_work_replay_audit WHERE work_id='{work['id']}' AND action='REPLAY_REQUESTED'","1",45)
+wait_sql(f"SELECT count(*) FROM ledger.failed_work WHERE id='{work['id']}' AND state='FAILED'","1",45)
+check("poison-replay-remains-bounded",int(sql(f"SELECT attempts FROM ledger.failed_work WHERE id='{work['id']}'"))>=1)
+
+bob=Browser();bob.login("bob@example.test",VALUES["LEDGER_DEMO_PASSWORD"])
+check("recipient-can-read-payment-without-private-source-id",bob.call("/payments/"+payment_id)[0]==200 and source not in json.dumps(bob.call("/payments/"+payment_id)[1]))
+check("cross-customer-transfer-denial",bob.call("/transfers/"+receipt["id"])[0]==404)
+check("real-admin-security-feed",admin.call("/admin/security-events")[0]==200)
+check("administrator-cannot-create-payment",admin.call("/payments",payment_body,headers={"Idempotency-Key":unique("admin-payment")})[0]==403)
+
+new=Browser();new.csrf();email=str(uuid.uuid4())+"@example.test";password=secrets.token_urlsafe(24)
+check("real-registration",new.call("/auth/register",{"email":email,"password":password,"displayName":"Compose smoke"})[0]==201)
+new.login(email,password);status,account,_=new.call("/accounts",{"name":"Zero balance","currency":"KWD"})
+check("new-account-zero",status==201 and account["postedMinor"]=="0" and account["availableMinor"]=="0")
+saved=Browser()
+for cookie in new.jar:saved.jar.set_cookie(copy.copy(cookie))
+check("logout-empty-response",new.call("/auth/logout",method="POST")[:2]==(204,None))
+check("copied-cookie-revoked",saved.call("/auth/me")[0]==401)
+
+report={"sourceSha":subprocess.check_output(["git","rev-parse","HEAD"],cwd=ROOT,text=True).strip(),"timestamp":datetime.now(timezone.utc).isoformat(),"scope":"real Docker Compose P05 API/outbox/RabbitMQ/two-worker/restart/replay smoke","checks":checks}
+out=ROOT/".evidence/payment-compose";out.mkdir(parents=True,exist_ok=True);(out/"results.json").write_text(json.dumps(report,indent=2)+"\n")
+print(json.dumps(report,indent=2))

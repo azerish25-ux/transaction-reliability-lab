@@ -1,54 +1,64 @@
 # Risk-based test strategy
 
-## Scope and entry conditions
+## Scope and evidence discipline
 
-The complete target is the unchanged MASTER_SPEC. This checkpoint verifies only Java component policies and TypeScript client behavior offline. PostgreSQL integration sources exist but are unexecuted. Authentication, a working API/UI/worker/receiver, contracts, operational faults, real throughput and delivery gates remain mandatory open work, not exclusions.
+The complete target is the unchanged `MASTER_SPEC.md`. P01–P04 have executed durable evidence. P05 is an implemented candidate and must not be marked `VERIFIED_PASS` until its complete GitHub Actions lane succeeds against the exact source SHA. P06–P11 remain open.
 
-Financial correctness has priority over presentation. No real money, third-party targets, live identities or arbitrary egress are permitted. All test identities must be fictional and each integration worker gets unique financial fixtures. A component test is not evidence of database locking, a mocked Fetch response is not a provider contract, and a compile failure is not a valid mutant detection.
+Financial correctness has priority over presentation. All money is synthetic; no live identities, third-party payment targets or arbitrary egress are allowed. A component test is not evidence of database locking, a mocked Fetch response is not a broker proof, and an unexecuted test source is not evidence. Every mandatory suite must report nonzero discovery with zero failures, errors and skips.
 
 ## Risk scoring
 
-Impact, likelihood and detection difficulty are analyst-assigned ordinal 1–5 scales, not hiring statistics or incident probabilities. Impact 5 means possible money loss/creation or unauthorized financial access; 4 means material outage/inconsistent obligations; 3 means material operational/usability harm; 2 means limited friction; 1 means cosmetic. Likelihood 5 means routine triggering inputs, 3 means plausible races/environmental faults, 1 means rare guarded conditions. Detection difficulty 5 means silent delayed harm, 3 requires cross-boundary evidence, 1 is immediately visible. The product I×L×D just prioritizes test depth; all financial/auth gates are mandatory regardless of rank.
+Impact, likelihood and detection difficulty are analyst-assigned ordinal 1–5 scales, not incident probabilities. Impact 5 means possible money loss/creation or unauthorized financial access; likelihood 5 means routine triggering inputs; detection difficulty 5 means silent delayed harm. Their product prioritizes depth, but every financial/authentication gate remains mandatory regardless of score.
 
-| Risk | Boundary and oracle | I | L | D | Priority product | Present evidence |
+| Risk | Boundary and independent oracle | I | L | D | Priority | Current state |
 |---|---|---:|---:|---:|---:|---|
-| R01 duplicate request | Same scope/key → one operation/posting | 5 | 5 | 4 | 100 | Fingerprint unit cases; DB suite unrun |
-| R02 concurrent spending | Two APIs, 10,000 funds, two 8,000 requests → one controlled rejection | 5 | 4 | 4 | 80 | Pure availability tests; two-connection PG source unrun |
-| R03 timeout after commit | Retried original key resolves original operation | 5 | 4 | 5 | 100 | Client replay and retry-classification units only |
-| R04 worker crash | Commit/ACK order and eventual recovery after dependencies return | 5 | 3 | 5 | 75 | No executed evidence |
-| R05 duplicate broker message | Inbox and business identity prevent extra journal | 5 | 4 | 5 | 100 | Settlement SQL/DB source unrun |
-| R06 reordered events | Lower version never regresses terminal snapshot | 4 | 4 | 4 | 64 | Projection unit cases only |
-| R07 partial transaction failure | Entries/holds/balances/state/audit/outbox commit atomically | 5 | 4 | 5 | 100 | Arithmetic reference model; DB invariants unrun |
-| R08 invalid compensation | Authorized adjustment totals never exceed settlement | 5 | 4 | 4 | 80 | State-policy tests; PG race source unrun |
-| R09 representation/overflow | String minor units agree exactly across browser/API/entries | 5 | 4 | 5 | 100 | Java/TS units; no browser-to-ledger proof |
-| R10 cross-user access | Owner predicates on direct/nested reads/writes | 5 | 4 | 4 | 80 | Intent-store isolation only; HTTP auth unimplemented |
-| R11 privilege escalation | CUSTOMER cannot perform administrator operations | 5 | 3 | 4 | 60 | DB function policy source unrun |
-| R12 expired/altered auth | Actual protected endpoints reject invalid sessions | 5 | 4 | 4 | 80 | HTTP/JWT implementation missing |
-| R13 webhook outage | Durable attempt budget/exact signatures; settlement isolated | 4 | 5 | 3 | 60 | Signature/retry/encryption units only |
-| R14 migration | Historical fingerprints and replay survive real upgrade/restore | 5 | 3 | 5 | 75 | Additive migration source; no upgrade/restore proof |
-| R15 scheduling | Unique occurrence; correct wall time/DST/catch-up | 4 | 4 | 5 | 80 | DST/identity policy units only |
-| R16 performance | Measured thresholds plus independent financial reconciliation | 4 | 3 | 3 | 36 | Not measured |
-| R17 accessibility | Axe + keyboard/focus + responsive critical journeys | 3 | 5 | 3 | 45 | No UI/browser evidence |
-| R18 dependency fault | Actual fault reaches dependency; controlled recovery | 4 | 4 | 4 | 64 | Retry/egress unit cases, no injected infrastructure fault |
+| R01 duplicate command | Same actor/kind/key/normalized intent → one operation and one financial effect | 5 | 5 | 4 | 100 | P04 verified; P05 acceptance/replay candidate |
+| R02 concurrent spending/reservation | Separate API processes cannot post or reserve beyond availability | 5 | 4 | 4 | 80 | P04 posting verified; P05 reservation race candidate |
+| R03 response lost after commit | Replaying the original key resolves the durable result | 5 | 4 | 5 | 100 | Immediate transfer verified; payment client intent preservation candidate |
+| R04 publisher crash | Broker-confirmed event with an unmarked outbox row is safely republished | 5 | 3 | 5 | 75 | Real process-death Compose proof configured for P05 |
+| R05 worker crash | Settlement commit before acknowledgement redelivers without a second journal | 5 | 4 | 5 | 100 | PostgreSQL dedup plus real process-death proof configured for P05 |
+| R06 duplicate/logical duplicate event | Inbox identity and payment state prevent extra committed effects | 5 | 4 | 5 | 100 | Database and Rabbit duplicate proofs configured for P05 |
+| R07 reordered/future event | Aggregate version cannot regress or outrun authoritative payment state | 4 | 4 | 4 | 64 | Projection database and stale-delivery proofs configured for P05 |
+| R08 partial transaction failure | Payment, hold, balances, journal, audit, inbox and outbox remain atomic | 5 | 4 | 5 | 100 | Database constraints plus acceptance/settlement inspection configured |
+| R09 representation/overflow | String minor units agree across client, API and ledger | 5 | 4 | 5 | 100 | Java/TypeScript verified in earlier phases; payment extension candidate |
+| R10 cross-user access | Relevant-party reads reveal no private counterparty UUID/owner/balance | 5 | 4 | 4 | 80 | Account/transfer verified; payment privacy candidate |
+| R11 privilege escalation | CUSTOMER cannot administer replay; ADMIN cannot spend customer funds | 5 | 3 | 4 | 60 | Prior role boundary verified; failed-work replay/payment denial candidate |
+| R12 broker outage | API and immediate transfers remain healthy; payment backlog drains later | 4 | 4 | 4 | 64 | Real RabbitMQ outage/recovery campaign configured for P05 |
+| R13 poison/retry exhaustion | No hot requeue loop; bounded failed work remains inspectable and replayable | 4 | 4 | 4 | 64 | Bounded queues, permanent validation and replay campaign configured |
+| R14 migration/restore | Historical financial identities survive upgrade and restore | 5 | 3 | 5 | 75 | Additive V1–V7 migration candidate; full backup/restore remains P10 |
+| R15 adjustment races | Cancellation/refund/reversal cannot exceed or rewrite settlement | 5 | 4 | 4 | 80 | Database scaffolding exists; complete P06 HTTP/race evidence remains open |
+| R16 schedules/webhooks | Unique DST-safe occurrence and signed bounded delivery | 4 | 4 | 5 | 80 | P07 not started |
+| R17 performance/security/accessibility | Measured thresholds and real scanners/browser checks | 4 | 3 | 4 | 48 | P08/P10 remain open |
 
-## Data and independent oracles
+## Independent financial oracles
 
-Java's seed-74021 arithmetic model executes 50,000 hold/release/consume/debit/credit steps against independent BigInteger posted/reserved totals. It is not a full payment/queue state machine and does not simulate distributed concurrency. TypeScript performs exact-string round trips against BigInt for 10,000 deterministic values in four currencies. Signature bytes are compared with an independently generated HMAC test vector, not only self-verification. PostgreSQL sources independently sum entries and active holds in one consistent snapshot.
+PostgreSQL is the spending authority. Tests independently recompute each account’s posted balance from immutable journal entries and reserved balance from active holds; they do not trust API totals as their oracle. Settlement assertions separately inspect payment state, hold state, one journal, two balanced entries, consumer inbox rows, audit records and outbox records.
 
-The pending full-system state machine must include transfers, pending payments, settlement, cancellations, adjustments, duplicates and ambiguous failures, comparing identities and every invariant after each step. Tests must not authorize spending from the same broken helper they use as an oracle.
+Java’s deterministic arithmetic model and TypeScript BigInt round trips remain lower-level representation checks. They do not substitute for real transaction locking, RabbitMQ delivery or process restart proofs.
 
-## Layers and exit criteria
+## P05 execution layers
 
-Unit/component: strict compilation, actual nonzero discovery, no implicit retries, recorded seed. Database: real PostgreSQL owner/runtime roles, commits, rollback/failure boundaries and old-data migration. API: real Spring HTTP + CSRF/JWT/ownership/errors. Contracts: real frontend client to Pact consumer, real API/database provider states, actual broker/message and sender/receiver contracts. Browser: all critical customer/admin actions, exact amount/receipt evidence, responsive sizes and a11y. Resilience: prove F01–F08 were active, capture pre/active/recovery snapshots and teardown. Performance: maintain specified dataset/load/duration thresholds, include rejected/replayed/uncertain classes and post-load reconciliation.
+1. **Component and client:** strict Java compilation; existing 120 core cases; TypeScript type checking; exact-string payment requests; stable idempotency keys; uncertain-intent persistence and replay.
+2. **Database:** real PostgreSQL 17 with owner/runtime roles; V1–V7 migration; protected payment acceptance/settlement; reservation concurrency; inbox deduplication; monotonic projection; failed-work authorization/audit; direct runtime DML denial.
+3. **HTTP:** two independent Spring Boot JVMs sharing PostgreSQL; payment acceptance, replay/conflict, reservation races, relevant-party privacy, OpenAPI and Rabbit-independent API behavior.
+4. **Messaging and resilience:** real RabbitMQ, durable exchanges/queues, bounded prefetch/queue sizes, persistent messages, mandatory routing, correlated confirms, leased outbox claims, one publisher and two independently proven workers.
+5. **Process death and outage:** publisher death after confirm/before outbox marking; worker death after settlement commit/before acknowledgement; complete broker outage; recovery and exact-one-effect inspection.
+6. **Failure handling:** invalid envelopes, duplicate/different IDs, stale snapshots, bounded failed work and ADMIN-authorized append-only-audited replay.
+7. **Regression and reconciliation:** all P01–P04 suites rerun; final repeated independent reconciliation must report zero discrepancies.
 
-Every gate consumes evidence from the exact candidate SHA; missing/skipped/pending/cancelled checks are not PASS. Coverage percentages, stress capacity, a11y conformance and security assurance cannot be inferred from test counts. All unperformed suites remain listed in release readiness.
+## Exit criteria
 
-## Component mutation protocol
+P05 becomes `VERIFIED_PASS` only when:
 
-`lab-support/unit-probes.json` describes exactly seven unit-component variants. The runner changes one matched source span in the single checkout, records original/mutant SHA-256 and source commit/dirty state, runs the same detecting case baseline/mutant/restored, rejects missing tests/compiler errors/unexpected failures, verifies restoration and retains red XML/logs. It has a filesystem lock and a recoverable original source copy. Expected mutant failure is not hidden through `continue-on-error`.
+- all required XML suites exist with expected nonzero discovery and no failure/error/skip;
+- the live Compose evidence contains every required passing check;
+- P03, P04 and P05 requirement manifests resolve to exact executed test/check names;
+- both OpenAPI compatibility snapshots remain internally valid;
+- source SHA, dirty-tree state, environment, commands and artifacts are recorded;
+- the required GitHub Actions aggregate gate succeeds.
 
-These probes are a partial learning/effectiveness experiment; their manifest explicitly sets `counts_toward_G07=false`. Full D01–D24 implementations at required HTTP/database/broker/browser boundaries are absent. No F01–F08 fault was activated.
+A failed candidate is retained as a failed run and fixed at the root. Evidence documentation must reference the tested implementation SHA; the later evidence commit is a separate SHA and must pass its own lane.
 
-## Security/evidence publication
+## Remaining full-product work
 
-No authentication tokens, signing keys or database backups may be published. Current fixtures have no live secrets; deterministic cryptographic vectors are labeled tests. Logs must be reviewed before curation. A local source scan is not a secret scanner certification. Future browser traces must be redacted or kept private when cookies cannot be safely removed. CI artifact expiry must be documented rather than presented as durable public storage.
+P05 does not satisfy the complete project. P06 adjustment state/races, P07 schedules and signed webhooks, P08 React/Playwright/axe journeys, P09 F01–F08 and D01–D24 laboratory execution, P10 Pact/ZAP/k6/restore/nightly/release lanes, and P11 final reports/diagrams/video remain mandatory. No test count implies security certification, accessibility conformance, production-financial readiness or performance capacity.
