@@ -221,7 +221,7 @@ BEGIN
   AND published_at IS NULL AND failed_at IS NULL FOR UPDATE;
  IF target.id IS NULL THEN RAISE EXCEPTION USING ERRCODE='P4090',MESSAGE='OUTBOX_LEASE_LOST'; END IF;
  work:=ledger.record_failed_work('outbox-publisher-v1',target.id,'ledgerguard.events.v1',target.event_type,
-  p_envelope,p_error,p_attempts);
+  p_envelope,left(p_error,200),p_attempts);
  UPDATE ledger.outbox_events SET failed_at=clock_timestamp(),lease_owner=NULL,lease_until=NULL,last_error=p_error
  WHERE id=p_event;
  RETURN work;
