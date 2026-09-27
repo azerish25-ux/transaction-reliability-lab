@@ -27,9 +27,22 @@ jobs:
           if source.count(old) != 1:
               raise SystemExit("Expected exactly one obsolete migration-count assertion")
           path.write_text(source.replace(old, new), encoding="utf-8")
-      - name: Upload exact patched source
+      - name: Upload exact source snapshot
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
-          name: p07a-forward-compatible-p06-test
-          path: backend/src/test/java/lab/ledgerguard/PaymentAdjustmentReliabilityIT.java
+          name: p07a-forward-compatible-source
           retention-days: 1
+          include-hidden-files: true
+          path: |
+            .env.example
+            .github/workflows/pr.yml
+            .mvn/
+            README.md
+            backend/
+            compose.yaml
+            docs/
+            frontend/
+            infra/
+            mvnw
+            mvnw.cmd
+            scripts/
