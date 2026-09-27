@@ -3,6 +3,7 @@ package lab.ledgerguard.accounts;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.time.Instant;
+import java.util.List;
 import java.util.UUID;
 import lab.ledgerguard.auth.Identity;
 import lab.ledgerguard.auth.Inputs;
@@ -24,6 +25,9 @@ public class AccountService {
                           String availableMinor,String version,Instant updatedAt) { }
     public record Entry(String id,UUID journalId,UUID operationId,String kind,String side,String amountMinor,String currency,Instant createdAt) { }
     public record Transaction(UUID journalId,UUID operationId,String kind,String effectMinor,String currency,Instant createdAt) { }
+    public record TransactionDetail(UUID journalId,UUID operationId,String kind,String effectMinor,String currency,
+                                    Instant createdAt,UUID accountId,String accountPublicRef,String accountName,
+                                    List<Entry> entries) { }
     public record Recipient(String publicRef,String currency) { }
     private static final String SELECT_ACCOUNT="SELECT a.id,a.public_ref,a.label,a.currency,b.posted_minor::text,b.reserved_minor::text,"
         + "(b.posted_minor-b.reserved_minor)::text AS available_minor,b.version::text,b.updated_at "
@@ -52,12 +56,19 @@ public class AccountService {
     }
     private static final String HISTORY=" FROM ledger.journal_entries e JOIN ledger.journals j ON j.id=e.journal_id "
         + "JOIN ledger.accounts a ON a.id=e.account_id WHERE a.id=? AND a.owner_id=? ";
+    private Entry entryRow(ResultSet rs,int number) throws SQLException {
+        return new Entry(rs.getString("id"),rs.getObject("journal_id",UUID.class),rs.getObject("operation_id",UUID.class),
+            rs.getString("kind"),rs.getString("side"),rs.getString("amount_minor"),rs.getString("currency"),
+            rs.getTimestamp("created_at").toInstant());
+    }
+    private Transaction transactionRow(ResultSet rs,int number) throws SQLException {
+        return new Transaction(rs.getObject("id",UUID.class),rs.getObject("operation_id",UUID.class),rs.getString("kind"),
+            rs.getString("effect"),rs.getString("currency"),rs.getTimestamp("created_at").toInstant());
+    }
     public Page<Entry> entries(Identity identity,UUID id,int limit,int offset) {
         Page.validate(limit,offset); get(identity,id);
         return Page.from(jdbc.query("SELECT e.id::text,e.journal_id,j.operation_id,j.kind,e.side,e.amount_minor::text,e.currency,j.created_at"
-            + HISTORY+"ORDER BY e.id DESC LIMIT ? OFFSET ?",(rs,n)->new Entry(rs.getString("id"),rs.getObject("journal_id",UUID.class),
-            rs.getObject("operation_id",UUID.class),rs.getString("kind"),rs.getString("side"),rs.getString("amount_minor"),
-            rs.getString("currency"),rs.getTimestamp("created_at").toInstant()),id,identity.userId(),limit+1,offset),limit,offset);
+            + HISTORY+"ORDER BY e.id DESC LIMIT ? OFFSET ?",this::entryRow,id,identity.userId(),limit+1,offset),limit,offset);
     }
     public Page<Transaction> transactions(Identity identity,UUID id,int limit,int offset) {
         Page.validate(limit,offset); get(identity,id);
@@ -65,8 +76,20 @@ public class AccountService {
         return Page.from(jdbc.query("SELECT j.id,j.operation_id,j.kind,e.currency,j.created_at,"
             + "sum(CASE WHEN e.side='CREDIT' THEN e.amount_minor::numeric ELSE -e.amount_minor::numeric END)::text AS effect"
             + HISTORY+"GROUP BY j.id,j.operation_id,j.kind,e.currency,j.created_at ORDER BY j.created_at DESC,j.id DESC LIMIT ? OFFSET ?",
-            (rs,n)->new Transaction(rs.getObject("id",UUID.class),rs.getObject("operation_id",UUID.class),rs.getString("kind"),rs.getString("effect"),
-            rs.getString("currency"),rs.getTimestamp("created_at").toInstant()),id,identity.userId(),limit+1,offset),limit,offset);
+            this::transactionRow,id,identity.userId(),limit+1,offset),limit,offset);
+    }
+    public TransactionDetail transaction(Identity identity,UUID id,UUID journalId) {
+        Account account=get(identity,id);
+        var rows=jdbc.query("SELECT j.id,j.operation_id,j.kind,e.currency,j.created_at,"
+            + "sum(CASE WHEN e.side='CREDIT' THEN e.amount_minor::numeric ELSE -e.amount_minor::numeric END)::text AS effect"
+            + HISTORY+"AND j.id=? GROUP BY j.id,j.operation_id,j.kind,e.currency,j.created_at",
+            this::transactionRow,id,identity.userId(),journalId);
+        if(rows.isEmpty()) { events.denied(identity.userId(),"ACCESS_DENIED"); throw new ApiException(404,"NOT_FOUND"); }
+        Transaction record=rows.getFirst();
+        List<Entry> lines=jdbc.query("SELECT e.id::text,e.journal_id,j.operation_id,j.kind,e.side,e.amount_minor::text,e.currency,j.created_at"
+            + HISTORY+"AND j.id=? ORDER BY e.id",this::entryRow,id,identity.userId(),journalId);
+        return new TransactionDetail(record.journalId(),record.operationId(),record.kind(),record.effectMinor(),record.currency(),
+            record.createdAt(),account.id(),account.publicRef(),account.name(),List.copyOf(lines));
     }
     public Recipient recipient(String reference) {
         if(!reference.matches("LG-[a-fA-F0-9]{32}")) throw new ApiException(404,"NOT_FOUND");

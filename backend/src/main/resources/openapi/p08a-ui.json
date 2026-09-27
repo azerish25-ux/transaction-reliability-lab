@@ -1,0 +1,63 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "LedgerGuard P08A customer interface contract",
+    "version": "0.8.1",
+    "description": "Scoped contract for the same-origin customer authentication, balances, account history and customer-safe transaction-detail slice. Synthetic money only."
+  },
+  "servers": [{ "url": "/api/v1" }],
+  "paths": {
+    "/auth/csrf": {
+      "get": { "operationId": "csrfToken", "responses": { "200": { "description": "CSRF header and token" } } }
+    },
+    "/auth/register": {
+      "post": { "operationId": "registerCustomer", "responses": { "201": { "description": "Customer registered without an authenticated session" }, "400": { "$ref": "#/components/responses/Problem" }, "409": { "$ref": "#/components/responses/Problem" } } }
+    },
+    "/auth/login": {
+      "post": { "operationId": "login", "responses": { "200": { "description": "Authenticated customer session" }, "401": { "$ref": "#/components/responses/Problem" }, "429": { "$ref": "#/components/responses/Problem" } } }
+    },
+    "/auth/me": {
+      "get": { "operationId": "currentSession", "responses": { "200": { "description": "Current authenticated identity" }, "401": { "$ref": "#/components/responses/Problem" } } }
+    },
+    "/auth/logout": {
+      "post": { "operationId": "logout", "responses": { "204": { "description": "Session revoked" }, "401": { "$ref": "#/components/responses/Problem" } } }
+    },
+    "/accounts": {
+      "get": { "operationId": "listAccounts", "responses": { "200": { "description": "Owner-scoped wallets with posted, reserved and available balances" }, "401": { "$ref": "#/components/responses/Problem" } } },
+      "post": { "operationId": "createAccount", "responses": { "201": { "description": "Zero-balance wallet created" }, "400": { "$ref": "#/components/responses/Problem" } } }
+    },
+    "/accounts/{accountId}": {
+      "get": {
+        "operationId": "getAccount",
+        "parameters": [{ "$ref": "#/components/parameters/AccountId" }],
+        "responses": { "200": { "description": "Owner-scoped wallet" }, "404": { "$ref": "#/components/responses/Problem" } }
+      }
+    },
+    "/accounts/{accountId}/transactions": {
+      "get": {
+        "operationId": "listAccountTransactions",
+        "parameters": [{ "$ref": "#/components/parameters/AccountId" }, { "$ref": "#/components/parameters/Limit" }, { "$ref": "#/components/parameters/Offset" }],
+        "responses": { "200": { "description": "Deterministically paginated economic effects for this owner's wallet only" }, "404": { "$ref": "#/components/responses/Problem" } }
+      }
+    },
+    "/accounts/{accountId}/transactions/{journalId}": {
+      "get": {
+        "operationId": "getAccountTransaction",
+        "description": "Returns an immutable transaction summary and only the entries owned by the authenticated customer's selected wallet. It does not disclose counterparty balances or unrelated journal lines.",
+        "parameters": [{ "$ref": "#/components/parameters/AccountId" }, { "$ref": "#/components/parameters/JournalId" }],
+        "responses": { "200": { "description": "Customer-safe transaction detail" }, "404": { "$ref": "#/components/responses/Problem" } }
+      }
+    }
+  },
+  "components": {
+    "parameters": {
+      "AccountId": { "name": "accountId", "in": "path", "required": true, "schema": { "type": "string", "format": "uuid" } },
+      "JournalId": { "name": "journalId", "in": "path", "required": true, "schema": { "type": "string", "format": "uuid" } },
+      "Limit": { "name": "limit", "in": "query", "schema": { "type": "integer", "minimum": 1, "maximum": 100, "default": 50 } },
+      "Offset": { "name": "offset", "in": "query", "schema": { "type": "integer", "minimum": 0, "maximum": 10000, "default": 0 } }
+    },
+    "responses": {
+      "Problem": { "description": "Machine-readable application/problem+json with stable code and correlationId" }
+    }
+  }
+}

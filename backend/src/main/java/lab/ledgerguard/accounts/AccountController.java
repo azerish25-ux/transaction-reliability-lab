@@ -31,6 +31,9 @@ public class AccountController {
     @GetMapping("/accounts/{id}/transactions")
     public Page<AccountService.Transaction> transactions(@AuthenticationPrincipal Identity identity,@PathVariable UUID id,
             @RequestParam(defaultValue="50") int limit,@RequestParam(defaultValue="0") int offset) { return accounts.transactions(identity,id,limit,offset); }
+    @GetMapping("/accounts/{id}/transactions/{journalId}")
+    public AccountService.TransactionDetail transaction(@AuthenticationPrincipal Identity identity,@PathVariable UUID id,
+            @PathVariable UUID journalId) { return accounts.transaction(identity,id,journalId); }
     @GetMapping("/recipients/{publicRef}")
     public AccountService.Recipient recipient(@PathVariable String publicRef) { return accounts.recipient(publicRef); }
 }

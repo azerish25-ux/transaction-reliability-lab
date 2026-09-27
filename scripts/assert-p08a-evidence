@@ -1,0 +1,93 @@
+#!/usr/bin/env python3
+"""Require verified P01-P07B regression plus executed P08A browser evidence."""
+import json
+import subprocess
+import xml.etree.ElementTree as ET
+from datetime import datetime,timezone
+from pathlib import Path
+
+ROOT=Path(__file__).resolve().parent.parent
+subprocess.run(["python3","scripts/assert-p07b-evidence"],cwd=ROOT,check=True)
+
+def suite(relative,minimum):
+    path=ROOT/relative
+    if not path.is_file(): raise SystemExit(f"Missing P08A test result: {relative}")
+    root=ET.parse(path).getroot()
+    suites=[root] if root.tag=="testsuite" else root.findall(".//testsuite")
+    counts={key:sum(int(item.get(key,"0")) for item in suites) for key in ("tests","failures","errors","skipped")}
+    cases=root.findall(".//testcase")
+    if counts["tests"]<minimum or len(cases)!=counts["tests"]:
+        raise SystemExit(f"Missing expected P08A discovery: {relative}: {counts}, cases={len(cases)}")
+    if any(counts[key] for key in ("failures","errors","skipped")):
+        raise SystemExit(f"P08A suite did not pass without skips: {relative}: {counts}")
+    for case in cases:
+        if any(case.find(tag) is not None for tag in ("failure","error","skipped")):
+            raise SystemExit(f"Non-passing P08A test case: {relative}: {case.get('name')}")
+    return counts,[case.get("name","") for case in cases]
+
+client_counts,client_cases=suite(".evidence/client/p08a-results.xml",6)
+browser_counts,browser_cases=suite(".evidence/playwright/junit.xml",12)
+executed={"p08a-client":client_cases,"p08a-browser":browser_cases}
+
+def match(prefix,name):
+    return prefix in name
+
+manifest=json.loads((ROOT/"docs/implementation/P08A_REQUIREMENTS.json").read_text(encoding="utf-8"))
+if not (ROOT/manifest["sourceContract"]).is_file(): raise SystemExit("Missing P08A source contract")
+traceability=[];seen=set()
+for requirement in manifest["requirements"]:
+    identity=requirement["id"]
+    if identity in seen: raise SystemExit(f"Duplicate P08A requirement: {identity}")
+    seen.add(identity);matches=[]
+    for suite_name,prefixes in requirement["tests"].items():
+        for prefix in prefixes:
+            actual=[name for name in executed.get(suite_name,[]) if match(prefix,name)]
+            if not actual: raise SystemExit(f"No executed oracle for {identity}: {suite_name}/{prefix}")
+            matches.extend({"suite":suite_name,"test":name} for name in actual)
+    traceability.append({"id":identity,"phase":manifest["phase"],"statement":requirement["statement"],
+                         "status":"VERIFIED_PASS","tests":matches})
+
+spec=json.loads((ROOT/"backend/src/main/resources/openapi/p08a-ui.json").read_text(encoding="utf-8"))
+for path in ("/auth/csrf","/auth/register","/auth/login","/auth/me","/auth/logout","/accounts",
+             "/accounts/{accountId}","/accounts/{accountId}/transactions",
+             "/accounts/{accountId}/transactions/{journalId}"):
+    if path not in spec["paths"]: raise SystemExit(f"P08A OpenAPI missing {path}")
+
+for relative in (
+    "frontend/index.html","frontend/package.json","frontend/package-lock.json","frontend/vite.config.ts",
+    "frontend/src/main.tsx","frontend/src/App.tsx","frontend/src/session.tsx","frontend/src/styles.css",
+    "frontend/playwright.config.ts","frontend/tests/e2e/p08a.spec.ts",
+    "backend/src/main/java/lab/ledgerguard/accounts/AccountController.java",
+    "backend/src/main/java/lab/ledgerguard/accounts/AccountService.java",
+    "infra/docker/Dockerfile.frontend","infra/docker/nginx.conf","compose.yaml",
+    "tests/contracts/p08a-client.test.cjs","tests/e2e/README.md"):
+    if not (ROOT/relative).is_file(): raise SystemExit(f"Missing P08A implementation source: {relative}")
+
+screens=ROOT/".evidence/playwright/screenshots"
+for project in ("chromium-desktop","chromium-tablet","chromium-mobile"):
+    path=screens/f"{project}-dashboard.png"
+    if not path.is_file() or path.stat().st_size<1000: raise SystemExit(f"Missing inspected P08A screenshot: {path}")
+
+if not (ROOT/"frontend/dist/index.html").is_file(): raise SystemExit("P08A production frontend build is missing")
+config=(ROOT/"frontend/playwright.config.ts").read_text(encoding="utf-8")
+for dimensions in ("1440, height: 900","768, height: 1024","390, height: 844"):
+    if dimensions not in config: raise SystemExit(f"Missing required responsive viewport: {dimensions}")
+
+sha=subprocess.check_output(["git","rev-parse","HEAD"],cwd=ROOT,text=True).strip()
+dirty=bool(subprocess.check_output(["git","status","--porcelain","--untracked-files=no"],cwd=ROOT,text=True).strip())
+if dirty: raise SystemExit("Tracked source changed during P08A verification")
+rows=[{"suite":".evidence/client/p08a-results.xml",**client_counts},
+      {"suite":".evidence/playwright/junit.xml",**browser_counts}]
+report={"sourceSha":sha,"trackedTreeDirty":dirty,"timestamp":datetime.now(timezone.utc).isoformat(),
+        "status":"VERIFIED_PASS","suites":rows,"requirements":traceability,
+        "screenshots":[str((screens/f"{name}-dashboard.png").relative_to(ROOT)) for name in ("chromium-desktop","chromium-tablet","chromium-mobile")],
+        "scope":"P01-P07B regression plus P08A same-origin React authentication, authoritative balances, customer-safe history/detail, responsive Chromium and authenticated axe proofs; later P08 slices and P09-P11 remain incomplete"}
+out=ROOT/".evidence/p08a";out.mkdir(parents=True,exist_ok=True)
+(out/"test-summary.json").write_text(json.dumps(report,indent=2)+"\n",encoding="utf-8")
+matrix=["# Executed P08A requirements","",f"Source: `{sha}`; tracked tree dirty: `{dirty}`.","",
+        "| Requirement | Executed cases/checks | Result |","|---|---:|---|"]
+for item in traceability: matrix.append(f"| {item['id']} | {len(item['tests'])} | {item['status']} |")
+matrix.extend(["","Exact case names and source identity are in test-summary.json."])
+(out/"requirements-matrix.md").write_text("\n".join(matrix)+"\n",encoding="utf-8")
+print(json.dumps({key:value for key,value in report.items() if key!="requirements"},indent=2))
+print(f"Verified {len(traceability)} P08A requirements against executed evidence.")

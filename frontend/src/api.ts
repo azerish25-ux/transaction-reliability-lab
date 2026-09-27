@@ -1,11 +1,18 @@
 import { currency, minor, MAX_TRANSACTION, type Currency } from './money.js';
-export interface Problem { code: string; message: string; correlationId: string; }
+
+export interface Problem {
+  code: string;
+  message: string;
+  correlationId: string;
+  validation?: Record<string, string>;
+}
 export interface Session { id: string; email: string; displayName: string; role: 'CUSTOMER' | 'ADMIN'; expiresAt: string; }
 export interface Registered { id: string; email: string; displayName: string; role: 'CUSTOMER'; }
 export interface Account { id: string; publicRef: string; name: string; currency: Currency; postedMinor: string; reservedMinor: string; availableMinor: string; version: string; updatedAt: string; }
 export interface Page<T> { items: T[]; limit: number; offset: number; hasMore: boolean; }
 export interface Entry { id: string; journalId: string; operationId: string; kind: string; side: 'DEBIT' | 'CREDIT'; amountMinor: string; currency: Currency; createdAt: string; }
 export interface Transaction { journalId: string; operationId: string; kind: string; effectMinor: string; currency: Currency; createdAt: string; }
+export interface TransactionDetail extends Transaction { accountId: string; accountPublicRef: string; accountName: string; entries: Entry[]; }
 export interface Recipient { publicRef: string; currency: Currency; }
 export interface Receipt { operationId: string; state: string; journalId?: string; paymentId?: string; }
 export interface Intent { sourceId: string; recipientRef: string; amountMinor: string; currency: Currency; }
@@ -20,16 +27,29 @@ export interface PaymentCancellationIntent { paymentId: string; reason?: string;
 export interface PaymentRefundIntent { paymentId: string; amountMinor: string; reason?: string; }
 export interface PaymentReversalIntent { paymentId: string; reason: string; }
 export interface CommandResponse<T> { status: number; body: T; replayed: boolean; }
+
 export class ApiError extends Error {
-  constructor(readonly status: number, readonly problem: Problem) { super(problem.message); this.name = 'ApiError'; }
+  constructor(readonly status: number, readonly problem: Problem) {
+    super(problem.message);
+    this.name = 'ApiError';
+  }
 }
 export class OutcomeUnknown extends Error {
-  constructor() { super('Outcome not yet confirmed. Keep this intent and safely retry the same key.'); this.name = 'OutcomeUnknown'; }
+  constructor() {
+    super('Outcome not yet confirmed. Keep this intent and safely retry the same key.');
+    this.name = 'OutcomeUnknown';
+  }
 }
+
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 function identity(value: string, label: string): string {
   if (!UUID.test(value)) throw new TypeError(`Invalid ${label} identity`);
   return value.toLowerCase();
+}
+function pagination(limit: number, offset: number): void {
+  if (!Number.isInteger(limit) || limit < 1 || limit > 100 || !Number.isInteger(offset) || offset < 0 || offset > 10000) {
+    throw new TypeError('Invalid pagination');
+  }
 }
 function reason(value: string | undefined, required = false): string | undefined {
   if (value === undefined) {
@@ -96,7 +116,24 @@ export class ApiClient {
     await this.csrfToken();
   }
   me(): Promise<Session> { return this.get<Session>('/auth/me'); }
-  accounts(limit = 50, offset = 0): Promise<Page<Account>> { return this.get<Page<Account>>(`/accounts?limit=${limit}&offset=${offset}`); }
+  accounts(limit = 50, offset = 0): Promise<Page<Account>> {
+    pagination(limit, offset);
+    return this.get<Page<Account>>(`/accounts?limit=${limit}&offset=${offset}`);
+  }
+  accountById(id: string): Promise<Account> {
+    return this.get<Account>(`/accounts/${identity(id, 'account')}`);
+  }
+  accountEntries(id: string, limit = 50, offset = 0): Promise<Page<Entry>> {
+    pagination(limit, offset);
+    return this.get<Page<Entry>>(`/accounts/${identity(id, 'account')}/entries?limit=${limit}&offset=${offset}`);
+  }
+  accountTransactions(id: string, limit = 50, offset = 0): Promise<Page<Transaction>> {
+    pagination(limit, offset);
+    return this.get<Page<Transaction>>(`/accounts/${identity(id, 'account')}/transactions?limit=${limit}&offset=${offset}`);
+  }
+  accountTransaction(id: string, journalId: string): Promise<TransactionDetail> {
+    return this.get<TransactionDetail>(`/accounts/${identity(id, 'account')}/transactions/${identity(journalId, 'journal')}`);
+  }
   async createAccount(name: string, unit: Currency): Promise<Account> {
     return (await this.command<Account>('/accounts', { name, currency: currency(unit) })).body;
   }
@@ -107,7 +144,7 @@ export class ApiClient {
     return this.get<TransferRecord>(`/transfers/${identity(id, 'transfer')}`);
   }
   transfers(limit = 50, offset = 0): Promise<Page<TransferRecord>> {
-    if (!Number.isInteger(limit) || limit < 1 || limit > 100 || !Number.isInteger(offset) || offset < 0 || offset > 10000) throw new TypeError('Invalid pagination');
+    pagination(limit, offset);
     return this.get<Page<TransferRecord>>(`/transfers?limit=${limit}&offset=${offset}`);
   }
   payment(input: Intent, key: string): Promise<CommandResponse<PaymentReceipt>> {
@@ -117,7 +154,7 @@ export class ApiClient {
     return this.get<PaymentRecord>(`/payments/${identity(id, 'payment')}`);
   }
   payments(limit = 50, offset = 0): Promise<Page<PaymentRecord>> {
-    if (!Number.isInteger(limit) || limit < 1 || limit > 100 || !Number.isInteger(offset) || offset < 0 || offset > 10000) throw new TypeError('Invalid pagination');
+    pagination(limit, offset);
     return this.get<Page<PaymentRecord>>(`/payments?limit=${limit}&offset=${offset}`);
   }
   cancelPayment(id: string, key: string, cancellationReason?: string): Promise<CommandResponse<CancellationReceipt>> {
@@ -136,7 +173,7 @@ export class ApiClient {
   }
   paymentAdjustments(id: string, limit = 50, offset = 0): Promise<Page<PaymentAdjustment>> {
     const paymentId = identity(id, 'payment');
-    if (!Number.isInteger(limit) || limit < 1 || limit > 100 || !Number.isInteger(offset) || offset < 0 || offset > 10000) throw new TypeError('Invalid pagination');
+    pagination(limit, offset);
     return this.get<Page<PaymentAdjustment>>(`/payments/${paymentId}/adjustments?limit=${limit}&offset=${offset}`);
   }
   paymentAdjustment(id: string, adjustmentId: string): Promise<PaymentAdjustment> {
@@ -160,7 +197,14 @@ export class ApiClient {
     }
     let response: Response;
     try {
-      response = await this.transport(`${this.prefix}${path}`, { method, headers, body: body === undefined ? undefined : JSON.stringify(body), credentials: 'same-origin', redirect: 'error', signal: AbortSignal.timeout(15_000) });
+      response = await this.transport(`${this.prefix}${path}`, {
+        method,
+        headers,
+        body: body === undefined ? undefined : JSON.stringify(body),
+        credentials: 'same-origin',
+        redirect: 'error',
+        signal: AbortSignal.timeout(15_000)
+      });
     } catch (cause) {
       if (method === 'POST' && key) throw new OutcomeUnknown();
       throw cause;
@@ -172,14 +216,21 @@ export class ApiClient {
     if (response.status === 204) {
       result = undefined;
     } else {
-      try { result = await response.json(); } catch {
+      try {
+        result = await response.json();
+      } catch {
         if (method === 'POST' && key) throw new OutcomeUnknown();
         throw new TypeError('Invalid API response');
       }
     }
     if (!response.ok) {
-      const p = result as Partial<Problem> & { title?: string };
-      throw new ApiError(response.status, { code: p?.code ?? 'HTTP_ERROR', message: p?.message ?? p?.title ?? 'Request could not be completed.', correlationId: p?.correlationId ?? '' });
+      const p = result as Partial<Problem> & { title?: string; validation?: Record<string, string> };
+      throw new ApiError(response.status, {
+        code: p?.code ?? 'HTTP_ERROR',
+        message: p?.message ?? p?.title ?? 'Request could not be completed.',
+        correlationId: p?.correlationId ?? '',
+        validation: p?.validation ?? {}
+      });
     }
     return { status: response.status, body: result as T, replayed: response.headers.get('Idempotency-Replayed') === 'true' };
   }

@@ -19,7 +19,7 @@ export function minor(value: unknown, limit: bigint = MAX_BALANCE): bigint {
 export function parseAmount(input: string, code: Currency): string {
   const exponent = exponents[currency(code)];
   if (input.length > 32 || !/^(0|[1-9][0-9]*)(\.[0-9]+)?$/.test(input)) throw new MoneyError('INVALID_AMOUNT');
-  const [whole, fraction = ''] = input.split('.');
+  const [whole = '', fraction = ''] = input.split('.');
   if (fraction.length > exponent) throw new MoneyError('EXCESS_PRECISION');
   const value = BigInt(whole) * (10n ** BigInt(exponent)) + BigInt(fraction.padEnd(exponent, '0') || '0');
   if (value <= 0n || value > MAX_TRANSACTION) throw new MoneyError('AMOUNT_OUT_OF_RANGE');

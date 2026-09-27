@@ -99,6 +99,27 @@ services:
       retries: 30
       start_period: 20s
 
+  web:
+    <<: *service-security
+    build:
+      context: .
+      dockerfile: infra/docker/Dockerfile.frontend
+    ports:
+      - "127.0.0.1:${LEDGER_UI_PORT:-3000}:8080"
+    tmpfs:
+      - /tmp
+      - /var/cache/nginx
+      - /var/run
+    depends_on:
+      api:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:8080/healthz"]
+      interval: 5s
+      timeout: 3s
+      retries: 30
+      start_period: 5s
+
   outbox-publisher:
     <<: *service-security
     build:

@@ -1,10 +1,11 @@
 #!/usr/bin/env bash
 set -euo pipefail
 cd "$(dirname "$0")/.."
-npm --prefix frontend run --silent typecheck
+npm --prefix frontend run --silent typecheck:core
 node tests/contracts/client.test.cjs
 node tests/contracts/auth-client.test.cjs
 node tests/contracts/transfer-client.test.cjs
 node tests/contracts/payment-client.test.cjs
 node tests/contracts/payment-adjustment-client.test.cjs
 node tests/contracts/webhook-client.test.cjs
+node tests/contracts/p08a-client.test.cjs

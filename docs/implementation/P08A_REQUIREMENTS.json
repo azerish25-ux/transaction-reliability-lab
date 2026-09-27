@@ -1,0 +1,49 @@
+{
+  "phase": "P08A",
+  "sourceContract": "docs/implementation/MASTER_SPEC.md",
+  "scope": "The first complete browser vertical slice: same-origin React runtime, registration/login/logout/session expiry, authoritative balances, account history, customer-safe immutable transaction detail, responsive behavior and authenticated accessibility. Later transfer/payment, schedule/webhook and administrator interfaces remain later P08 slices.",
+  "requirements": [
+    {
+      "id": "P08A-R01",
+      "sections": ["14", "15", "20"],
+      "statement": "Registration, login, logout, bootstrap and expired-session behavior use the real cookie/CSRF API and never persist authentication or CSRF material in browser storage.",
+      "tests": { "p08a-browser": ["P08AE2E01", "P08AE2E02", "P08AE2E03"], "p08a-client": ["P08ATS05"] }
+    },
+    {
+      "id": "P08A-R02",
+      "sections": ["3", "5", "15"],
+      "statement": "The customer dashboard renders real posted, reserved and available minor-unit balances with currency, version and update time and never fabricates metrics.",
+      "tests": { "p08a-browser": ["P08AE2E01"], "p08a-client": ["P08ATS01"] }
+    },
+    {
+      "id": "P08A-R03",
+      "sections": ["6", "14", "15"],
+      "statement": "Account history is deterministically paginated and transaction detail exposes only the selected owner's economic lines and immutable references without counterparty balances or unrelated journal data.",
+      "tests": { "p08a-browser": ["P08AE2E01"], "p08a-client": ["P08ATS02", "P08ATS03", "P08ATS04", "P08ATS06"] }
+    },
+    {
+      "id": "P08A-R04",
+      "sections": ["3", "6", "15"],
+      "statement": "A newly registered customer begins without wallets or money, and a newly created wallet displays posted, reserved and available balances of exactly zero.",
+      "tests": { "p08a-browser": ["P08AE2E02"] }
+    },
+    {
+      "id": "P08A-R05",
+      "sections": ["14", "15"],
+      "statement": "Loading, empty, validation, authentication-expiry and temporary dependency failure states are explicit and do not falsely display a financial result.",
+      "tests": { "p08a-browser": ["P08AE2E02", "P08AE2E03", "P08AE2E04"], "p08a-client": ["P08ATS05"] }
+    },
+    {
+      "id": "P08A-R06",
+      "sections": ["15", "20"],
+      "statement": "Critical authenticated flows are keyboard-operable, use semantic names and non-color-only status, pass axe WCAG A/AA checks and render at desktop, tablet and mobile reference widths.",
+      "tests": { "p08a-browser": ["P08AE2E01", "P08AE2E02"] }
+    },
+    {
+      "id": "P08A-R07",
+      "sections": ["4", "24", "25"],
+      "statement": "The locked production UI is served by a non-root loopback-bound same-origin proxy with real health checks, reproducible Compose startup and an executable Chromium CI gate.",
+      "tests": { "p08a-browser": ["P08AE2E01", "P08AE2E03"] }
+    }
+  ]
+}
