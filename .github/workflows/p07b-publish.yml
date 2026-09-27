@@ -16,6 +16,7 @@ concurrency:
 
 jobs:
   publish:
+    if: github.actor != 'github-actions[bot]'
     name: Materialize reviewed P07B source
     runs-on: ubuntu-latest
     timeout-minutes: 10
@@ -51,7 +52,8 @@ jobs:
                       raise SystemExit(f'Unsafe archive path: {member.name}')
               bundle.extractall('.',filter='data')
           PY
-          rm -rf .p07b .github/workflows/p07b-publish.yml
+          git checkout -- .github/workflows/pr.yml
+          rm -rf .p07b
           chmod +x scripts/test-client scripts/smoke-schedules scripts/smoke-webhooks scripts/assert-p07b-evidence
           git diff --check
       - name: Commit reviewed P07B source
@@ -61,5 +63,5 @@ jobs:
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add -A
           ! git diff --cached --quiet
-          git commit -m 'feat(p07b): add signed durable webhook delivery' -m 'Integrate encrypted endpoint secrets, durable fan-out and attempts, isolated dispatchers, exact-byte HMAC receiver validation, owner/admin inspection, restart and duplicate protection, scoped contracts, tests and permanent evidence gating.'
+          git commit -m 'feat(p07b): add signed durable webhook delivery' -m 'Integrate encrypted endpoint secrets, durable fan-out and attempts, isolated dispatchers, exact-byte HMAC receiver validation, owner/admin inspection, restart and duplicate protection, scoped contracts and tests.'
           git push origin HEAD:main
