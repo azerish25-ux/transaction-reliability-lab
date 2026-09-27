@@ -1,0 +1,4 @@
+/* Keep the gold accent distinguishable as text on LedgerGuard's paper surface. */
+:root:root {
+  --gold: #915b12;
+}
