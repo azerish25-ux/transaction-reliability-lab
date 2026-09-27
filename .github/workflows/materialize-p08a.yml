@@ -1,0 +1,104 @@
+name: Materialize reviewed P08A source
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - .github/workflows/materialize-p08a.yml
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: ledgerguard-p08a-materialization
+  cancel-in-progress: false
+
+jobs:
+  materialize:
+    name: Verify and publish reviewed P08A source
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    env:
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      P08A_CHUNKS: dac7d6456cc8c97533e435eef14d468f3b8a9311 ff436fbb78258cdc872f1b01430478bda0616258 99bf25e31fe867949f84536fa4b21d9d5bded5bb a5ae1554f93c04e2c9a9963b1095cdb48ff452de ffe23ce79be070998193181879a55a604e3e6c3e
+      P08A_ARCHIVE_SHA256: 63b4c1f910996ed826509cb35d03987c7cb7d864aa9c27f1565a60e6b7b41060
+    steps:
+      - name: Check out staging commit
+        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+        with:
+          fetch-depth: 0
+      - name: Configure Java 21
+        uses: actions/setup-java@b6effb05e454b25005698d916606bdc6ffcbf961
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: maven
+          cache-dependency-path: backend/pom.xml
+      - name: Configure Node 22
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '22'
+      - name: Reassemble checksum-pinned source
+        shell: bash
+        run: |
+          set -euo pipefail
+          : > /tmp/p08a-source.tar.gz
+          for sha in $P08A_CHUNKS; do
+            curl --fail --silent --show-error --location \
+              -H "Authorization: Bearer $GITHUB_TOKEN" \
+              -H "Accept: application/vnd.github+json" \
+              -H "X-GitHub-Api-Version: 2022-11-28" \
+              "$GITHUB_API_URL/repos/$GITHUB_REPOSITORY/git/blobs/$sha" \
+              -o /tmp/p08a-blob.json
+            python3 - "$sha" <<'PY'
+          import base64, json, pathlib, sys
+          sha = sys.argv[1]
+          payload = json.loads(pathlib.Path('/tmp/p08a-blob.json').read_text(encoding='utf-8'))
+          if payload.get('sha') != sha or payload.get('encoding') != 'base64':
+              raise SystemExit(f'unexpected blob response for {sha}')
+          data = base64.b64decode(payload['content'].replace('\n', ''), validate=True)
+          with pathlib.Path('/tmp/p08a-source.tar.gz').open('ab') as output:
+              output.write(data)
+          PY
+          done
+          printf '%s  %s\n' "$P08A_ARCHIVE_SHA256" /tmp/p08a-source.tar.gz | sha256sum --check --strict
+          python3 <<'PY'
+          import pathlib, tarfile
+          archive = pathlib.Path('/tmp/p08a-source.tar.gz')
+          with tarfile.open(archive, 'r:gz') as source:
+              for member in source.getmembers():
+                  path = pathlib.PurePosixPath(member.name)
+                  if path.is_absolute() or '..' in path.parts or member.issym() or member.islnk():
+                      raise SystemExit(f'unsafe archive member: {member.name}')
+              source.extractall('.', filter='data')
+          PY
+      - name: Generate exact frontend lock and verify source
+        shell: bash
+        run: |
+          set -euo pipefail
+          chmod +x scripts/lab scripts/test-client scripts/assert-p08a-evidence
+          npm install --package-lock-only --ignore-scripts --prefix frontend --no-audit --no-fund
+          npm ci --ignore-scripts --prefix frontend --no-audit --no-fund
+          npm --prefix frontend run verify
+          python3 -m py_compile scripts/lab scripts/assert-p08a-evidence
+          python3 - <<'PY'
+          import json, pathlib
+          for name in ('backend/src/main/resources/openapi/p08a-ui.json', 'docs/implementation/P08A_REQUIREMENTS.json'):
+              json.loads(pathlib.Path(name).read_text(encoding='utf-8'))
+          PY
+          ./mvnw -B -ntp -f backend/pom.xml -DskipTests package
+          docker compose --env-file .env.example -f compose.yaml config --quiet
+          docker compose --env-file .env.example -f compose.yaml -f compose.p07.yaml config --quiet
+      - name: Commit reviewed ordinary source
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add -A
+          git diff --cached --check
+          git diff --cached --quiet && { echo 'No reviewed source changes found.' >&2; exit 1; }
+          git commit -m "feat(p08a): add real customer product journey" \
+            -m "Add the same-origin React product shell, real authentication/session behavior, live balances, authorized history and transaction detail, responsive accessibility states, Playwright/axe journeys, Compose serving, traceability and the candidate P08A gate."
+          git push origin HEAD:main
