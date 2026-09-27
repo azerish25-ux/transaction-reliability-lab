@@ -2,6 +2,7 @@ package lab.ledgerguard.webhooks;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Timestamp;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
@@ -119,9 +120,10 @@ public class WebhookRepository {
     public void complete(UUID delivery, UUID owner, String outcome, Integer httpStatus, int durationMs,
                          long requestTimestamp, String signature, String responseSummary,
                          String errorCode, Instant nextAttemptAt) {
+        Timestamp nextAttempt = nextAttemptAt == null ? null : Timestamp.from(nextAttemptAt);
         jdbc.query("SELECT ledger.complete_webhook_delivery(?,?,?,?,?,?,?,?,?,?)", ignored -> null,
             delivery, owner, outcome, httpStatus, durationMs, requestTimestamp, signature,
-            responseSummary, errorCode, nextAttemptAt);
+            responseSummary, errorCode, nextAttempt);
     }
 
     public String receiverSecret(UUID endpoint, UUID event, int keyVersion) {
