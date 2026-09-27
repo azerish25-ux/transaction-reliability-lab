@@ -84,14 +84,40 @@ jobs:
                       raise SystemExit(f'unsafe archive member: {member.name}')
               source.extractall('.', filter='data')
           PY
-      - name: Print strict-typecheck diagnostics
+      - name: Apply reviewed strict typing repairs
         shell: bash
         run: |
           set -euo pipefail
-          echo '--- frontend/src/App.tsx failing ranges ---'
-          nl -ba frontend/src/App.tsx | sed -n '175,200p;280,305p;340,365p;420,460p;515,535p;560,580p;648,670p'
-          echo '--- frontend/src/money.ts failing range ---'
-          nl -ba frontend/src/money.ts | sed -n '15,32p'
+          python3 <<'PY'
+          from pathlib import Path
+
+          app_path = Path('frontend/src/App.tsx')
+          app = app_path.read_text(encoding='utf-8')
+          replacements = [
+              ("{logoutError && <div className=\"shell-problem\"><ProblemPanel failure={logoutError} /></div>}",
+               "{logoutError !== undefined && <div className=\"shell-problem\"><ProblemPanel failure={logoutError} /></div>}", 1),
+              ("{failure && <ProblemPanel failure={failure} headingRef={errorHeading} />}",
+               "{failure !== undefined && <ProblemPanel failure={failure} headingRef={errorHeading} />}", 2),
+              ("{failure && <ProblemPanel failure={failure} />}",
+               "{failure !== undefined && <ProblemPanel failure={failure} />}", 4),
+              ("message: CODE_MESSAGES.INVALID_LABEL, correlationId: ''",
+               "message: CODE_MESSAGES.INVALID_LABEL ?? 'Enter a valid account name.', correlationId: ''", 1),
+          ]
+          for old, new, expected in replacements:
+              actual = app.count(old)
+              if actual != expected:
+                  raise SystemExit(f'expected {expected} App.tsx occurrence(s), found {actual}: {old}')
+              app = app.replace(old, new)
+          app_path.write_text(app, encoding='utf-8')
+
+          money_path = Path('frontend/src/money.ts')
+          money = money_path.read_text(encoding='utf-8')
+          old = "const [whole, fraction = ''] = input.split('.');"
+          new = "const [whole = '', fraction = ''] = input.split('.');"
+          if money.count(old) != 1:
+              raise SystemExit('unexpected parseAmount destructuring source')
+          money_path.write_text(money.replace(old, new), encoding='utf-8')
+          PY
       - name: Generate exact frontend lock and verify source
         shell: bash
         run: |
