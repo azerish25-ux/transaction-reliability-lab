@@ -179,13 +179,14 @@ wait_sql(f"SELECT count(*) FROM ledger.consumer_inbox WHERE event_id='{stale_eve
 check("different-message-id-cannot-repeat-payment",sql(f"SELECT count(*) FROM ledger.journals WHERE operation_id='{worker_payment['id']}'")=="1")
 check("old-event-cannot-regress-projection",sql(f"SELECT state||':'||aggregate_version FROM ledger.payment_projection WHERE payment_id='{worker_payment['id']}'")=="SETTLED:2")
 
-# Poison work is bounded, inspectable and auditable through the administrator replay path.
+# Poison work is bounded per consumer, inspectable and auditable through the administrator replay path.
 poison_id=str(uuid.uuid4());rabbit_publish("payment.requested",'{"malformed":true}',poison_id)
-wait_sql(f"SELECT count(*) FROM ledger.failed_work WHERE event_id='{poison_id}' AND state='FAILED'","1",45)
+wait_sql(f"SELECT string_agg(consumer,':' ORDER BY consumer) FROM ledger.failed_work WHERE event_id='{poison_id}' AND state='FAILED'","payment-projection-v1:payment-settler-v1",45)
 admin=Browser();admin.login("admin@example.test",VALUES["LEDGER_DEMO_PASSWORD"])
 status,failed_page,_=admin.call("/admin/failed-work?limit=100&offset=0")
-work=next(item for item in failed_page["items"] if item["eventId"]==poison_id)
-check("poison-work-admin-inspection",status==200 and work["attempts"]==1)
+poison_work=[item for item in failed_page["items"] if item["eventId"]==poison_id]
+check("poison-work-admin-inspection",status==200 and {item["consumer"] for item in poison_work}=={"payment-projection-v1","payment-settler-v1"} and all(item["attempts"]==1 for item in poison_work))
+work=next(item for item in poison_work if item["consumer"]=="payment-settler-v1")
 status,replay_response,_=admin.call(f"/admin/failed-work/{work['id']}/replay",{},method="POST")
 check("audited-replay-request",status==202 and replay_response["state"]=="REPLAY_REQUESTED")
 wait_sql(f"SELECT count(*) FROM ledger.failed_work_replay_audit WHERE work_id='{work['id']}' AND action='REPLAY_REQUESTED'","1",45)
