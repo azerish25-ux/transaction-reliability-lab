@@ -197,7 +197,7 @@ export class ApiClient {
     }
     let response: Response;
     try {
-      response = await this.transport(`${this.prefix}${path}`, {
+      response = await this.transport.call(globalThis, `${this.prefix}${path}`, {
         method,
         headers,
         body: body === undefined ? undefined : JSON.stringify(body),
