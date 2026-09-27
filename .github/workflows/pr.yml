@@ -1,4 +1,4 @@
-name: LedgerGuard P08A verification
+name: LedgerGuard P08B verification
 
 on:
   push:
@@ -11,9 +11,9 @@ permissions:
 
 jobs:
   verify:
-    name: Build, customer UI, browser accessibility, signed webhooks and financial invariants
+    name: Build, customer money movement, browser accessibility, signed webhooks and financial invariants
     runs-on: ubuntu-latest
-    timeout-minutes: 150
+    timeout-minutes: 165
     steps:
       - name: Check out candidate
         uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
@@ -31,7 +31,7 @@ jobs:
           cache: npm
           cache-dependency-path: frontend/package-lock.json
       - name: Prepare deterministic tools
-        run: chmod +x mvnw scripts/lab scripts/test-core scripts/test-client scripts/assert-p04-evidence scripts/assert-p05-evidence scripts/assert-p06-evidence scripts/assert-p07a-evidence scripts/assert-p07b-evidence scripts/assert-p08a-evidence scripts/smoke-auth scripts/smoke-adjustments scripts/smoke-schedules scripts/smoke-webhooks scripts/unit-probes scripts/validate-evidence scripts/scan-secrets infra/docker/postgres/00-roles.sh
+        run: chmod +x mvnw scripts/lab scripts/test-core scripts/test-client scripts/assert-p04-evidence scripts/assert-p05-evidence scripts/assert-p06-evidence scripts/assert-p07a-evidence scripts/assert-p07b-evidence scripts/assert-p08a-evidence scripts/assert-p08b-evidence scripts/smoke-auth scripts/smoke-adjustments scripts/smoke-schedules scripts/smoke-webhooks scripts/unit-probes scripts/validate-evidence scripts/scan-secrets infra/docker/postgres/00-roles.sh
       - name: Install locked frontend dependencies
         run: npm ci --prefix frontend --ignore-scripts --no-audit --no-fund
       - name: Verify strict frontend source, client contracts and production build
@@ -48,7 +48,7 @@ jobs:
         run: ./scripts/scan-secrets
       - name: Install exact Chromium runtime
         run: npm exec --prefix frontend -- playwright install --with-deps chromium
-      - name: Start, migrate, seed and reconcile the P08A topology
+      - name: Start, migrate, seed and reconcile the P08B topology
         run: ./scripts/lab up
       - name: Preserve P05 payment, RabbitMQ, duplicate-delivery and process-death proofs
         run: python3 scripts/smoke-auth
@@ -61,20 +61,20 @@ jobs:
         run: python3 scripts/smoke-schedules
       - name: Exercise P07B encrypted secrets, signatures, retries, restart and authorization
         run: python3 scripts/smoke-webhooks
-      - name: Exercise P08A authentication, balances, history, responsive UI and axe checks
+      - name: Exercise P08A and P08B customer journeys, uncertainty recovery, responsive UI and axe checks
         run: npm --prefix frontend run test:e2e
       - name: Verify live status and repeatable reconciliation
         run: |
           ./scripts/lab status
           ./scripts/lab reconcile
-      - name: Require P01-P07B regression and executed P08A requirements
-        run: python3 scripts/assert-p08a-evidence
+      - name: Require P01-P08A regression and executed P08B requirements
+        run: python3 scripts/assert-p08b-evidence
       - name: Capture service logs
         if: always()
         run: |
           ./scripts/lab logs
           mkdir -p .evidence/compose
-          docker compose --env-file .ledgerguard/runtime.env -f compose.yaml -f compose.p07.yaml logs --no-color > .evidence/compose/p08a-services.log 2>&1 || true
+          docker compose --env-file .ledgerguard/runtime.env -f compose.yaml -f compose.p07.yaml logs --no-color > .evidence/compose/p08b-services.log 2>&1 || true
       - name: Stop the scoped environment
         if: always()
         run: |
@@ -84,7 +84,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
-          name: ledgerguard-p08a-evidence-${{ github.sha }}
+          name: ledgerguard-p08b-evidence-${{ github.sha }}
           if-no-files-found: warn
           include-hidden-files: true
           retention-days: 14
@@ -99,13 +99,13 @@ jobs:
             backend/target/payment-adjustment-http-evidence/
 
   gate:
-    name: Required P08A gate
+    name: Required P08B gate
     if: always()
     needs: [verify]
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
-      - name: Require every mandatory P08A job
+      - name: Require every mandatory P08B job
         env:
           VERIFY_RESULT: ${{ needs.verify.result }}
         run: |
