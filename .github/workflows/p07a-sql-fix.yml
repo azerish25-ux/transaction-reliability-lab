@@ -1,0 +1,54 @@
+name: P07A SQL ambiguity correction
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  actions: write
+  contents: write
+
+concurrency:
+  group: ledgerguard-p07a-sql-correction
+  cancel-in-progress: false
+
+jobs:
+  correct-publish-and-dispatch:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - name: Check out source
+        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+        with:
+          fetch-depth: 0
+      - name: Correct V9 ambiguity, publish, and dispatch the permanent gate
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+          path = Path('backend/src/main/resources/db/p07/V9__p07_scheduled_transfer_execution.sql')
+          text = path.read_text()
+          before = "UPDATE ledger.schedules SET source_id=source_id,destination_ref=recipient,amount_minor=amount,"
+          after = "UPDATE ledger.schedules SET source_id=(p_payload->>'sourceAccountId')::uuid,destination_ref=recipient,amount_minor=amount,"
+          if after not in text:
+              if text.count(before) != 1:
+                  raise SystemExit(f'expected one ambiguous assignment, found {text.count(before)}')
+              path.write_text(text.replace(before, after, 1))
+          PY
+          rm .github/workflows/p07a-sql-fix.yml
+          git config user.name "azerish25-ux"
+          git config user.email "azerish25@gmail.com"
+          git add -A
+          git diff --cached --check
+          git commit -m "fix: qualify scheduled-transfer edit source"
+          for status in queued in_progress; do
+            gh api "repos/$GITHUB_REPOSITORY/actions/workflows/pr.yml/runs?branch=main&status=$status&per_page=20" \
+              --jq '.workflow_runs[] | select(.head_sha == env.GITHUB_SHA) | .id' | while read -r run_id; do
+                test -z "$run_id" || gh api --method POST "repos/$GITHUB_REPOSITORY/actions/runs/$run_id/cancel" || true
+              done
+          done
+          git push origin HEAD:main
+          gh api --method POST "repos/$GITHUB_REPOSITORY/actions/workflows/pr.yml/dispatches" -f ref=main
