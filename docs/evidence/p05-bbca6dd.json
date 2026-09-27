@@ -1,0 +1,58 @@
+{
+  "phase": "P05",
+  "status": "VERIFIED_PASS",
+  "fullProductStatus": "INCOMPLETE_NO_GO",
+  "repository": "azerish25-ux/transaction-reliability-lab",
+  "branch": "main",
+  "implementationSha": "bbca6dd7478e33320aa134f6cd59c9652f4b60db",
+  "sourceTree": "992c8c0b89e17a96b42e631d7ba6e313957d1984",
+  "workflow": "LedgerGuard P05 verification",
+  "runId": 36285547632,
+  "jobId": 108525519311,
+  "gateJobId": 108526205503,
+  "event": "push",
+  "runConclusion": "success",
+  "verifiedAt": "2026-09-27T01:31:37Z",
+  "results": {
+    "junitCoreAndSecurity": {"passed": 133, "failures": 0, "errors": 0, "skipped": 0},
+    "authenticationAccountHttp": {"passed": 58, "failures": 0, "errors": 0, "skipped": 0},
+    "immediateTransferHttp": {"passed": 28, "failures": 0, "errors": 0, "skipped": 0},
+    "postgresFinancialPayment": {"passed": 13, "failures": 0, "errors": 0, "skipped": 0},
+    "outboxFailureBoundary": {"passed": 1, "failures": 0, "errors": 0, "skipped": 0},
+    "typescriptExisting": {"passed": 44, "failed": 0},
+    "typescriptAuthentication": {"passed": 6, "failed": 0},
+    "typescriptTransfer": {"passed": 7, "failed": 0},
+    "typescriptPayment": {"passed": 5, "failed": 0},
+    "liveComposeChecks": {"passed": 42, "failed": 0},
+    "migrations": 7,
+    "requirementsVerified": 34,
+    "reconciliationDiscrepancies": 0,
+    "trackedTextFilesScanned": 241,
+    "literalSecretFindings": 0
+  },
+  "verifiedProofs": [
+    "atomic payment and hold acceptance without a journal",
+    "durable idempotent replay and conflict rejection",
+    "two independent manual-ack workers",
+    "broker-outage API continuity and backlog recovery",
+    "publisher death after confirmation before outbox marking",
+    "worker death after commit before acknowledgement",
+    "duplicate event and logical duplicate financial deduplication",
+    "version-aware stale projection rejection",
+    "per-consumer poison-work inspection and audited replay",
+    "bounded failed-work code with full outbox diagnostic retention"
+  ],
+  "artifact": {
+    "id": 10920557373,
+    "name": "ledgerguard-p05-evidence-bbca6dd7478e33320aa134f6cd59c9652f4b60db",
+    "sizeBytes": 121477,
+    "sha256": "b509e74ea2038f5cb58a529fa2ae0df43e7d82131d04145061c47f8b66c6098a",
+    "expiresAt": "2026-10-11T01:31:30Z"
+  },
+  "limitations": [
+    "P06 through P11 remain incomplete",
+    "no public deployment or release tag",
+    "no compliance, security certification, accessibility or performance claim"
+  ],
+  "nextPhase": "P06"
+}
