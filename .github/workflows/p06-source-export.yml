@@ -1,25 +1,95 @@
-name: P06 source export
+name: P06 candidate verification and publication
 
 on:
   push:
     branches: [p06-payment-adjustments]
+  workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
-  export:
+  verify-and-publish:
+    if: ${{ !contains(github.event.head_commit.message, '[p06-bundle]') }}
     runs-on: ubuntu-latest
-    timeout-minutes: 5
+    timeout-minutes: 70
     steps:
-      - name: Check out source
+      - name: Check out candidate branch
         uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
-      - name: Export source snapshot
+        with:
+          ref: p06-payment-adjustments
+          fetch-depth: 0
+      - name: Configure Java 21
+        uses: actions/setup-java@b6effb05e454b25005698d916606bdc6ffcbf961
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: maven
+          cache-dependency-path: backend/pom.xml
+      - name: Configure Node 22
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - name: Reconstruct exact P06 candidate
+        shell: bash
+        run: |
+          set -euo pipefail
+          cat .p06-bundle/chunk-* > /tmp/p06-bundle.b64
+          printf '%s  %s\n' '46c0f386820c9fa34bc0f42c0e7781ca67957d30af0ee9ca3148a4003b3f329f' /tmp/p06-bundle.b64 | sha256sum --check
+          base64 --decode /tmp/p06-bundle.b64 > /tmp/p06-bundle.tar.gz
+          printf '%s  %s\n' 'd430738edfef21b4ad069a390419e6bd99a60a2df46f36825dd44f47afef5c37' /tmp/p06-bundle.tar.gz | sha256sum --check
+          tar -xzf /tmp/p06-bundle.tar.gz
+          chmod +x mvnw scripts/test-client
+          git diff --check
+      - name: Install locked TypeScript dependency
+        run: npm ci --prefix frontend
+      - name: Verify TypeScript adjustment client
+        run: ./scripts/test-client
+      - name: Verify Java, PostgreSQL, HTTP and concurrency boundaries
+        run: ./mvnw -B -ntp -f backend/pom.xml verify
+      - name: Validate OpenAPI and Compose model
+        shell: bash
+        run: |
+          python3 -m json.tool backend/src/main/resources/openapi/p06.json >/dev/null
+          docker compose --env-file .env.example -f compose.yaml config --quiet
+      - name: Publish verified source commit
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add \
+            backend/src/main/java/lab/ledgerguard/config/FoundationSecurityConfiguration.java \
+            backend/src/main/java/lab/ledgerguard/http/OpenApiController.java \
+            backend/src/main/java/lab/ledgerguard/messaging/MessagingTopology.java \
+            backend/src/main/java/lab/ledgerguard/messaging/ReliableEventConsumers.java \
+            backend/src/main/java/lab/ledgerguard/payments/PaymentController.java \
+            backend/src/main/java/lab/ledgerguard/payments/PaymentService.java \
+            backend/src/main/resources/db/migration/V8__p06_payment_adjustments.sql \
+            backend/src/main/resources/openapi/p06.json \
+            backend/src/test/java/lab/ledgerguard/AuthenticationAccountsIT.java \
+            backend/src/test/java/lab/ledgerguard/TransferReliabilityIT.java \
+            frontend/package.json \
+            frontend/src/adjustment-store.ts \
+            frontend/src/api.ts \
+            frontend/tsconfig.core.json \
+            scripts/test-client \
+            tests/contracts/payment-adjustment-client.test.cjs
+          git rm -r .p06-bundle
+          git diff --cached --check
+          git commit -m 'feat: implement P06 payment adjustments [p06-bundle]'
+          git push origin HEAD:p06-payment-adjustments
+      - name: Publish candidate evidence
+        if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
-          name: ledgerguard-p06-source-${{ github.sha }}
-          include-hidden-files: true
-          retention-days: 1
+          name: ledgerguard-p06-candidate-${{ github.sha }}
+          if-no-files-found: warn
+          retention-days: 14
           path: |
-            .
-            !.git/**
+            backend/target/surefire-reports/
+            backend/target/failsafe-reports/
+            backend/target/auth-http-evidence/
+            backend/target/transfer-http-evidence/
