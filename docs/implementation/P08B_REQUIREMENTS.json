@@ -1,0 +1,49 @@
+{
+  "phase": "P08B",
+  "sourceContract": "docs/implementation/MASTER_SPEC.md",
+  "scope": "Customer immediate-transfer and asynchronous-payment browser journeys: exact money entry, explicit confirmation, replay-safe uncertainty resolution, authoritative receipts, payment history/status polling, pending cancellation, responsive layouts and authenticated accessibility. Refund/reversal, schedules, webhooks and administrator interfaces remain later P08 slices.",
+  "requirements": [
+    {
+      "id": "P08B-R01",
+      "sections": ["8", "14", "15"],
+      "statement": "A customer can submit an owner-authorized immediate transfer only after explicit confirmation and receives an authoritative settled receipt containing stable transfer and journal references.",
+      "tests": { "p08b-browser": ["P08BE2E01"], "p08b-client": ["P08BTS02"] }
+    },
+    {
+      "id": "P08B-R02",
+      "sections": ["8", "15"],
+      "statement": "A lost or ambiguous transfer/payment response preserves the normalized economic intent and original idempotency key, blocks conflicting replacement commands and resolves through safe replay without a duplicate financial effect.",
+      "tests": { "p08b-browser": ["P08BE2E02"], "p08b-client": ["P08BTS01", "P08BTS06", "P08BTS08"] }
+    },
+    {
+      "id": "P08B-R03",
+      "sections": ["9", "11", "15"],
+      "statement": "Payment creation displays durable PENDING acceptance honestly and polls the owner-scoped payment resource with bounded timing until an authoritative terminal state is observed.",
+      "tests": { "p08b-browser": ["P08BE2E03"], "p08b-client": ["P08BTS04", "P08BTS05"] }
+    },
+    {
+      "id": "P08B-R04",
+      "sections": ["14", "15"],
+      "statement": "Payment history and detail render real incoming/outgoing direction, amount, counterparty reference, version, timestamps, adjustment state, failure information and settlement journal only when returned by the protected API.",
+      "tests": { "p08b-browser": ["P08BE2E03"], "p08b-client": ["P08BTS03", "P08BTS04"] }
+    },
+    {
+      "id": "P08B-R05",
+      "sections": ["8", "9", "15"],
+      "statement": "Only an outgoing PENDING payment exposes cancellation; cancellation has its own idempotency key, preserves uncertainty safely and refreshes the authoritative resource so a settlement race is never misrepresented.",
+      "tests": { "p08b-browser": ["P08BE2E04"], "p08b-client": ["P08BTS07"] }
+    },
+    {
+      "id": "P08B-R06",
+      "sections": ["5", "15", "20"],
+      "statement": "Money entry uses exact currency precision and minor-unit strings, confirmation dialogs are keyboard-operable with predictable focus, status is non-color-only, and critical flows pass axe at desktop, tablet and mobile reference widths.",
+      "tests": { "p08b-browser": ["P08BE2E01", "P08BE2E03", "P08BE2E04"], "p08b-client": ["P08BTS02"] }
+    },
+    {
+      "id": "P08B-R07",
+      "sections": ["24", "25", "28"],
+      "statement": "The P08B browser journeys execute against the real same-origin Compose topology with PostgreSQL, RabbitMQ, outbox publisher and competing payment workers while preserving the complete P01-P08A regression campaign.",
+      "tests": { "p08b-browser": ["P08BE2E01", "P08BE2E02", "P08BE2E03", "P08BE2E04"], "p08b-client": ["P08BTS05"] }
+    }
+  ]
+}

@@ -1,0 +1,123 @@
+#!/usr/bin/env python3
+"""Require verified P01-P08A regression plus executed P08B customer money-movement evidence."""
+import json
+import subprocess
+import xml.etree.ElementTree as ET
+from datetime import datetime, timezone
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parent.parent
+subprocess.run(["python3", "scripts/assert-p08a-evidence"], cwd=ROOT, check=True)
+
+def suite(relative, minimum):
+    path = ROOT / relative
+    if not path.is_file():
+        raise SystemExit(f"Missing P08B test result: {relative}")
+    root = ET.parse(path).getroot()
+    suites = [root] if root.tag == "testsuite" else root.findall(".//testsuite")
+    counts = {key: sum(int(item.get(key, "0")) for item in suites) for key in ("tests", "failures", "errors", "skipped")}
+    cases = root.findall(".//testcase")
+    if counts["tests"] < minimum or len(cases) != counts["tests"]:
+        raise SystemExit(f"Missing expected P08B discovery: {relative}: {counts}, cases={len(cases)}")
+    if any(counts[key] for key in ("failures", "errors", "skipped")):
+        raise SystemExit(f"P08B suite did not pass without skips: {relative}: {counts}")
+    for case in cases:
+        if any(case.find(tag) is not None for tag in ("failure", "error", "skipped")):
+            raise SystemExit(f"Non-passing P08B test case: {relative}: {case.get('name')}")
+    return counts, [case.get("name", "") for case in cases]
+
+client_counts, client_cases = suite(".evidence/client/p08b-results.xml", 8)
+browser_counts, browser_cases = suite(".evidence/playwright/junit.xml", 24)
+executed = {"p08b-client": client_cases, "p08b-browser": browser_cases}
+
+manifest = json.loads((ROOT / "docs/implementation/P08B_REQUIREMENTS.json").read_text(encoding="utf-8"))
+if not (ROOT / manifest["sourceContract"]).is_file():
+    raise SystemExit("Missing P08B source contract")
+traceability = []
+seen = set()
+for requirement in manifest["requirements"]:
+    identity = requirement["id"]
+    if identity in seen:
+        raise SystemExit(f"Duplicate P08B requirement: {identity}")
+    seen.add(identity)
+    matches = []
+    for suite_name, prefixes in requirement["tests"].items():
+        for prefix in prefixes:
+            actual = [name for name in executed.get(suite_name, []) if prefix in name]
+            if not actual:
+                raise SystemExit(f"No executed oracle for {identity}: {suite_name}/{prefix}")
+            matches.extend({"suite": suite_name, "test": name} for name in actual)
+    traceability.append({
+        "id": identity,
+        "phase": manifest["phase"],
+        "statement": requirement["statement"],
+        "status": "VERIFIED_PASS",
+        "tests": matches
+    })
+
+spec = json.loads((ROOT / "backend/src/main/resources/openapi/p08b-ui.json").read_text(encoding="utf-8"))
+for path in ("/auth/csrf", "/auth/me", "/accounts", "/transfers", "/transfers/{transferId}",
+             "/payments", "/payments/{paymentId}", "/payments/{paymentId}/cancel"):
+    if path not in spec["paths"]:
+        raise SystemExit(f"P08B OpenAPI missing {path}")
+
+for relative in (
+    "frontend/src/product-router.tsx", "frontend/src/p08b-ui.tsx", "frontend/src/p08b-core.ts",
+    "frontend/src/p08b.css", "frontend/src/intent-store.ts", "frontend/tests/e2e/p08b.spec.ts",
+    "tests/contracts/p08b-client.test.cjs", "backend/src/main/resources/openapi/p08b-ui.json",
+    "docs/implementation/P08B_REQUIREMENTS.json",
+    "docs/architecture/adr/0019-p08b-replay-safe-customer-money-movement.md"):
+    if not (ROOT / relative).is_file():
+        raise SystemExit(f"Missing P08B implementation source: {relative}")
+
+screens = ROOT / ".evidence/playwright/screenshots"
+screenshot_paths = []
+for project in ("chromium-desktop", "chromium-tablet", "chromium-mobile"):
+    for journey in ("transfer", "payment"):
+        path = screens / f"{project}-{journey}.png"
+        if not path.is_file() or path.stat().st_size < 1000:
+            raise SystemExit(f"Missing inspected P08B screenshot: {path}")
+        screenshot_paths.append(str(path.relative_to(ROOT)))
+
+if not (ROOT / "frontend/dist/index.html").is_file():
+    raise SystemExit("P08B production frontend build is missing")
+config = (ROOT / "frontend/playwright.config.ts").read_text(encoding="utf-8")
+for dimensions in ("1440, height: 900", "768, height: 1024", "390, height: 844"):
+    if dimensions not in config:
+        raise SystemExit(f"Missing required responsive viewport: {dimensions}")
+
+sha = subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=ROOT, text=True).strip()
+dirty = bool(subprocess.check_output(["git", "status", "--porcelain", "--untracked-files=no"], cwd=ROOT, text=True).strip())
+if dirty:
+    raise SystemExit("Tracked source changed during P08B verification")
+rows = [
+    {"suite": ".evidence/client/p08b-results.xml", **client_counts},
+    {"suite": ".evidence/playwright/junit.xml", **browser_counts}
+]
+report = {
+    "sourceSha": sha,
+    "trackedTreeDirty": dirty,
+    "timestamp": datetime.now(timezone.utc).isoformat(),
+    "status": "VERIFIED_PASS",
+    "suites": rows,
+    "requirements": traceability,
+    "screenshots": screenshot_paths,
+    "scope": "P01-P08A regression plus P08B replay-safe immediate transfers, asynchronous payment creation/status/history, pending cancellation, real Compose workers, responsive Chromium and authenticated axe proofs; later P08 slices and P09-P11 remain incomplete"
+}
+out = ROOT / ".evidence/p08b"
+out.mkdir(parents=True, exist_ok=True)
+(out / "test-summary.json").write_text(json.dumps(report, indent=2) + "\n", encoding="utf-8")
+matrix = [
+    "# Executed P08B requirements",
+    "",
+    f"Source: `{sha}`; tracked tree dirty: `{dirty}`.",
+    "",
+    "| Requirement | Executed cases/checks | Result |",
+    "|---|---:|---|"
+]
+for item in traceability:
+    matrix.append(f"| {item['id']} | {len(item['tests'])} | {item['status']} |")
+matrix.extend(["", "Exact case names and source identity are in test-summary.json."])
+(out / "requirements-matrix.md").write_text("\n".join(matrix) + "\n", encoding="utf-8")
+print(json.dumps({key: value for key, value in report.items() if key != "requirements"}, indent=2))
+print(f"Verified {len(traceability)} P08B requirements against executed evidence.")

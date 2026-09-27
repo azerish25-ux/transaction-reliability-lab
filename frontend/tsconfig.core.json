@@ -9,5 +9,5 @@
     "outDir": "../.evidence/ts",
     "skipLibCheck": false
   },
-  "include": ["src/money.ts", "src/api.ts", "src/intent-store.ts", "src/webhook-api.ts"]
+  "include": ["src/money.ts", "src/api.ts", "src/intent-store.ts", "src/p08b-core.ts", "src/webhook-api.ts"]
 }

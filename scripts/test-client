@@ -9,3 +9,4 @@ node tests/contracts/payment-client.test.cjs
 node tests/contracts/payment-adjustment-client.test.cjs
 node tests/contracts/webhook-client.test.cjs
 node tests/contracts/p08a-client.test.cjs
+node tests/contracts/p08b-client.test.cjs

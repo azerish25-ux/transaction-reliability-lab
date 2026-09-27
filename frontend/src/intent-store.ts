@@ -3,8 +3,8 @@ import {
   type AdjustmentReceipt, type CancellationReceipt, type CommandResponse, type Intent,
   type PaymentCancellationIntent, type PaymentReceipt, type PaymentRefundIntent,
   type PaymentReversalIntent, type TransferReceipt,
-  normalizeIntent, normalizePaymentCancellationIntent, normalizePaymentRefundIntent,
-  normalizePaymentReversalIntent
+  normalizeIntent, normalizePaymentCancellationIntent, normalizePaymentIntent,
+  normalizePaymentRefundIntent, normalizePaymentReversalIntent, normalizeTransferIntent
 } from './api.js';
 export type IntentState = 'PREPARED' | 'UNCERTAIN' | 'CONFIRMED' | 'REJECTED';
 export type IntentKind = 'transfers' | 'payments' | 'payment-cancellations' | 'payment-refunds' | 'payment-reversals';
@@ -44,13 +44,13 @@ export class IntentStore {
     return updated;
   }
   async executeTransfer(api: ApiClient, input: Intent, newKey: () => string = () => crypto.randomUUID()): Promise<CommandResponse<TransferReceipt>> {
-    return this.sendPreparedTransfer(api, this.prepare('transfers', input, newKey));
+    return this.sendPreparedTransfer(api, this.prepare('transfers', normalizeTransferIntent(input), newKey));
   }
   async retryTransfer(api: ApiClient): Promise<CommandResponse<TransferReceipt>> {
     return this.sendPreparedTransfer(api, this.unresolved('transfers'));
   }
   async executePayment(api: ApiClient, input: Intent, newKey: () => string = () => crypto.randomUUID()): Promise<CommandResponse<PaymentReceipt>> {
-    return this.sendPreparedPayment(api, this.prepare('payments', input, newKey));
+    return this.sendPreparedPayment(api, this.prepare('payments', normalizePaymentIntent(input), newKey));
   }
   async retryPayment(api: ApiClient): Promise<CommandResponse<PaymentReceipt>> {
     return this.sendPreparedPayment(api, this.unresolved('payments'));

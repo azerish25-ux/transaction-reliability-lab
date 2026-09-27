@@ -1,0 +1,176 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "LedgerGuard P08B customer money-movement contract",
+    "version": "0.8.2",
+    "description": "Scoped same-origin contract for owner-authorized immediate transfers, asynchronous payment creation and history, authoritative status polling, replay-safe uncertainty resolution and pending-payment cancellation. Synthetic money only."
+  },
+  "servers": [{ "url": "/api/v1" }],
+  "security": [{ "SessionCookie": [] }],
+  "paths": {
+    "/auth/csrf": {
+      "get": {
+        "security": [],
+        "operationId": "csrfToken",
+        "responses": { "200": { "description": "CSRF header name and token for same-origin commands" } }
+      }
+    },
+    "/auth/me": {
+      "get": {
+        "operationId": "currentSession",
+        "responses": { "200": { "description": "Current authenticated identity" }, "401": { "$ref": "#/components/responses/Problem" } }
+      }
+    },
+    "/accounts": {
+      "get": {
+        "operationId": "listAccountsForMoneyMovement",
+        "parameters": [{ "$ref": "#/components/parameters/Limit" }, { "$ref": "#/components/parameters/Offset" }],
+        "responses": {
+          "200": {
+            "description": "Owner-scoped wallets with authoritative posted, reserved and available balances",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/AccountPage" } } }
+          },
+          "401": { "$ref": "#/components/responses/Problem" }
+        }
+      }
+    },
+    "/transfers": {
+      "post": {
+        "operationId": "createTransfer",
+        "description": "Atomically settles one immediate transfer. The same principal, key and canonical intent replay the original 201 response; a changed intent conflicts without another financial effect.",
+        "parameters": [{ "$ref": "#/components/parameters/IdempotencyKey" }, { "$ref": "#/components/parameters/CsrfHeader" }],
+        "requestBody": { "required": true, "content": { "application/json": { "schema": { "$ref": "#/components/schemas/MoneyIntent" } } } },
+        "responses": {
+          "201": {
+            "description": "Settled transfer receipt",
+            "headers": { "Idempotency-Replayed": { "$ref": "#/components/headers/IdempotencyReplayed" }, "Location": { "$ref": "#/components/headers/Location" } },
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/TransferReceipt" } } }
+          },
+          "400": { "$ref": "#/components/responses/Problem" },
+          "401": { "$ref": "#/components/responses/Problem" },
+          "403": { "$ref": "#/components/responses/Problem" },
+          "409": { "$ref": "#/components/responses/Problem" },
+          "422": { "$ref": "#/components/responses/Problem" },
+          "503": { "$ref": "#/components/responses/UncertainProblem" }
+        }
+      },
+      "get": {
+        "operationId": "listTransfers",
+        "parameters": [{ "$ref": "#/components/parameters/Limit" }, { "$ref": "#/components/parameters/Offset" }],
+        "responses": { "200": { "description": "Owner-created transfers ordered newest first" }, "401": { "$ref": "#/components/responses/Problem" } }
+      }
+    },
+    "/transfers/{transferId}": {
+      "get": {
+        "operationId": "getTransfer",
+        "parameters": [{ "$ref": "#/components/parameters/TransferId" }],
+        "responses": {
+          "200": { "description": "Owner-scoped settled transfer", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/TransferRecord" } } } },
+          "404": { "$ref": "#/components/responses/Problem" }
+        }
+      }
+    },
+    "/payments": {
+      "post": {
+        "operationId": "createPayment",
+        "description": "Durably accepts a pending payment, active hold, idempotency outcome, audit entry and outbox event before returning 202. Pending is not settlement.",
+        "parameters": [{ "$ref": "#/components/parameters/IdempotencyKey" }, { "$ref": "#/components/parameters/CsrfHeader" }],
+        "requestBody": { "required": true, "content": { "application/json": { "schema": { "$ref": "#/components/schemas/MoneyIntent" } } } },
+        "responses": {
+          "202": {
+            "description": "Durably accepted pending payment",
+            "headers": { "Idempotency-Replayed": { "$ref": "#/components/headers/IdempotencyReplayed" }, "Location": { "$ref": "#/components/headers/Location" } },
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/PaymentReceipt" } } }
+          },
+          "400": { "$ref": "#/components/responses/Problem" },
+          "401": { "$ref": "#/components/responses/Problem" },
+          "403": { "$ref": "#/components/responses/Problem" },
+          "409": { "$ref": "#/components/responses/Problem" },
+          "422": { "$ref": "#/components/responses/Problem" },
+          "503": { "$ref": "#/components/responses/UncertainProblem" }
+        }
+      },
+      "get": {
+        "operationId": "listPayments",
+        "parameters": [{ "$ref": "#/components/parameters/Limit" }, { "$ref": "#/components/parameters/Offset" }],
+        "responses": { "200": { "description": "Owner-visible incoming and outgoing payments ordered newest first" }, "401": { "$ref": "#/components/responses/Problem" } }
+      }
+    },
+    "/payments/{paymentId}": {
+      "get": {
+        "operationId": "getPayment",
+        "description": "Authoritative payment lifecycle resource. Clients poll this resource using bounded intervals until SETTLED, FAILED or CANCELLED.",
+        "parameters": [{ "$ref": "#/components/parameters/PaymentId" }],
+        "responses": {
+          "200": { "description": "Owner-visible payment", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/PaymentRecord" } } } },
+          "404": { "$ref": "#/components/responses/Problem" }
+        }
+      }
+    },
+    "/payments/{paymentId}/cancel": {
+      "post": {
+        "operationId": "cancelPendingPayment",
+        "description": "Attempts to cancel an outgoing owner payment. The refreshed payment resource is authoritative when cancellation races settlement.",
+        "parameters": [{ "$ref": "#/components/parameters/PaymentId" }, { "$ref": "#/components/parameters/IdempotencyKey" }, { "$ref": "#/components/parameters/CsrfHeader" }],
+        "requestBody": { "required": false, "content": { "application/json": { "schema": { "$ref": "#/components/schemas/CancellationRequest" } } } },
+        "responses": {
+          "200": {
+            "description": "Cancellation won and the payment is cancelled",
+            "headers": { "Idempotency-Replayed": { "$ref": "#/components/headers/IdempotencyReplayed" } },
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/CancellationReceipt" } } }
+          },
+          "403": { "$ref": "#/components/responses/Problem" },
+          "404": { "$ref": "#/components/responses/Problem" },
+          "409": { "$ref": "#/components/responses/Problem" },
+          "422": { "$ref": "#/components/responses/Problem" },
+          "503": { "$ref": "#/components/responses/UncertainProblem" }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "SessionCookie": { "type": "apiKey", "in": "cookie", "name": "LG-SESSION", "description": "Sandbox cookie name; secure deployments use the __Host- prefix." }
+    },
+    "parameters": {
+      "IdempotencyKey": { "name": "Idempotency-Key", "in": "header", "required": true, "schema": { "type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{7,127}$" }, "description": "Stable for one normalized economic instruction and reused after an uncertain response." },
+      "CsrfHeader": { "name": "X-XSRF-TOKEN", "in": "header", "required": true, "schema": { "type": "string", "minLength": 1 } },
+      "TransferId": { "name": "transferId", "in": "path", "required": true, "schema": { "type": "string", "format": "uuid" } },
+      "PaymentId": { "name": "paymentId", "in": "path", "required": true, "schema": { "type": "string", "format": "uuid" } },
+      "Limit": { "name": "limit", "in": "query", "schema": { "type": "integer", "minimum": 1, "maximum": 100, "default": 50 } },
+      "Offset": { "name": "offset", "in": "query", "schema": { "type": "integer", "minimum": 0, "maximum": 10000, "default": 0 } }
+    },
+    "headers": {
+      "IdempotencyReplayed": { "description": "true only when the original durable response is being replayed", "schema": { "type": "string", "enum": ["true", "false"] } },
+      "Location": { "description": "Stable resource location", "schema": { "type": "string" } }
+    },
+    "responses": {
+      "Problem": { "description": "Machine-readable application/problem+json with stable code, safe message, correlationId and optional validation details", "content": { "application/problem+json": { "schema": { "$ref": "#/components/schemas/Problem" } } } },
+      "UncertainProblem": { "description": "The client cannot infer success or failure; it must retain the same normalized request and idempotency key and resolve by replay/resource lookup", "content": { "application/problem+json": { "schema": { "$ref": "#/components/schemas/Problem" } } } }
+    },
+    "schemas": {
+      "Currency": { "type": "string", "enum": ["CAD", "USD", "JPY", "KWD"] },
+      "MinorUnits": { "type": "string", "pattern": "^[1-9][0-9]{0,12}$", "description": "Exact integer minor units; never a JSON number." },
+      "MoneyIntent": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["sourceId", "recipientRef", "amountMinor", "currency"],
+        "properties": {
+          "sourceId": { "type": "string", "format": "uuid" },
+          "recipientRef": { "type": "string", "pattern": "^LG-[0-9a-f]{32}$" },
+          "amountMinor": { "$ref": "#/components/schemas/MinorUnits" },
+          "currency": { "$ref": "#/components/schemas/Currency" }
+        }
+      },
+      "AccountPage": { "type": "object", "required": ["items", "limit", "offset", "hasMore"], "properties": { "items": { "type": "array", "items": { "$ref": "#/components/schemas/Account" } }, "limit": { "type": "integer" }, "offset": { "type": "integer" }, "hasMore": { "type": "boolean" } } },
+      "Account": { "type": "object", "required": ["id", "publicRef", "name", "currency", "postedMinor", "reservedMinor", "availableMinor", "version", "updatedAt"], "properties": { "id": { "type": "string", "format": "uuid" }, "publicRef": { "type": "string" }, "name": { "type": "string" }, "currency": { "$ref": "#/components/schemas/Currency" }, "postedMinor": { "type": "string" }, "reservedMinor": { "type": "string" }, "availableMinor": { "type": "string" }, "version": { "type": "string" }, "updatedAt": { "type": "string", "format": "date-time" } } },
+      "TransferReceipt": { "type": "object", "required": ["id", "kind", "state", "journalId", "amountMinor", "currency"], "properties": { "id": { "type": "string", "format": "uuid" }, "kind": { "const": "TRANSFER" }, "state": { "const": "SETTLED" }, "journalId": { "type": "string", "format": "uuid" }, "amountMinor": { "$ref": "#/components/schemas/MinorUnits" }, "currency": { "$ref": "#/components/schemas/Currency" } } },
+      "TransferRecord": { "allOf": [{ "$ref": "#/components/schemas/TransferReceipt" }, { "type": "object", "required": ["sourceId", "recipientRef", "createdAt"], "properties": { "sourceId": { "type": "string", "format": "uuid" }, "recipientRef": { "type": "string" }, "createdAt": { "type": "string", "format": "date-time" } } }] },
+      "PaymentReceipt": { "type": "object", "required": ["id", "kind", "state", "amountMinor", "currency"], "properties": { "id": { "type": "string", "format": "uuid" }, "kind": { "const": "PAYMENT" }, "state": { "const": "PENDING" }, "amountMinor": { "$ref": "#/components/schemas/MinorUnits" }, "currency": { "$ref": "#/components/schemas/Currency" } } },
+      "PaymentRecord": { "type": "object", "required": ["id", "direction", "accountId", "counterpartyRef", "amountMinor", "currency", "state", "version", "adjustmentState", "createdAt", "updatedAt"], "properties": { "id": { "type": "string", "format": "uuid" }, "direction": { "type": "string", "enum": ["OUTGOING", "INCOMING"] }, "accountId": { "type": "string", "format": "uuid" }, "counterpartyRef": { "type": "string" }, "amountMinor": { "$ref": "#/components/schemas/MinorUnits" }, "currency": { "$ref": "#/components/schemas/Currency" }, "state": { "type": "string", "enum": ["PENDING", "SETTLED", "FAILED", "CANCELLED"] }, "version": { "type": "string" }, "adjustmentState": { "type": "string", "enum": ["NONE", "PARTIALLY_REFUNDED", "FULLY_REFUNDED", "REVERSED"] }, "journalId": { "type": ["string", "null"], "format": "uuid" }, "failureCode": { "type": ["string", "null"] }, "projectionState": { "type": ["string", "null"] }, "projectionVersion": { "type": ["string", "null"] }, "createdAt": { "type": "string", "format": "date-time" }, "updatedAt": { "type": "string", "format": "date-time" } } },
+      "CancellationRequest": { "type": "object", "additionalProperties": false, "properties": { "reason": { "type": "string", "minLength": 1, "maxLength": 500 } } },
+      "CancellationReceipt": { "type": "object", "required": ["id", "state"], "properties": { "id": { "type": "string", "format": "uuid" }, "state": { "const": "CANCELLED" } } },
+      "Problem": { "type": "object", "required": ["code", "message", "correlationId"], "properties": { "code": { "type": "string" }, "message": { "type": "string" }, "correlationId": { "type": "string" }, "validation": { "type": "object", "additionalProperties": { "type": "string" } } } }
+    }
+  }
+}

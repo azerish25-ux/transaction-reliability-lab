@@ -1,6 +1,6 @@
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
-import App from './App.js';
+import ProductRouter from './product-router.js';
 import { SessionProvider } from './session.js';
 import './accessibility.css';
 
@@ -10,7 +10,7 @@ if (!root) throw new Error('LedgerGuard root element is missing');
 createRoot(root).render(
   <StrictMode>
     <SessionProvider>
-      <App />
+      <ProductRouter />
     </SessionProvider>
   </StrictMode>
 );
