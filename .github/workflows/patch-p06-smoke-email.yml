@@ -1,0 +1,41 @@
+name: Patch P06 smoke email identity
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    if: "${{ github.event.head_commit.message == 'chore: route P06 smoke email fix' }}"
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Check out routing commit
+        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+        with:
+          fetch-depth: 0
+      - name: Correct generated registration address
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+
+          path = Path('scripts/smoke-adjustments')
+          text = path.read_text(encoding='utf-8')
+          old = 'email=f"{label}-{uuid.uuid4().hex}@example.test"'
+          new = 'email=f"p06-{uuid.uuid4().hex}@example.test"'
+          if text.count(old) != 1:
+              raise SystemExit(f'expected exactly one invalid email template, found {text.count(old)}')
+          path.write_text(text.replace(old, new), encoding='utf-8')
+          PY
+          python3 -m py_compile scripts/smoke-adjustments
+          git diff --check
+      - name: Commit and publish smoke correction
+        run: |
+          git config user.name 'azerish25-ux'
+          git config user.email 'azerish25@gmail.com'
+          git add scripts/smoke-adjustments
+          git commit -m 'fix: generate valid P06 smoke identities'
+          git push origin HEAD:main
