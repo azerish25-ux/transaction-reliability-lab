@@ -14,12 +14,12 @@ spring:
       validation-timeout: 1000
       max-lifetime: 900000
       data-source-properties:
-        ApplicationName: LedgerGuard-API
+        ApplicationName: ${LEDGER_PROCESS_NAME:LedgerGuard-API}
   flyway:
-    enabled: true
+    enabled: ${LEDGER_FLYWAY_ENABLED:true}
     url: ${LEDGER_MIGRATION_URL:jdbc:postgresql://localhost:5432/ledgerguard}
     user: ${LEDGER_OWNER_USER:ledger_owner}
-    password: ${LEDGER_OWNER_PASSWORD}
+    password: ${LEDGER_OWNER_PASSWORD:unused-when-flyway-disabled}
     locations: classpath:db/migration
     default-schema: public
     schemas: public
@@ -30,15 +30,23 @@ spring:
     host: ${LEDGER_RABBIT_HOST:localhost}
     port: ${LEDGER_RABBIT_PORT:5672}
     username: ${LEDGER_RABBIT_USER:ledgerguard}
-    password: ${LEDGER_RABBIT_PASSWORD}
+    password: ${LEDGER_RABBIT_PASSWORD:unused-when-messaging-disabled}
     virtual-host: ${LEDGER_RABBIT_VHOST:/ledgerguard}
     connection-timeout: 3s
     requested-heartbeat: 15s
+    publisher-confirm-type: correlated
+    publisher-returns: true
+    template:
+      mandatory: true
     listener:
       simple:
-        auto-startup: false
-      direct:
-        auto-startup: false
+        acknowledge-mode: manual
+        default-requeue-rejected: false
+        prefetch: ${LEDGER_WORKER_PREFETCH:8}
+        concurrency: 1
+        max-concurrency: 1
+        missing-queues-fatal: true
+        consumer-batch-enabled: false
 
 server:
   port: ${LEDGER_HTTP_PORT:8080}
@@ -62,17 +70,39 @@ management:
         liveness:
           include: livenessState
         readiness:
-          include: readinessState,ledgerDatabase,rabbit
+          include: readinessState,ledgerDatabase
   health:
     rabbit:
-      enabled: true
+      enabled: false
+
+ledgerguard:
+  messaging:
+    enabled: ${LEDGER_MESSAGING_ENABLED:false}
+  outbox-publisher:
+    enabled: ${LEDGER_OUTBOX_PUBLISHER_ENABLED:false}
+  payment-worker:
+    enabled: ${LEDGER_PAYMENT_WORKER_ENABLED:false}
+  outbox:
+    poll-ms: ${LEDGER_OUTBOX_POLL_MS:250}
+    recovery-ms: ${LEDGER_OUTBOX_RECOVERY_MS:30000}
+    replay-ms: ${LEDGER_REPLAY_POLL_MS:1000}
+    batch-size: ${LEDGER_OUTBOX_BATCH_SIZE:32}
+    max-attempts: ${LEDGER_OUTBOX_MAX_ATTEMPTS:8}
+    lease-seconds: ${LEDGER_OUTBOX_LEASE_SECONDS:20}
+    pending-recovery-age-seconds: ${LEDGER_PENDING_RECOVERY_AGE_SECONDS:120}
+  worker:
+    max-retries: ${LEDGER_WORKER_MAX_RETRIES:6}
+  sandbox-http: ${LEDGER_SANDBOX_HTTP:false}
+  test:
+    crash-after-publish-confirm: ${LEDGER_TEST_CRASH_AFTER_PUBLISH_CONFIRM:false}
+    crash-after-settlement-commit: ${LEDGER_TEST_CRASH_AFTER_SETTLEMENT_COMMIT:false}
 
 info:
   app:
     name: LedgerGuard
-    version: 0.4.0-INCOMPLETE
+    version: 0.5.0-INCOMPLETE
     boundary: synthetic-money-only
 
 logging:
   pattern:
-    console: "%d{yyyy-MM-dd'T'HH:mm:ss.SSSXXX} level=%-5level service=ledgerguard correlationId=%X{correlationId:-none} logger=%logger{36} message=%msg%n"
+    console: "%d{yyyy-MM-dd'T'HH:mm:ss.SSSXXX} level=%-5level service=${LEDGER_PROCESS_NAME:ledgerguard} correlationId=%X{correlationId:-none} logger=%logger{36} message=%msg%n"

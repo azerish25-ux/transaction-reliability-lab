@@ -1,4 +1,4 @@
-name: LedgerGuard fast verification
+name: LedgerGuard P05 verification
 
 on:
   push:
@@ -11,26 +11,12 @@ permissions:
 
 jobs:
   verify:
-    name: Build, security, transfers, financial core, PostgreSQL and Compose smoke
+    name: Build, payments, messaging recovery, security and financial invariants
     runs-on: ubuntu-latest
-    timeout-minutes: 55
+    timeout-minutes: 70
     steps:
       - name: Check out candidate
         uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
-      - name: Publish temporary source snapshot
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
-        with:
-          name: ledgerguard-source-${{ github.sha }}
-          if-no-files-found: error
-          include-hidden-files: true
-          retention-days: 1
-          path: |
-            .
-            !.git/**
-            !.ledgerguard/**
-            !.evidence/**
-            !backend/target/**
-            !frontend/node_modules/**
       - name: Configure Java 21
         uses: actions/setup-java@b6effb05e454b25005698d916606bdc6ffcbf961
         with:
@@ -45,27 +31,27 @@ jobs:
           cache: npm
           cache-dependency-path: frontend/package-lock.json
       - name: Prepare deterministic tools
-        run: chmod +x mvnw scripts/lab scripts/test-core scripts/test-client scripts/assert-p04-evidence scripts/smoke-auth scripts/unit-probes scripts/validate-evidence scripts/scan-secrets infra/docker/postgres/00-roles.sh
+        run: chmod +x mvnw scripts/lab scripts/test-core scripts/test-client scripts/assert-p04-evidence scripts/assert-p05-evidence scripts/smoke-auth scripts/unit-probes scripts/validate-evidence scripts/scan-secrets infra/docker/postgres/00-roles.sh
       - name: Install locked TypeScript dependency
         run: npm ci --prefix frontend
       - name: Run Java and TypeScript component regressions
         run: ./scripts/lab test unit
-      - name: Execute JUnit, PostgreSQL and two-process transfer HTTP verification
+      - name: Execute JUnit, PostgreSQL and two-process HTTP verification
         run: ./mvnw -B -ntp -f backend/pom.xml verify
-      - name: Require executed P03/P04 requirements with no failures or skips
-        run: python3 scripts/assert-p04-evidence
       - name: Validate Compose model
         run: docker compose --env-file .env.example -f compose.yaml config --quiet
       - name: Scan tracked source for high-signal literal secrets
         run: ./scripts/scan-secrets
-      - name: Start, seed and reconcile restricted-role application
+      - name: Start, migrate, seed and reconcile the complete P05 topology
         run: ./scripts/lab up
-      - name: Exercise live authentication, accounts, transfer and durable replay
+      - name: Exercise real payments, RabbitMQ, duplicate delivery and process-death recovery
         run: python3 scripts/smoke-auth
       - name: Verify live status and repeatable reconciliation
         run: |
           ./scripts/lab status
           ./scripts/lab reconcile
+      - name: Require executed P03/P04/P05 requirements with no failures or skips
+        run: python3 scripts/assert-p05-evidence
       - name: Capture service logs
         if: always()
         run: ./scripts/lab logs
@@ -76,7 +62,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
-          name: ledgerguard-fast-evidence-${{ github.sha }}
+          name: ledgerguard-p05-evidence-${{ github.sha }}
           if-no-files-found: warn
           include-hidden-files: true
           retention-days: 14
@@ -87,13 +73,13 @@ jobs:
             backend/target/auth-http-evidence/
             backend/target/transfer-http-evidence/
   gate:
-    name: Required fast-lane gate
+    name: Required P05 gate
     if: always()
     needs: [verify]
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
-      - name: Require every mandatory fast-lane job
+      - name: Require every mandatory P05 job
         env:
           VERIFY_RESULT: ${{ needs.verify.result }}
         run: |

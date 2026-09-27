@@ -6,6 +6,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import lab.ledgerguard.auth.*;
 import lab.ledgerguard.http.ApiProblems;
 import org.springframework.boot.autoconfigure.jackson.Jackson2ObjectMapperBuilderCustomizer;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnWebApplication;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -39,7 +40,9 @@ public class FoundationSecurityConfiguration {
             DeserializationFeature.FAIL_ON_TRAILING_TOKENS).postConfigurer(mapper->mapper.getFactory().setStreamReadConstraints(
                 StreamReadConstraints.builder().maxNestingDepth(20).maxStringLength(16384).maxNumberLength(32).build()));
     }
-    @Bean SecurityFilterChain foundationSecurity(HttpSecurity http,SecuritySettings settings,JwtSessions sessions,
+    @Bean
+    @ConditionalOnWebApplication(type=ConditionalOnWebApplication.Type.SERVLET)
+    SecurityFilterChain foundationSecurity(HttpSecurity http,SecuritySettings settings,JwtSessions sessions,
             SecurityEvents events,ObjectMapper json,CookieCsrfTokenRepository csrf) throws Exception {
         http.sessionManagement(session->session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .requestCache(AbstractHttpConfigurer::disable)
@@ -50,7 +53,7 @@ public class FoundationSecurityConfiguration {
                 .requestMatchers(HttpMethod.POST,"/api/v1/auth/register","/api/v1/auth/login").permitAll()
                 .requestMatchers("/api/v1/auth/me","/api/v1/auth/logout").authenticated()
                 .requestMatchers("/api/v1/accounts","/api/v1/accounts/**","/api/v1/recipients/**",
-                    "/api/v1/transfers","/api/v1/transfers/**").hasRole("CUSTOMER")
+                    "/api/v1/transfers","/api/v1/transfers/**","/api/v1/payments","/api/v1/payments/**").hasRole("CUSTOMER")
                 .requestMatchers("/api/v1/admin/**","/actuator/metrics","/actuator/metrics/**").hasRole("ADMIN")
                 .anyRequest().denyAll())
             .exceptionHandling(errors->errors

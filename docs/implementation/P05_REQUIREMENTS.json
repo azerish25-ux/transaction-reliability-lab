@@ -1,0 +1,186 @@
+{
+  "phase": "P05",
+  "sourceContract": "docs/implementation/MASTER_SPEC.md",
+  "scope": "Asynchronous payment acceptance and holds, PostgreSQL transactional outbox, durable RabbitMQ publication, two restartable manual-ack workers, inbox/business deduplication, monotonic status projection, recovery, failed-work inspection and audited replay. P06 adjustments and P07-P11 remain later phases.",
+  "requirements": [
+    {
+      "id": "P05-R01",
+      "sections": [
+        "3",
+        "8",
+        "9"
+      ],
+      "statement": "An authenticated CUSTOMER payment command atomically persists one PENDING payment, ACTIVE hold, idempotency outcome, audit record and payment.requested outbox event, returns 202/Location, and posts no journal at acceptance.",
+      "tests": {
+        "TransferReliabilityIT": [
+          "P0501"
+        ],
+        "payment-client": [
+          "P05TS01"
+        ],
+        "compose": [
+          "payment-accepted-without-publisher",
+          "acceptance-reserves-without-posting",
+          "acceptance-atomic-artifacts"
+        ]
+      }
+    },
+    {
+      "id": "P05-R02",
+      "sections": [
+        "7",
+        "8",
+        "9"
+      ],
+      "statement": "Payment intent is durably replayable by actor/kind/key and normalized economics; changed intent conflicts and concurrent reservations cannot exceed available funds.",
+      "tests": {
+        "TransferReliabilityIT": [
+          "P0501",
+          "P0502",
+          "P0503"
+        ],
+        "payment-client": [
+          "P05TS02",
+          "P05TS03"
+        ]
+      }
+    },
+    {
+      "id": "P05-R03",
+      "sections": [
+        "10"
+      ],
+      "statement": "A leased outbox publisher uses persistent routed messages and broker confirms, marks publication only after confirmation, and safely republishes the stable event ID after process death between confirmation and database marking.",
+      "tests": {
+        "compose": [
+          "publisher-process-died-after-confirm",
+          "crash-after-confirm-republish-one-effect"
+        ]
+      }
+    },
+    {
+      "id": "P05-R04",
+      "sections": [
+        "9",
+        "10"
+      ],
+      "statement": "Workers acknowledge only after the settlement transaction commits; death after commit but before acknowledgement redelivers safely through the consumer inbox and payment identity without a second journal.",
+      "tests": {
+        "PostgresFinancialIT": [
+          "PG06"
+        ],
+        "compose": [
+          "worker-process-died-after-commit",
+          "worker-redelivery-one-financial-effect"
+        ]
+      }
+    },
+    {
+      "id": "P05-R05",
+      "sections": [
+        "4",
+        "10"
+      ],
+      "statement": "RabbitMQ outage does not take down the PostgreSQL-backed API or immediate transfers; accepted payment work remains pending and drains after broker recovery.",
+      "tests": {
+        "TransferReliabilityIT": [
+          "P0504"
+        ],
+        "compose": [
+          "api-ready-during-broker-outage",
+          "durable-payment-during-broker-outage",
+          "immediate-transfer-during-broker-outage",
+          "broker-recovery-drains-backlog"
+        ]
+      }
+    },
+    {
+      "id": "P05-R06",
+      "sections": [
+        "10"
+      ],
+      "statement": "Duplicate delivery and a logically repeated command carrying a different message ID cannot create another committed payment effect.",
+      "tests": {
+        "PostgresFinancialIT": [
+          "PG06"
+        ],
+        "compose": [
+          "different-message-id-cannot-repeat-payment"
+        ]
+      }
+    },
+    {
+      "id": "P05-R07",
+      "sections": [
+        "10"
+      ],
+      "statement": "The payment-status projection applies full snapshots by aggregate version, deduplicates events and cannot be regressed by an older or invalid transition.",
+      "tests": {
+        "PostgresFinancialIT": [
+          "PG12"
+        ],
+        "compose": [
+          "rabbit-settlement-and-projection",
+          "old-event-cannot-regress-projection"
+        ]
+      }
+    },
+    {
+      "id": "P05-R08",
+      "sections": [
+        "10",
+        "13"
+      ],
+      "statement": "Malformed or retry-exhausted messages are bounded and inspectable; ADMIN replay is authorized, audited and republishes the original event identity rather than creating a new payment.",
+      "tests": {
+        "PostgresFinancialIT": [
+          "PG13"
+        ],
+        "compose": [
+          "poison-work-admin-inspection",
+          "audited-replay-request",
+          "poison-replay-remains-bounded"
+        ]
+      }
+    },
+    {
+      "id": "P05-R09",
+      "sections": [
+        "4",
+        "7",
+        "10"
+      ],
+      "statement": "The real Compose topology runs an independently restartable publisher and at least two competing payment workers against durable PostgreSQL and RabbitMQ infrastructure.",
+      "tests": {
+        "compose": [
+          "two-independent-workers-running",
+          "worker-a-settles-independently",
+          "worker-b-settles-independently",
+          "rabbit-settlement-and-projection"
+        ]
+      }
+    },
+    {
+      "id": "P05-R10",
+      "sections": [
+        "13",
+        "14",
+        "15"
+      ],
+      "statement": "Payment reads are owner/relevant-party scoped without private counterparty UUID disclosure, runtime SQL cannot forge payments, and the P05 OpenAPI/client preserve exact string money and uncertain intent.",
+      "tests": {
+        "TransferReliabilityIT": [
+          "P0505"
+        ],
+        "payment-client": [
+          "P05TS04",
+          "P05TS05"
+        ],
+        "compose": [
+          "recipient-can-read-payment-without-private-source-id",
+          "administrator-cannot-create-payment"
+        ]
+      }
+    }
+  ]
+}
