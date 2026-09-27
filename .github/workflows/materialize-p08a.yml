@@ -21,7 +21,6 @@ jobs:
     timeout-minutes: 45
     env:
       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      P08A_CHUNKS: dac7d6456cc8c97533e435eef14d468f3b8a9311 ff436fbb78258cdc872f1b01430478bda0616258 99bf25e31fe867949f84536fa4b21d9d5bded5bb a5ae1554f93c04e2c9a9963b1095cdb48ff452de ffe23ce79be070998193181879a55a604e3e6c3e
       P08A_ARCHIVE_SHA256: 63b4c1f910996ed826509cb35d03987c7cb7d864aa9c27f1565a60e6b7b41060
     steps:
       - name: Check out staging commit
@@ -43,24 +42,36 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+          chunks=(
+            "dac7d6456cc8c97533e435eef14d468f3b8a9311:416152b8ed2de6c0eacf709e05db1e65f0d217e15c3c9733cb329ab19c8d1a12"
+            "ff436fbb78258cdc872f1b01430478bda0616258:614e0d89905917f668445070e9ba1d45e0e23788b9ecc2b9078908b7b03dcfee"
+            "99bf25e31fe867949f84536fa4b21d9d5bded5bb:2c9f2602ef74ca58dc992aa4a3bbaf4835541a8832be4f2d9dd9d4d799243dd3"
+            "a5ae1554f93c04e2c9a9963b1095cdb48ff452de:411958cdd6aad03a4891c33212b5f47f2cfb144743488d2969ab4fa2b336d677"
+            "ffe23ce79be070998193181879a55a604e3e6c3e:787d1cbc7de98aa84a6a83e318f44c7c44153294e30e46392870803ac63afb25"
+          )
           : > /tmp/p08a-source.tar.gz
-          for sha in $P08A_CHUNKS; do
+          index=0
+          for item in "${chunks[@]}"; do
+            sha="${item%%:*}"
+            expected="${item#*:}"
             curl --fail --silent --show-error --location \
               -H "Authorization: Bearer $GITHUB_TOKEN" \
               -H "Accept: application/vnd.github+json" \
               -H "X-GitHub-Api-Version: 2022-11-28" \
               "$GITHUB_API_URL/repos/$GITHUB_REPOSITORY/git/blobs/$sha" \
               -o /tmp/p08a-blob.json
-            python3 - "$sha" <<'PY'
+            python3 - "$sha" "$index" <<'PY'
           import base64, json, pathlib, sys
-          sha = sys.argv[1]
+          sha, index = sys.argv[1], sys.argv[2]
           payload = json.loads(pathlib.Path('/tmp/p08a-blob.json').read_text(encoding='utf-8'))
           if payload.get('sha') != sha or payload.get('encoding') != 'base64':
               raise SystemExit(f'unexpected blob response for {sha}')
           data = base64.b64decode(payload['content'].replace('\n', ''), validate=True)
-          with pathlib.Path('/tmp/p08a-source.tar.gz').open('ab') as output:
-              output.write(data)
+          pathlib.Path(f'/tmp/p08a-chunk-{index}').write_bytes(data)
           PY
+            printf '%s  %s\n' "$expected" "/tmp/p08a-chunk-$index" | sha256sum --check --strict
+            cat "/tmp/p08a-chunk-$index" >> /tmp/p08a-source.tar.gz
+            index=$((index + 1))
           done
           printf '%s  %s\n' "$P08A_ARCHIVE_SHA256" /tmp/p08a-source.tar.gz | sha256sum --check --strict
           python3 <<'PY'
