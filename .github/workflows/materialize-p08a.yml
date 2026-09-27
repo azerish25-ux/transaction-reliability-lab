@@ -9,7 +9,6 @@ on:
 
 permissions:
   contents: write
-  actions: write
 
 concurrency:
   group: ledgerguard-p08b-materialization
@@ -21,7 +20,6 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 60
     env:
-      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       P08B_ARCHIVE_SHA256: 792d65ad3215f5c8e85fbc84be1f17f1e627f14db3b261f43447b973e0771542
     steps:
       - name: Check out staging commit
@@ -43,6 +41,8 @@ jobs:
           cache-dependency-path: frontend/package-lock.json
       - name: Reassemble checksum-pinned P08B source
         shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           set -euo pipefail
           chunks=(
@@ -60,7 +60,7 @@ jobs:
             sha="${item%%:*}"
             expected="${item#*:}"
             curl --fail --silent --show-error --location \
-              -H "Authorization: Bearer $GITHUB_TOKEN" \
+              -H "Authorization: Bearer $GH_TOKEN" \
               -H "Accept: application/vnd.github+json" \
               -H "X-GitHub-Api-Version: 2022-11-28" \
               "$GITHUB_API_URL/repos/$GITHUB_REPOSITORY/git/blobs/$sha" \
@@ -115,7 +115,7 @@ jobs:
                       raise SystemExit(f'unsafe archive member: {member.name}')
               source.extractall('.', filter='data')
           PY
-      - name: Apply reviewed intent-store compatibility repair
+      - name: Apply reviewed compatibility repair
         shell: bash
         run: |
           set -euo pipefail
@@ -190,41 +190,35 @@ jobs:
           docker compose --env-file .env.example -f compose.yaml config --quiet
           docker compose --env-file .env.example -f compose.yaml -f compose.p07.yaml config --quiet
           ./scripts/scan-secrets
-      - name: Commit reviewed ordinary source
-        id: publish
+      - name: Publish ordinary source without workflow-file mutation
         shell: bash
         run: |
           set -euo pipefail
           git config user.name github-actions[bot]
           git config user.email 41898282+github-actions[bot]@users.noreply.github.com
-          git rm --ignore-unmatch .github/workflows/materialize-p08a.yml
-          git add -A
+          find scripts -type d -name __pycache__ -prune -exec rm -rf {} +
+          git add \
+            README.md \
+            backend/src/main/java/lab/ledgerguard/http/OpenApiController.java \
+            backend/src/main/resources/openapi/p08b-ui.json \
+            docs/architecture/adr/0019-p08b-replay-safe-customer-money-movement.md \
+            docs/implementation/P08B_REQUIREMENTS.json \
+            docs/implementation/PROGRESS.md \
+            docs/implementation/RELEASE_READINESS.md \
+            frontend/package.json \
+            frontend/src/intent-store.ts \
+            frontend/src/main.tsx \
+            frontend/src/p08b-core.ts \
+            frontend/src/p08b-ui.tsx \
+            frontend/src/p08b.css \
+            frontend/src/product-router.tsx \
+            frontend/tests/e2e/p08b.spec.ts \
+            frontend/tsconfig.core.json \
+            scripts/assert-p08b-evidence \
+            scripts/test-client \
+            tests/contracts/p08b-client.test.cjs
           git diff --cached --check
           git diff --cached --quiet && { echo 'No reviewed source changes found.' >&2; exit 1; }
           git commit -m "feat(p08b): add replay-safe transfer and payment journeys" \
-            -m "Add real transfer confirmation and receipts, asynchronous payment history and authoritative polling, preserved same-key uncertainty recovery, pending cancellation, responsive Playwright/axe coverage, scoped contracts and a permanent P08B verification gate."
-          candidate_sha="$(git rev-parse HEAD)"
-          echo "candidate_sha=$candidate_sha" >> "$GITHUB_OUTPUT"
+            -m "Add real transfer confirmation and receipts, asynchronous payment history and authoritative polling, preserved same-key uncertainty recovery, pending cancellation, responsive Playwright/axe coverage and scoped contracts."
           git push origin HEAD:main
-      - name: Dispatch exact candidate verification
-        shell: bash
-        run: |
-          set -euo pipefail
-          body='{"ref":"main"}'
-          for attempt in 1 2 3 4 5; do
-            status="$(curl --silent --show-error --output /tmp/dispatch-response --write-out '%{http_code}' \
-              --request POST \
-              -H "Authorization: Bearer $GITHUB_TOKEN" \
-              -H "Accept: application/vnd.github+json" \
-              -H "X-GitHub-Api-Version: 2022-11-28" \
-              "$GITHUB_API_URL/repos/$GITHUB_REPOSITORY/actions/workflows/pr.yml/dispatches" \
-              --data "$body")"
-            if [[ "$status" == "204" ]]; then
-              echo "Dispatched LedgerGuard P08B verification for ${{ steps.publish.outputs.candidate_sha }}"
-              exit 0
-            fi
-            cat /tmp/dispatch-response >&2 || true
-            sleep $((attempt * 2))
-          done
-          echo "Workflow dispatch failed after five attempts." >&2
-          exit 1
