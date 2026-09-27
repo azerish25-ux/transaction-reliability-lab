@@ -1,0 +1,47 @@
+name: P07A fixture correction
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+
+concurrency:
+  group: ledgerguard-p07a-fixture-correction
+  cancel-in-progress: false
+
+jobs:
+  correct-and-publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Check out source
+        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+        with:
+          fetch-depth: 0
+      - name: Correct the UTC edit fixture and remove this one-shot workflow
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+          path = Path('backend/src/test/java/lab/ledgerguard/ScheduledTransferReliabilityIT.java')
+          text = path.read_text()
+          before = '''        ObjectNode edited = payload(fixture, 900, editedLocal, editedDue, "DAILY");
+                  edited.put("expectedVersion", 1);'''
+          after = '''        ObjectNode edited = payload(fixture, 900, editedLocal, editedDue, "DAILY");
+                  edited.put("zoneId", "UTC");
+                  edited.put("expectedVersion", 1);'''
+          if after not in text:
+              if before not in text:
+                  raise SystemExit('expected fixture block not found')
+              path.write_text(text.replace(before, after, 1))
+          PY
+          rm .github/workflows/p07a-fixture-fix.yml
+          git config user.name "azerish25-ux"
+          git config user.email "azerish25@gmail.com"
+          git add -A
+          git diff --cached --check
+          git commit -m "test: align UTC edit fixture with due instant"
+          git push origin HEAD:main
