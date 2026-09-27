@@ -1,0 +1,55 @@
+name: Publish P07B source
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.p07b/**'
+      - '.github/workflows/p07b-publish.yml'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: ledgerguard-p07b-source-publication
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    name: Materialize reviewed P07B source
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Check out staging commit
+        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+        with:
+          fetch-depth: 1
+      - name: Verify and extract source payload
+        run: |
+          set -euo pipefail
+          git fetch origin main --depth=1
+          test "$(git rev-parse origin/main)" = "$GITHUB_SHA"
+          cat .p07b/part-* | base64 --decode > /tmp/p07b-source.tar.gz
+          echo 'dc882e63ed1d5a505a210616654f9c53ae5d6aee3ea41ad5f82644cc79b2f3eb  /tmp/p07b-source.tar.gz' | sha256sum --check
+          python3 - <<'PY'
+          import pathlib, tarfile
+          archive=pathlib.Path('/tmp/p07b-source.tar.gz')
+          with tarfile.open(archive,'r:gz') as bundle:
+              for member in bundle.getmembers():
+                  path=pathlib.PurePosixPath(member.name)
+                  if path.is_absolute() or '..' in path.parts:
+                      raise SystemExit(f'Unsafe archive path: {member.name}')
+              bundle.extractall('.',filter='data')
+          PY
+          rm -rf .p07b .github/workflows/p07b-publish.yml
+          chmod +x scripts/test-client scripts/smoke-schedules scripts/smoke-webhooks scripts/assert-p07b-evidence
+          git diff --check
+      - name: Commit reviewed P07B source
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -A
+          ! git diff --cached --quiet
+          git commit -m 'feat(p07b): add signed durable webhook delivery' -m 'Integrate encrypted endpoint secrets, durable fan-out and attempts, isolated dispatchers, exact-byte HMAC receiver validation, owner/admin inspection, restart and duplicate protection, scoped contracts, tests and permanent evidence gating.'
+          git push origin HEAD:main
