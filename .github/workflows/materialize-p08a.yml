@@ -135,6 +135,14 @@ jobs:
                   raise SystemExit(f'unexpected P08A contract assertion source: {old}')
               tests = tests.replace(old, new)
           test_path.write_text(tests, encoding='utf-8')
+
+          adr_path = Path('docs/architecture/adr/0018-p08a-same-origin-customer-interface.md')
+          adr = adr_path.read_text(encoding='utf-8')
+          old = "Status: accepted for P08A candidate verification  \n"
+          new = "Status: accepted for P08A candidate verification\n"
+          if adr.count(old) != 1:
+              raise SystemExit('unexpected P08A ADR status formatting')
+          adr_path.write_text(adr.replace(old, new), encoding='utf-8')
           PY
       - name: Generate exact frontend lock and verify source
         shell: bash
