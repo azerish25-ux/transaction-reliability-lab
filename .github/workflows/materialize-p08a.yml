@@ -84,7 +84,7 @@ jobs:
                       raise SystemExit(f'unsafe archive member: {member.name}')
               source.extractall('.', filter='data')
           PY
-      - name: Apply reviewed strict typing repairs
+      - name: Apply reviewed source repairs
         shell: bash
         run: |
           set -euo pipefail
@@ -117,10 +117,25 @@ jobs:
           if money.count(old) != 1:
               raise SystemExit('unexpected parseAmount destructuring source')
           money_path.write_text(money.replace(old, new), encoding='utf-8')
+
+          test_path = Path('tests/contracts/p08a-client.test.cjs')
+          tests = test_path.read_text(encoding='utf-8')
+          test_replacements = [
+              ("await assert.rejects(api.accountTransaction('../other', journalId), /Invalid account identity/);",
+               "assert.throws(() => api.accountTransaction('../other', journalId), /Invalid account identity/);"),
+              ("await assert.rejects(api.accountTransaction(accountId, 'not-a-journal'), /Invalid journal identity/);",
+               "assert.throws(() => api.accountTransaction(accountId, 'not-a-journal'), /Invalid journal identity/);"),
+              ("await assert.rejects(api.accountTransactions(accountId, 101, 0), /Invalid pagination/);",
+               "assert.throws(() => api.accountTransactions(accountId, 101, 0), /Invalid pagination/);"),
+              ("await assert.rejects(api.accountTransactions(accountId, 15, 10001), /Invalid pagination/);",
+               "assert.throws(() => api.accountTransactions(accountId, 15, 10001), /Invalid pagination/);"),
+          ]
+          for old, new in test_replacements:
+              if tests.count(old) != 1:
+                  raise SystemExit(f'unexpected P08A contract assertion source: {old}')
+              tests = tests.replace(old, new)
+          test_path.write_text(tests, encoding='utf-8')
           PY
-      - name: Print P08A client contract source
-        shell: bash
-        run: nl -ba tests/contracts/p08a-client.test.cjs
       - name: Generate exact frontend lock and verify source
         shell: bash
         run: |
