@@ -1,42 +1,103 @@
-name: LedgerGuard P07A publisher
+name: LedgerGuard P07A verification
 
 on:
   push:
     branches: [main]
+  pull_request:
   workflow_dispatch:
 
 permissions:
-  contents: write
-
-concurrency:
-  group: ledgerguard-p07a-publisher
-  cancel-in-progress: false
+  contents: read
 
 jobs:
-  publish-reviewed-candidate:
+  verify:
+    name: Build, schedules, adjustments, messaging recovery, security and financial invariants
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 100
     steps:
-      - name: Check out source
+      - name: Check out candidate
         uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+      - name: Configure Java 21
+        uses: actions/setup-java@b6effb05e454b25005698d916606bdc6ffcbf961
         with:
-          fetch-depth: 0
-      - name: Materialize reviewed P07A candidate
-        shell: bash
+          distribution: temurin
+          java-version: '21'
+          cache: maven
+          cache-dependency-path: backend/pom.xml
+      - name: Configure Node 22
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - name: Prepare deterministic tools
+        run: chmod +x mvnw scripts/lab scripts/test-core scripts/test-client scripts/assert-p04-evidence scripts/assert-p05-evidence scripts/assert-p06-evidence scripts/assert-p07a-evidence scripts/smoke-auth scripts/smoke-adjustments scripts/smoke-schedules scripts/unit-probes scripts/validate-evidence scripts/scan-secrets infra/docker/postgres/00-roles.sh
+      - name: Install locked TypeScript dependency
+        run: npm ci --prefix frontend
+      - name: Run Java and TypeScript component regressions
+        run: ./scripts/lab test unit
+      - name: Execute JUnit, PostgreSQL, multi-process HTTP and schedule verification
+        run: ./mvnw -B -ntp -f backend/pom.xml verify
+      - name: Validate Compose models
         run: |
-          set -euo pipefail
-          if test -f backend/src/main/java/lab/ledgerguard/schedules/ScheduleService.java; then
-            echo "P07A candidate already materialized."
-            exit 0
-          fi
-          cat .p07a-payload/*.part | tr -d '\n' | base64 --decode > /tmp/p07a.tar.xz
-          echo "d41bf55a42196022316da040bc0e5f61044a6f0418e7cd3f172ed13876ae5407  /tmp/p07a.tar.xz" | sha256sum -c -
-          tar -xJf /tmp/p07a.tar.xz -C .
-          sed -i 's/[[:space:]]\+$//' docs/evidence/p06-bb1eeb.md docs/implementation/DELIVERY.md
-          rm -rf .p07a-payload
-          git config user.name "azerish25-ux"
-          git config user.email "azerish25@gmail.com"
-          git add -A
-          git diff --cached --check
-          git commit -m "feat: add durable P07A scheduled transfers"
-          git push origin HEAD:main
+          docker compose --env-file .env.example -f compose.yaml config --quiet
+          docker compose --env-file .env.example -f compose.yaml -f compose.p07.yaml config --quiet
+      - name: Scan tracked source for high-signal literal secrets
+        run: ./scripts/scan-secrets
+      - name: Start, migrate, seed and reconcile the verified P06 topology
+        run: ./scripts/lab up
+      - name: Preserve P05 payment, RabbitMQ, duplicate-delivery and process-death proofs
+        run: python3 scripts/smoke-auth
+      - name: Preserve P06 cancellation, refund, reversal and adjustment proofs
+        run: python3 scripts/smoke-adjustments
+      - name: Activate V9 and two independent P07A schedulers
+        run: |
+          docker compose --env-file .ledgerguard/runtime.env -f compose.yaml -f compose.p07.yaml up -d --build --wait api scheduler-a scheduler-b
+      - name: Exercise durable schedule API, lifecycle, duplicate protection and accounting
+        run: python3 scripts/smoke-schedules
+      - name: Verify live status and repeatable reconciliation
+        run: |
+          ./scripts/lab status
+          ./scripts/lab reconcile
+      - name: Require P01-P06 regression and executed P07A requirements
+        run: python3 scripts/assert-p07a-evidence
+      - name: Capture service logs
+        if: always()
+        run: |
+          ./scripts/lab logs
+          mkdir -p .evidence/compose
+          docker compose --env-file .ledgerguard/runtime.env -f compose.yaml -f compose.p07.yaml logs --no-color > .evidence/compose/p07a-services.log 2>&1 || true
+      - name: Stop the scoped environment
+        if: always()
+        run: |
+          docker compose --env-file .ledgerguard/runtime.env -f compose.yaml -f compose.p07.yaml down --remove-orphans || true
+          ./scripts/lab down || true
+      - name: Publish verification evidence
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: ledgerguard-p07a-evidence-${{ github.sha }}
+          if-no-files-found: warn
+          include-hidden-files: true
+          retention-days: 14
+          path: |
+            .evidence/
+            backend/target/surefire-reports/
+            backend/target/failsafe-reports/
+            backend/target/auth-http-evidence/
+            backend/target/transfer-http-evidence/
+            backend/target/payment-adjustment-http-evidence/
+
+  gate:
+    name: Required P07A gate
+    if: always()
+    needs: [verify]
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Require every mandatory P07A job
+        env:
+          VERIFY_RESULT: ${{ needs.verify.result }}
+        run: |
+          echo "verify=$VERIFY_RESULT"
+          test "$VERIFY_RESULT" = success
