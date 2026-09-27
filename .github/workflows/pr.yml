@@ -1,5 +1,4 @@
-name: LedgerGuard P07A verification
-# Corrected-tree rerun marker: UTC edit fixture aligned with its due instant.
+name: LedgerGuard P07B verification
 
 on:
   push:
@@ -12,9 +11,9 @@ permissions:
 
 jobs:
   verify:
-    name: Build, schedules, adjustments, messaging recovery, security and financial invariants
+    name: Build, signed webhooks, schedules, adjustments, recovery, security and financial invariants
     runs-on: ubuntu-latest
-    timeout-minutes: 100
+    timeout-minutes: 120
     steps:
       - name: Check out candidate
         uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
@@ -32,12 +31,12 @@ jobs:
           cache: npm
           cache-dependency-path: frontend/package-lock.json
       - name: Prepare deterministic tools
-        run: chmod +x mvnw scripts/lab scripts/test-core scripts/test-client scripts/assert-p04-evidence scripts/assert-p05-evidence scripts/assert-p06-evidence scripts/assert-p07a-evidence scripts/smoke-auth scripts/smoke-adjustments scripts/smoke-schedules scripts/unit-probes scripts/validate-evidence scripts/scan-secrets infra/docker/postgres/00-roles.sh
+        run: chmod +x mvnw scripts/lab scripts/test-core scripts/test-client scripts/assert-p04-evidence scripts/assert-p05-evidence scripts/assert-p06-evidence scripts/assert-p07a-evidence scripts/assert-p07b-evidence scripts/smoke-auth scripts/smoke-adjustments scripts/smoke-schedules scripts/smoke-webhooks scripts/unit-probes scripts/validate-evidence scripts/scan-secrets infra/docker/postgres/00-roles.sh
       - name: Install locked TypeScript dependency
         run: npm ci --prefix frontend
       - name: Run Java and TypeScript component regressions
         run: ./scripts/lab test unit
-      - name: Execute JUnit, PostgreSQL, multi-process HTTP and schedule verification
+      - name: Execute JUnit, PostgreSQL, multi-process HTTP, schedule and webhook verification
         run: ./mvnw -B -ntp -f backend/pom.xml verify
       - name: Validate Compose models
         run: |
@@ -51,23 +50,25 @@ jobs:
         run: python3 scripts/smoke-auth
       - name: Preserve P06 cancellation, refund, reversal and adjustment proofs
         run: python3 scripts/smoke-adjustments
-      - name: Activate V9 and two independent P07A schedulers
+      - name: Activate V10, two schedulers, two webhook dispatchers and the signed receiver
         run: |
-          docker compose --env-file .ledgerguard/runtime.env -f compose.yaml -f compose.p07.yaml up -d --build --wait api scheduler-a scheduler-b
-      - name: Exercise durable schedule API, lifecycle, duplicate protection and accounting
+          docker compose --env-file .ledgerguard/runtime.env -f compose.yaml -f compose.p07.yaml up -d --build --wait api scheduler-a scheduler-b receiver webhook-dispatcher-a webhook-dispatcher-b
+      - name: Preserve P07A schedules, duplicate protection and accounting
         run: python3 scripts/smoke-schedules
+      - name: Exercise P07B encrypted secrets, signatures, retries, restart and authorization
+        run: python3 scripts/smoke-webhooks
       - name: Verify live status and repeatable reconciliation
         run: |
           ./scripts/lab status
           ./scripts/lab reconcile
-      - name: Require P01-P06 regression and executed P07A requirements
-        run: python3 scripts/assert-p07a-evidence
+      - name: Require P01-P07A regression and executed P07B requirements
+        run: python3 scripts/assert-p07b-evidence
       - name: Capture service logs
         if: always()
         run: |
           ./scripts/lab logs
           mkdir -p .evidence/compose
-          docker compose --env-file .ledgerguard/runtime.env -f compose.yaml -f compose.p07.yaml logs --no-color > .evidence/compose/p07a-services.log 2>&1 || true
+          docker compose --env-file .ledgerguard/runtime.env -f compose.yaml -f compose.p07.yaml logs --no-color > .evidence/compose/p07b-services.log 2>&1 || true
       - name: Stop the scoped environment
         if: always()
         run: |
@@ -77,7 +78,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
-          name: ledgerguard-p07a-evidence-${{ github.sha }}
+          name: ledgerguard-p07b-evidence-${{ github.sha }}
           if-no-files-found: warn
           include-hidden-files: true
           retention-days: 14
@@ -90,13 +91,13 @@ jobs:
             backend/target/payment-adjustment-http-evidence/
 
   gate:
-    name: Required P07A gate
+    name: Required P07B gate
     if: always()
     needs: [verify]
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
-      - name: Require every mandatory P07A job
+      - name: Require every mandatory P07B job
         env:
           VERIFY_RESULT: ${{ needs.verify.result }}
         run: |
