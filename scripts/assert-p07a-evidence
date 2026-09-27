@@ -11,8 +11,12 @@ subprocess.run(["python3","scripts/assert-p06-evidence"],cwd=ROOT,check=True)
 
 executed={}
 rows=[]
+# Surefire verifies CoreTest through assert-p06-evidence, but its XML replaces
+# JUnit dynamic-test display names with policies()[N]. Use the independently
+# generated core result for requirement traceability because it retains stable
+# case identities such as SCHEDULE-gap.
 for relative,suite_name,minimum in (
-    ("backend/target/surefire-reports/TEST-lab.ledgerguard.CoreTest.xml","CoreTest",120),
+    (".evidence/core/results.xml","CoreTest",120),
     ("backend/target/failsafe-reports/TEST-lab.ledgerguard.ScheduledTransferReliabilityIT.xml","ScheduledTransferReliabilityIT",5),
 ):
     path=ROOT/relative
