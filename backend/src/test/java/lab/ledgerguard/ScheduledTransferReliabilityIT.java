@@ -220,6 +220,7 @@ class ScheduledTransferReliabilityIT {
         LocalDateTime editedLocal = original.intended().plusDays(3);
         Instant editedDue = SchedulePolicy.resolve(editedLocal, ZoneId.of("UTC"));
         ObjectNode edited = payload(fixture, 900, editedLocal, editedDue, "DAILY");
+        edited.put("zoneId", "UTC");
         edited.put("expectedVersion", 1);
         ScheduleCommands.Result update = commands.execute(fixture.owner(), "EDIT", original.id(),
             "schedule-edit-0705", JSON.writeValueAsString(edited), UUID.randomUUID());
