@@ -228,6 +228,22 @@ class ScheduledTransferReliabilityIT {
         JsonNode updated = JSON.readTree(update.json());
         assertEquals(2, updated.path("version").asLong());
         assertEquals("900", updated.path("amountMinor").asText());
+        assertEquals(fixture.source().id().toString(), updated.path("sourceId").asText());
+        assertEquals(1, scalar("SELECT count(*) FROM ledger.schedules WHERE id=? AND source_id=?",
+            original.id(), fixture.source().id()));
+
+        ObjectNode aliasPayload = payload(fixture, 901, editedLocal.plusDays(1),
+            SchedulePolicy.resolve(editedLocal.plusDays(1), ZoneId.of("UTC")), "DAILY");
+        aliasPayload.put("zoneId", "UTC");
+        aliasPayload.put("expectedVersion", 2);
+        aliasPayload.put("sourceAccountId", aliasPayload.remove("sourceId").asText());
+        SQLException aliasFailure = assertThrows(SQLException.class,
+            () -> commands.execute(fixture.owner(), "EDIT", original.id(), "schedule-edit-alias-0705",
+                JSON.writeValueAsString(aliasPayload), UUID.randomUUID()));
+        assertEquals("P4000", aliasFailure.getSQLState());
+        assertTrue(aliasFailure.getMessage().contains("UNKNOWN_FIELD"));
+        assertEquals(1, scalar("SELECT count(*) FROM ledger.schedules WHERE id=? AND version=2 AND amount_minor=900",
+            original.id()));
 
         LocalDateTime oldNext = original.intended().plusDays(1);
         String stale = commands.executeOccurrence(original.id(), 1, original.intended(), original.due(),

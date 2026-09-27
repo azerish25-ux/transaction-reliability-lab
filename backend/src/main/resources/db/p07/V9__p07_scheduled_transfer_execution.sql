@@ -65,7 +65,7 @@ DECLARE
  fingerprint text; prior ledger.idempotency_records%ROWTYPE; actor ledger.app_users%ROWTYPE;
  current_schedule ledger.schedules%ROWTYPE; source ledger.accounts%ROWTYPE; destination ledger.accounts%ROWTYPE;
  operation uuid:=gen_random_uuid(); schedule_id uuid; status integer; result jsonb;
- source_id uuid; amount bigint; intended timestamp without time zone; next_at timestamptz;
+ requested_source_id uuid; amount bigint; intended timestamp without time zone; next_at timestamptz;
  expected_version bigint; zone text; recurrence_value text; recipient text; currency_value text;
  action text; event_type text;
 BEGIN
@@ -108,7 +108,7 @@ BEGIN
    RAISE EXCEPTION USING ERRCODE='P4000',MESSAGE='INVALID_SCHEDULE';
   END IF;
   BEGIN
-   source_id:=(p_payload->>'sourceId')::uuid;
+   requested_source_id:=(p_payload->>'sourceId')::uuid;
    amount:=(p_payload->>'amountMinor')::bigint;
    IF amount>1000000000000 THEN RAISE EXCEPTION USING ERRCODE='P4000',MESSAGE='INVALID_SCHEDULE'; END IF;
    intended:=(p_payload->>'intendedLocal')::timestamp;
@@ -153,7 +153,7 @@ BEGIN
     RAISE EXCEPTION USING ERRCODE='P4000',MESSAGE='INVALID_SCHEDULE_TIME';
    END IF;
    IF next_at<=clock_timestamp() THEN RAISE EXCEPTION USING ERRCODE='P4220',MESSAGE='SCHEDULE_NOT_FUTURE'; END IF;
-   SELECT * INTO source FROM ledger.accounts WHERE id=source_id AND owner_id=p_actor AND kind='WALLET_LIABILITY';
+   SELECT * INTO source FROM ledger.accounts WHERE id=requested_source_id AND owner_id=p_actor AND kind='WALLET_LIABILITY';
    SELECT * INTO destination FROM ledger.accounts WHERE public_ref=recipient AND kind='WALLET_LIABILITY';
    IF source.id IS NULL THEN RAISE EXCEPTION USING ERRCODE='P4040',MESSAGE='NOT_FOUND'; END IF;
    IF source.status<>'OPEN' OR destination.id IS NULL OR destination.status<>'OPEN' OR source.id=destination.id
@@ -165,7 +165,7 @@ BEGIN
    schedule_id:=operation;
    INSERT INTO ledger.schedules(id,owner_id,source_id,destination_ref,amount_minor,currency,
      intended_local,zone_id,recurrence,next_instant)
-   VALUES(schedule_id,p_actor,source_id,recipient,amount,currency_value,intended,zone,recurrence_value,next_at);
+   VALUES(schedule_id,p_actor,requested_source_id,recipient,amount,currency_value,intended,zone,recurrence_value,next_at);
    action:='SCHEDULE_CREATED';event_type:='schedule.created';status:=201;
   ELSE
    SELECT * INTO current_schedule FROM ledger.schedules WHERE id=p_parent AND owner_id=p_actor FOR UPDATE;
@@ -178,7 +178,7 @@ BEGIN
     IF current_schedule.status NOT IN ('ACTIVE','PAUSED') THEN
      RAISE EXCEPTION USING ERRCODE='P4090',MESSAGE='INVALID_SCHEDULE_STATE';
     END IF;
-    UPDATE ledger.schedules SET source_id=(p_payload->>'sourceAccountId')::uuid,destination_ref=recipient,amount_minor=amount,
+    UPDATE ledger.schedules SET source_id=requested_source_id,destination_ref=recipient,amount_minor=amount,
       currency=currency_value,intended_local=intended,zone_id=zone,recurrence=recurrence_value,
       next_instant=next_at,version=version+1,event_version=event_version+1,updated_at=clock_timestamp()
      WHERE id=schedule_id;
