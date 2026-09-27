@@ -345,7 +345,7 @@ class AuthenticationAccountsIT {
     }
     @Test void P0327_v5UpgradePreservesHistoricalAccounts() throws Exception {
         assertEquals(1,count("SELECT count(*) FROM ledger.accounts a JOIN ledger.account_balances b ON b.account_id=a.id WHERE a.id=? AND a.owner_id=? AND a.currency='CAD' AND b.posted_minor=0 AND b.reserved_minor=0",historicalAccount,historicalUser));
-        assertEquals(7,count("SELECT count(*) FROM public.flyway_schema_history WHERE success AND version IS NOT NULL"));
+        assertEquals(8,count("SELECT count(*) FROM public.flyway_schema_history WHERE success AND version IS NOT NULL"));
     }
     @Test void P0328_openApiMatchesAccountWireFieldsAndContainsOnlyImplementedProductGroups() throws Exception {
         Browser b=new Browser(first.port);Response response=b.call("GET","/openapi.json",null);status(200,response);var spec=JSON.readTree(response.asString());
