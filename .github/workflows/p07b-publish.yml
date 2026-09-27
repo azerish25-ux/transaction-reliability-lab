@@ -29,7 +29,17 @@ jobs:
           set -euo pipefail
           git fetch origin main --depth=1
           test "$(git rev-parse origin/main)" = "$GITHUB_SHA"
-          cat .p07b/part-* | base64 --decode > /tmp/p07b-source.tar.gz
+          cat \
+            .p07b/part-00 \
+            .p07b/part-01 \
+            .p07b/part-0200 \
+            .p07b/part-0201 \
+            .p07b/part-0202 \
+            .p07b/part-0203 \
+            .p07b/part-0204 \
+            .p07b/part-0205 \
+            .p07b/part-03 \
+            | base64 --decode > /tmp/p07b-source.tar.gz
           echo 'dc882e63ed1d5a505a210616654f9c53ae5d6aee3ea41ad5f82644cc79b2f3eb  /tmp/p07b-source.tar.gz' | sha256sum --check
           python3 - <<'PY'
           import pathlib, tarfile
