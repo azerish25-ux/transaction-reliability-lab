@@ -1,0 +1,109 @@
+name: LedgerGuard P05 staging verification
+
+on:
+  push:
+    branches: [p05-staging]
+
+permissions:
+  contents: write
+
+jobs:
+  verify-and-publish:
+    name: Reconstruct, verify and publish P05 candidate
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    steps:
+      - name: Check out staging payload
+        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+        with:
+          fetch-depth: 0
+      - name: Reconstruct exact P05 source tree
+        shell: bash
+        run: |
+          set -euo pipefail
+          cat .p05/payload-* | base64 --decode > /tmp/p05.tar.gz
+          echo "81eb67e1f7f66f816a8e6bfdfbf00247d82a4a4a1c79e279070f526088506cb1  /tmp/p05.tar.gz" | sha256sum --check --strict
+          tar -xzf /tmp/p05.tar.gz
+          rm -rf .p05 .github/workflows/p05-staging.yml
+          chmod +x mvnw scripts/lab scripts/test-core scripts/test-client scripts/assert-p05-evidence scripts/smoke-auth scripts/smoke-payment scripts/unit-probes scripts/validate-evidence scripts/scan-secrets infra/docker/postgres/00-roles.sh
+          git diff --check
+          git status --short
+      - name: Configure Java 21
+        uses: actions/setup-java@b6effb05e454b25005698d916606bdc6ffcbf961
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: maven
+          cache-dependency-path: backend/pom.xml
+      - name: Configure Node 22
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - name: Install locked TypeScript dependency
+        run: npm ci --prefix frontend
+      - name: Run Java and TypeScript component regressions
+        run: ./scripts/lab test unit
+      - name: Execute JUnit, PostgreSQL, transfer and RabbitMQ payment verification
+        run: ./mvnw -B -ntp -f backend/pom.xml verify
+      - name: Require executed P03, P04 and P05 requirements
+        run: python3 scripts/assert-p05-evidence
+      - name: Validate Compose model
+        run: docker compose --env-file .env.example -f compose.yaml config --quiet
+      - name: Scan tracked source for high-signal literal secrets
+        run: ./scripts/scan-secrets
+      - name: Start the complete P05 sandbox
+        run: ./scripts/lab up
+      - name: Exercise authentication, accounts, immediate transfer and replay
+        run: python3 scripts/smoke-auth
+      - name: Exercise payment acceptance, outbox, RabbitMQ settlement and owner views
+        run: python3 scripts/smoke-payment
+      - name: Verify live processes and reconciliation
+        run: |
+          ./scripts/lab status
+          ./scripts/lab reconcile
+      - name: Capture service logs
+        if: always()
+        run: ./scripts/lab logs
+      - name: Stop the scoped environment
+        if: always()
+        run: ./scripts/lab down
+      - name: Commit the exact verified tree
+        id: commit
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "azerish25-ux"
+          git config user.email "azerish25@gmail.com"
+          git add -A
+          git diff --cached --check
+          git commit -m "feat: implement P05 asynchronous payment reliability"
+          final_sha="$(git rev-parse HEAD)"
+          final_tree="$(git rev-parse HEAD^{tree})"
+          printf '%s\n' "$final_sha" > /tmp/p05-final-sha.txt
+          printf '%s\n' "$final_tree" > /tmp/p05-final-tree.txt
+          echo "final_sha=$final_sha" >> "$GITHUB_OUTPUT"
+          echo "final_tree=$final_tree" >> "$GITHUB_OUTPUT"
+          echo "P05_FINAL_SHA=$final_sha"
+          echo "P05_FINAL_TREE=$final_tree"
+          git push origin HEAD:p05-staging
+      - name: Publish verified staging identity and evidence
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: ledgerguard-p05-staging-${{ steps.commit.outputs.final_sha }}
+          if-no-files-found: error
+          include-hidden-files: true
+          retention-days: 14
+          path: |
+            /tmp/p05-final-sha.txt
+            /tmp/p05-final-tree.txt
+            .evidence/
+            backend/target/surefire-reports/
+            backend/target/failsafe-reports/
+            backend/target/auth-http-evidence/
+            backend/target/transfer-http-evidence/
+            backend/target/payment-messaging-evidence/
+      - name: Remove the transport branch
+        shell: bash
+        run: git push origin --delete p05-staging
