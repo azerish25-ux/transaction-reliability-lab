@@ -36,19 +36,31 @@ jobs:
           cache: npm
           cache-dependency-path: frontend/package-lock.json
 
-      - name: Apply the exact semantic status-label repair
+      - name: Apply the exact semantic status-label repairs
         run: |
           python3 - <<'PY'
           from pathlib import Path
 
           path = Path('frontend/src/p08b-ui.tsx')
           source = path.read_text(encoding='utf-8')
-          before = '<span className="status-badge p08b-status success"><span aria-hidden="true">✓</span>Settled</span>'
-          after = '<span className="status-badge p08b-status success"><span aria-hidden="true">✓</span><span>Settled</span></span>'
-          matches = source.count(before)
-          if matches != 1:
-              raise SystemExit(f'Expected exactly one transfer-receipt status label, found {matches}')
-          path.write_text(source.replace(before, after), encoding='utf-8')
+          replacements = (
+              (
+                  '</span>{paymentStateLabel(state)}</span>;',
+                  '</span><span>{paymentStateLabel(state)}</span></span>;',
+                  'shared payment status label',
+              ),
+              (
+                  '<span className="status-badge p08b-status success"><span aria-hidden="true">✓</span>Settled</span>',
+                  '<span className="status-badge p08b-status success"><span aria-hidden="true">✓</span><span>Settled</span></span>',
+                  'transfer receipt status label',
+              ),
+          )
+          for before, after, label in replacements:
+              matches = source.count(before)
+              if matches != 1:
+                  raise SystemExit(f'Expected exactly one {label}, found {matches}')
+              source = source.replace(before, after)
+          path.write_text(source, encoding='utf-8')
           PY
           git diff --check
           git diff -- frontend/src/p08b-ui.tsx
@@ -90,5 +102,5 @@ jobs:
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add frontend/src/p08b-ui.tsx
-          git commit -m 'fix(p08b): expose standalone receipt status label'
+          git commit -m 'fix(p08b): expose standalone receipt status labels'
           git push origin HEAD:main
