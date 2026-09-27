@@ -228,7 +228,7 @@ function ProductShell({ navigate, children }: PropsWithChildren<{ navigate: Prod
 }
 
 function StatusBadge({ state }: { state: PaymentRecord['state'] }): JSX.Element {
-  return <span className={`status-badge p08b-status ${paymentStateTone(state)}`}><span aria-hidden="true">{state === 'SETTLED' ? '✓' : state === 'FAILED' ? '!' : state === 'CANCELLED' ? '—' : '●'}</span>{paymentStateLabel(state)}</span>;
+  return <span className={`status-badge p08b-status ${paymentStateTone(state)}`}><span aria-hidden="true">{state === 'SETTLED' ? '✓' : state === 'FAILED' ? '!' : state === 'CANCELLED' ? '—' : '●'}</span><span>{paymentStateLabel(state)}</span></span>;
 }
 
 function ConfirmDialog({ open, title, description, confirmLabel, busy, onCancel, onConfirm, children }: PropsWithChildren<{
@@ -454,7 +454,7 @@ function TransferDetailPage({ transferId, navigate }: { transferId: string; navi
     <Link href="/transfers/new" navigate={navigate} className="back-link">← New transfer</Link>
     {failure !== undefined && <ProblemPanel failure={failure} />}
     {loading ? <LoadingState label="Loading authoritative transfer receipt" /> : record ? <>
-      <header className="receipt-hero"><div><p className="eyebrow">Authoritative receipt</p><h1>Transfer receipt</h1><p><time dateTime={record.createdAt}>{formatInstant(record.createdAt)}</time></p></div><div className="receipt-total"><span>Settled amount</span><strong>{formatMoney(record.amountMinor, record.currency)}</strong><span className="status-badge p08b-status success"><span aria-hidden="true">✓</span>Settled</span></div></header>
+      <header className="receipt-hero"><div><p className="eyebrow">Authoritative receipt</p><h1>Transfer receipt</h1><p><time dateTime={record.createdAt}>{formatInstant(record.createdAt)}</time></p></div><div className="receipt-total"><span>Settled amount</span><strong>{formatMoney(record.amountMinor, record.currency)}</strong><span className="status-badge p08b-status success"><span aria-hidden="true">✓</span><span>Settled</span></span></div></header>
       {replayed && <section className="replay-note" role="status"><strong>Recovered by safe replay.</strong><span>The server returned the original transfer for the preserved idempotency key; no second transfer was created.</span></section>}
       <dl className="receipt-grid"><div><dt>Transfer ID</dt><dd><code>{record.id}</code></dd></div><div><dt>Journal ID</dt><dd><code>{record.journalId}</code></dd></div><div><dt>Source wallet</dt><dd><code>{record.sourceId}</code></dd></div><div><dt>Recipient reference</dt><dd><code>{record.recipientRef}</code></dd></div><div><dt>Currency</dt><dd>{record.currency}</dd></div><div><dt>State</dt><dd>{record.state}</dd></div></dl>
       <section className="privacy-note"><span aria-hidden="true">◎</span><div><h2>Scoped receipt</h2><p>This customer receipt contains the immutable transfer and journal references but not the recipient’s balance or private account history.</p></div></section>
