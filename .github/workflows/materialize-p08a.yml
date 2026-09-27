@@ -115,6 +115,59 @@ jobs:
                       raise SystemExit(f'unsafe archive member: {member.name}')
               source.extractall('.', filter='data')
           PY
+      - name: Apply reviewed intent-store compatibility repair
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 <<'PY'
+          from pathlib import Path
+
+          intent_path = Path('frontend/src/intent-store.ts')
+          intent = intent_path.read_text(encoding='utf-8')
+          replacements = [
+              (
+                  "  async executeTransfer(api: ApiClient, input: Intent, newKey: () => string = () => crypto.randomUUID()): Promise<CommandResponse<TransferReceipt>> {\n    return this.sendPreparedTransfer(api, this.prepare('transfers', input, newKey));\n  }",
+                  "  async executeTransfer(api: ApiClient, input: Intent, newKey: () => string = () => crypto.randomUUID()): Promise<CommandResponse<TransferReceipt>> {\n    return this.sendPreparedTransfer(api, this.prepare('transfers', normalizeTransferIntent(input), newKey));\n  }",
+              ),
+              (
+                  "  async executePayment(api: ApiClient, input: Intent, newKey: () => string = () => crypto.randomUUID()): Promise<CommandResponse<PaymentReceipt>> {\n    return this.sendPreparedPayment(api, this.prepare('payments', input, newKey));\n  }",
+                  "  async executePayment(api: ApiClient, input: Intent, newKey: () => string = () => crypto.randomUUID()): Promise<CommandResponse<PaymentReceipt>> {\n    return this.sendPreparedPayment(api, this.prepare('payments', normalizePaymentIntent(input), newKey));\n  }",
+              ),
+              (
+                  "    case 'transfers': return normalizeTransferIntent(input as Intent);\n    case 'payments': return normalizePaymentIntent(input as Intent);",
+                  "    case 'transfers':\n    case 'payments': return normalizeIntent(input as Intent);",
+              ),
+          ]
+          for old, new in replacements:
+              if intent.count(old) != 1:
+                  raise SystemExit(f'unexpected intent-store repair source: {old}')
+              intent = intent.replace(old, new)
+          intent_path.write_text(intent, encoding='utf-8')
+
+          test_path = Path('tests/contracts/p08b-client.test.cjs')
+          tests = test_path.read_text(encoding='utf-8')
+          old = """test('P08BTS01-operation-specific-validation-precedes-persistence', () => {
+            const memory = storage();
+            const store = new IntentStore(memory, alice);
+            assert.throws(() => store.prepare('transfers', { ...paymentIntent, recipientRef: 'not-a-ledgerguard-reference' }, () => 'p08b-transfer-key-0001'));
+            assert.equal(memory.values.size, 0);
+            const record = store.prepare('payments', { ...paymentIntent, sourceId: source.toUpperCase(), recipientRef: recipient.toUpperCase() }, () => 'p08b-payment-key-0001');
+            assert.equal(record.intent.sourceId, source);
+            assert.equal(record.intent.recipientRef, recipient);
+          });"""
+          new = """test('P08BTS01-operation-specific-validation-precedes-persistence', async () => {
+            const memory = storage();
+            const store = new IntentStore(memory, alice);
+            await assert.rejects(
+              store.executeTransfer({}, { ...paymentIntent, recipientRef: 'not-a-ledgerguard-reference' }, () => 'p08b-transfer-key-0001'),
+              /Invalid transfer recipient reference/
+            );
+            assert.equal(memory.values.size, 0);
+          });"""
+          if tests.count(old) != 1:
+              raise SystemExit('unexpected P08BTS01 compatibility source')
+          test_path.write_text(tests.replace(old, new), encoding='utf-8')
+          PY
       - name: Verify reviewed P08B source before publication
         shell: bash
         run: |
