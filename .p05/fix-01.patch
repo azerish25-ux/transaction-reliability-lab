@@ -1,0 +1,51 @@
+diff --git a/backend/src/test/java/lab/ledgerguard/PaymentMessagingIT.java b/backend/src/test/java/lab/ledgerguard/PaymentMessagingIT.java
+index 402beb7..329784e 100644
+--- a/backend/src/test/java/lab/ledgerguard/PaymentMessagingIT.java
++++ b/backend/src/test/java/lab/ledgerguard/PaymentMessagingIT.java
+@@ -4,7 +4,6 @@ import com.fasterxml.jackson.databind.JsonNode;
+ import com.fasterxml.jackson.databind.ObjectMapper;
+ import com.rabbitmq.client.AMQP;
+ import com.rabbitmq.client.Channel;
+-import com.rabbitmq.client.Connection;
+ import com.rabbitmq.client.ConnectionFactory;
+ import io.restassured.response.Response;
+ import java.io.IOException;
+@@ -401,11 +400,11 @@ class PaymentMessagingIT {
+ 
+     private static void publish(String routingKey, UUID messageId, byte[] body) throws Exception {
+         ConnectionFactory factory = rabbitFactory();
+-        try (Connection connection = factory.newConnection("p05-test-publisher"); Channel channel = connection.createChannel()) {
++        try (com.rabbitmq.client.Connection connection = factory.newConnection("p05-test-publisher"); Channel channel = connection.createChannel()) {
+             channel.confirmSelect();
+             AMQP.BasicProperties properties = new AMQP.BasicProperties.Builder().contentType("application/json")
+                 .contentEncoding("UTF-8").deliveryMode(2).messageId(messageId.toString()).type(routingKey)
+-                .timestamp(Date.from(Instant.now())).build();
++                .timestamp(java.util.Date.from(Instant.now())).build();
+             channel.basicPublish(RabbitTopology.EVENT_EXCHANGE, routingKey, true, properties, body);
+             channel.waitForConfirmsOrDie(5000);
+         }
+@@ -413,7 +412,7 @@ class PaymentMessagingIT {
+ 
+     private static void awaitQueues(Duration timeout) throws Exception {
+         await("Rabbit topology", timeout, () -> {
+-            try (Connection connection = rabbitFactory().newConnection("p05-topology-probe"); Channel channel = connection.createChannel()) {
++            try (com.rabbitmq.client.Connection connection = rabbitFactory().newConnection("p05-topology-probe"); Channel channel = connection.createChannel()) {
+                 channel.queueDeclarePassive(RabbitTopology.SETTLEMENT_QUEUE);
+                 channel.queueDeclarePassive(RabbitTopology.PROJECTION_QUEUE);
+                 channel.queueDeclarePassive(RabbitTopology.EVENT_LOG_QUEUE);
+@@ -425,13 +424,13 @@ class PaymentMessagingIT {
+ 
+     private static void awaitRabbit(Duration timeout) throws Exception {
+         await("RabbitMQ restart", timeout, () -> {
+-            try (Connection connection = rabbitFactory().newConnection("p05-rabbit-probe")) { return connection.isOpen(); }
++            try (com.rabbitmq.client.Connection connection = rabbitFactory().newConnection("p05-rabbit-probe")) { return connection.isOpen(); }
+             catch (Exception unavailable) { return false; }
+         });
+     }
+ 
+     private static long queueMessages(String queue) {
+-        try (Connection connection = rabbitFactory().newConnection("p05-queue-probe"); Channel channel = connection.createChannel()) {
++        try (com.rabbitmq.client.Connection connection = rabbitFactory().newConnection("p05-queue-probe"); Channel channel = connection.createChannel()) {
+             return channel.messageCount(queue);
+         } catch (Exception unavailable) { return -1; }
+     }
