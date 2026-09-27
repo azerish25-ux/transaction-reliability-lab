@@ -1,0 +1,49 @@
+name: Prepare P05 migration hardening
+
+on:
+  workflow_dispatch:
+
+permissions:
+  actions: write
+  contents: write
+
+jobs:
+  prepare:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Check out P05 candidate
+        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+        with:
+          ref: p05-async-payments
+          fetch-depth: 0
+
+      - name: Fold failure-code bound into unreleased V7
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+
+          migration = Path("backend/src/main/resources/db/migration/V7__p05_async_payment_reliability.sql")
+          text = migration.read_text()
+          old = """ work:=ledger.record_failed_work('outbox-publisher-v1',target.id,'ledgerguard.events.v1',target.event_type,
+            p_envelope,p_error,p_attempts);"""
+          new = """ work:=ledger.record_failed_work('outbox-publisher-v1',target.id,'ledgerguard.events.v1',target.event_type,
+            p_envelope,left(p_error,200),p_attempts);"""
+          if text.count(old) != 1:
+              raise SystemExit("expected V7 fail_outbox boundary was not found exactly once")
+          migration.write_text(text.replace(old, new, 1))
+          Path("backend/src/main/resources/db/migration/V8__bound_outbox_failed_work_error.sql").unlink()
+          PY
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A backend/src/main/resources/db/migration
+          git diff --cached --check
+          git commit -m "fix: bound outbox failure codes in P05 migration"
+          git push origin HEAD:p05-async-payments
+
+      - name: Dispatch complete P05 verification
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: gh workflow run scheduled-p05.yml --ref main
