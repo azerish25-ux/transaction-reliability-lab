@@ -84,6 +84,14 @@ jobs:
                       raise SystemExit(f'unsafe archive member: {member.name}')
               source.extractall('.', filter='data')
           PY
+      - name: Print strict-typecheck diagnostics
+        shell: bash
+        run: |
+          set -euo pipefail
+          echo '--- frontend/src/App.tsx failing ranges ---'
+          nl -ba frontend/src/App.tsx | sed -n '175,200p;280,305p;340,365p;420,460p;515,535p;560,580p;648,670p'
+          echo '--- frontend/src/money.ts failing range ---'
+          nl -ba frontend/src/money.ts | sed -n '15,32p'
       - name: Generate exact frontend lock and verify source
         shell: bash
         run: |
