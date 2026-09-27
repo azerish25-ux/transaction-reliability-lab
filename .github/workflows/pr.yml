@@ -32,6 +32,7 @@ jobs:
           cat .p07a-payload/*.part | tr -d '\n' | base64 --decode > /tmp/p07a.tar.xz
           echo "d41bf55a42196022316da040bc0e5f61044a6f0418e7cd3f172ed13876ae5407  /tmp/p07a.tar.xz" | sha256sum -c -
           tar -xJf /tmp/p07a.tar.xz -C .
+          sed -i 's/[[:space:]]\+$//' docs/evidence/p06-bb1eeb.md docs/implementation/DELIVERY.md
           rm -rf .p07a-payload
           git config user.name "azerish25-ux"
           git config user.email "azerish25@gmail.com"
