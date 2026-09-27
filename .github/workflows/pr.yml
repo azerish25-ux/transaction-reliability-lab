@@ -1,4 +1,5 @@
 name: LedgerGuard P07A verification
+# Corrected-tree rerun marker: UTC edit fixture aligned with its due instant.
 
 on:
   push:
