@@ -10,12 +10,18 @@ permissions:
 
 jobs:
   dispatch:
-    if: github.event.issue.number == 1 && github.event.comment.body == '/integrate-p05'
+    if: github.event.issue.number == 1 && (github.event.comment.body == '/integrate-p05' || github.event.comment.body == '/prepare-p05-hardening')
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
-      - name: Dispatch verified integration
+      - name: Dispatch requested P05 workflow
         env:
           GH_TOKEN: ${{ github.token }}
           GH_REPO: ${{ github.repository }}
-        run: gh workflow run scheduled-p05.yml --ref main
+          COMMAND: ${{ github.event.comment.body }}
+        run: |
+          if [ "$COMMAND" = "/prepare-p05-hardening" ]; then
+            gh workflow run prepare-p05-hardening.yml --ref main
+          else
+            gh workflow run scheduled-p05.yml --ref main
+          fi
