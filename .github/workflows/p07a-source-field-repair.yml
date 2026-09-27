@@ -1,0 +1,132 @@
+name: P07A source-field repair
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - .github/workflows/p07a-source-field-repair.yml
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  actions: write
+
+concurrency:
+  group: p07a-source-field-repair
+  cancel-in-progress: false
+
+jobs:
+  repair:
+    name: Repair, regress and publish P07A edit semantics
+    if: github.repository == 'azerish25-ux/transaction-reliability-lab'
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - name: Check out exact repair parent
+        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+        with:
+          fetch-depth: 0
+
+      - name: Configure Java 21
+        uses: actions/setup-java@b6effb05e454b25005698d916606bdc6ffcbf961
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: maven
+          cache-dependency-path: backend/pom.xml
+
+      - name: Apply guarded P07A source-field repair
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+
+          def replace_once(path: str, old: str, new: str) -> None:
+              target = Path(path)
+              text = target.read_text(encoding="utf-8")
+              count = text.count(old)
+              if count != 1:
+                  raise SystemExit(f"expected exactly one match in {path}, found {count}: {old!r}")
+              target.write_text(text.replace(old, new, 1), encoding="utf-8")
+
+          sql = "backend/src/main/resources/db/p07/V9__p07_scheduled_transfer_execution.sql"
+          replace_once(sql, " source_id uuid; amount bigint; intended timestamp without time zone; next_at timestamptz;",
+                           " requested_source_id uuid; amount bigint; intended timestamp without time zone; next_at timestamptz;")
+          replace_once(sql, "   source_id:=(p_payload->>'sourceId')::uuid;",
+                           "   requested_source_id:=(p_payload->>'sourceId')::uuid;")
+          replace_once(sql, "   SELECT * INTO source FROM ledger.accounts WHERE id=source_id AND owner_id=p_actor AND kind='WALLET_LIABILITY';",
+                           "   SELECT * INTO source FROM ledger.accounts WHERE id=requested_source_id AND owner_id=p_actor AND kind='WALLET_LIABILITY';")
+          replace_once(sql, "   VALUES(schedule_id,p_actor,source_id,recipient,amount,currency_value,intended,zone,recurrence_value,next_at);",
+                           "   VALUES(schedule_id,p_actor,requested_source_id,recipient,amount,currency_value,intended,zone,recurrence_value,next_at);")
+          replace_once(sql, "    UPDATE ledger.schedules SET source_id=(p_payload->>'sourceAccountId')::uuid,destination_ref=recipient,amount_minor=amount,",
+                           "    UPDATE ledger.schedules SET source_id=requested_source_id,destination_ref=recipient,amount_minor=amount,")
+
+          test = "backend/src/test/java/lab/ledgerguard/ScheduledTransferReliabilityIT.java"
+          old = '''        assertEquals(2, updated.path("version").asLong());
+                  assertEquals("900", updated.path("amountMinor").asText());
+          
+                  LocalDateTime oldNext = original.intended().plusDays(1);'''
+          new = '''        assertEquals(2, updated.path("version").asLong());
+                  assertEquals("900", updated.path("amountMinor").asText());
+                  assertEquals(fixture.source().id().toString(), updated.path("sourceId").asText());
+                  assertEquals(1, scalar("SELECT count(*) FROM ledger.schedules WHERE id=? AND source_id=?",
+                      original.id(), fixture.source().id()));
+          
+                  ObjectNode aliasPayload = payload(fixture, 901, editedLocal.plusDays(1),
+                      SchedulePolicy.resolve(editedLocal.plusDays(1), ZoneId.of("UTC")), "DAILY");
+                  aliasPayload.put("zoneId", "UTC");
+                  aliasPayload.put("expectedVersion", 2);
+                  aliasPayload.put("sourceAccountId", aliasPayload.remove("sourceId").asText());
+                  SQLException aliasFailure = assertThrows(SQLException.class,
+                      () -> commands.execute(fixture.owner(), "EDIT", original.id(), "schedule-edit-alias-0705",
+                          JSON.writeValueAsString(aliasPayload), UUID.randomUUID()));
+                  assertEquals("P4000", aliasFailure.getSQLState());
+                  assertTrue(aliasFailure.getMessage().contains("UNKNOWN_FIELD"));
+                  assertEquals(1, scalar("SELECT count(*) FROM ledger.schedules WHERE id=? AND version=2 AND amount_minor=900",
+                      original.id()));
+          
+                  LocalDateTime oldNext = original.intended().plusDays(1);'''
+          replace_once(test, old, new)
+          PY
+          ! grep -q "sourceAccountId" backend/src/main/resources/db/p07/V9__p07_scheduled_transfer_execution.sql
+          git diff --check
+
+      - name: Execute backend regression and P07A integration suite
+        shell: bash
+        run: |
+          chmod +x mvnw
+          ./mvnw -B -ntp -f backend/pom.xml verify
+
+      - name: Commit the coherent repair to main
+        id: publish
+        shell: bash
+        env:
+          EXPECTED_PARENT: ${{ github.sha }}
+        run: |
+          git fetch origin main
+          test "$(git rev-parse origin/main)" = "$EXPECTED_PARENT"
+          rm .github/workflows/p07a-source-field-repair.yml
+          git diff --check
+          git config user.name "azerish25-ux"
+          git config user.email "azerish25@gmail.com"
+          git add backend/src/main/resources/db/p07/V9__p07_scheduled_transfer_execution.sql \
+                  backend/src/test/java/lab/ledgerguard/ScheduledTransferReliabilityIT.java \
+                  .github/workflows/p07a-source-field-repair.yml
+          git commit -m "fix(p07a): preserve validated sourceId during schedule edits" \
+                     -m "Use the validated source identifier for persistence, avoid PL/pgSQL column-variable ambiguity, and add regression coverage for source preservation and rejected aliases."
+          git push origin HEAD:main
+          echo "candidate_sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+
+      - name: Dispatch permanent P07A verification
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          curl --fail --silent --show-error \
+            --request POST \
+            --header "Accept: application/vnd.github+json" \
+            --header "Authorization: Bearer $GH_TOKEN" \
+            --header "X-GitHub-Api-Version: 2022-11-28" \
+            "https://api.github.com/repos/${GITHUB_REPOSITORY}/actions/workflows/pr.yml/dispatches" \
+            --data '{"ref":"main"}'
+          echo "Dispatched permanent verification for ${{ steps.publish.outputs.candidate_sha }}"
