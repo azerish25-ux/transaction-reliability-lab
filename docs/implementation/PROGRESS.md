@@ -1,39 +1,38 @@
-# Execution checkpoint — P07A IMPLEMENTED_UNVERIFIED
+# Execution checkpoint — P07A VERIFIED_PASS
 
-Overall product status remains **INCOMPLETE / NO_GO**. P01–P06 retain verified evidence. P07A durable scheduled transfers are implemented as a source candidate but must not be called `VERIFIED_PASS` until the exact published source SHA completes the permanent GitHub Actions gate.
+Overall product status remains **INCOMPLETE / NO_GO**. P01–P07A now retain exact-SHA verified evidence. P07B signed durable webhooks and P08–P11 remain incomplete.
 
-## P06 closeout
+## P07A verified source
 
-P06 source `bb1eeb1167b71fb92fb28f82c110fc489f60f03b` passed permanent push workflow run `36306335283`. Both mandatory jobs succeeded, every required suite reported zero failures/errors/skips, 32 live adjustment checks passed, 44 P03–P06 requirements were bound to executed evidence and reconciliation ended with zero discrepancies. Durable provenance is recorded in `docs/evidence/p06-bb1eeb.md`.
+P07A implementation source `9478663f97f9dc65d0c85117f244e1b8b80c37cb` passed permanent `LedgerGuard P07A verification` push workflow run `36319414655` on September 27, 2026.
 
-## P07A source candidate
+- Main verification job `108620228488`: SUCCESS.
+- Required aggregate gate `108621256048`: SUCCESS.
+- Artifact `10932146860`: `ledgerguard-p07a-evidence-9478663f97f9dc65d0c85117f244e1b8b80c37cb`.
+- Artifact SHA-256: `ca15e81bd90673978890b5e97f51e82aee1d6e3b2da3b092270568877c699473`.
+- The generated evidence identifies the exact source SHA, reports `trackedTreeDirty: false`, and marks all six P07A requirements `VERIFIED_PASS`.
 
-The candidate adds the complete backend reliability slice for:
+The source chain includes functional repair `6c1994a60447402e00abe451d24c311357b43b99`, which preserves the validated `sourceId` during schedule edits and adds regression coverage, followed by `9478663f97f9dc65d0c85117f244e1b8b80c37cb`, which binds schedule-policy traceability to the named standalone core evidence without weakening the independently verified Surefire gate.
+
+## Verified P07A scope
 
 - Customer-owned one-time, daily and weekly scheduled transfers.
 - Intended local date/time plus IANA zone storage and derived UTC execution instant.
 - Spring-gap advancement, earlier-offset overlap policy and local-wall-time recurrence.
 - Durable create/edit/pause/resume/cancel commands with CSRF, idempotency and expected-version checks.
-- Immutable occurrence history with `SUCCEEDED`, `REJECTED` and `SKIPPED_LATE` outcomes.
-- Stable occurrence operations derived from schedule ID, definition version and intended local time.
-- Two independently running scheduler processes protected by PostgreSQL row locking, expected-tuple validation and occurrence uniqueness.
+- Immutable `SUCCEEDED`, `REJECTED` and `SKIPPED_LATE` occurrence history.
+- Stable occurrence identity derived from schedule ID, definition version and intended local time.
+- Two independently running scheduler processes with PostgreSQL row locking, expected-tuple validation and occurrence uniqueness.
 - Atomic success across transfer/journal/balance, occurrence, schedule advancement, audit and outbox events.
 - Business rejection without financial fragments and oldest-first, one-obligation-at-a-time catch-up.
-- An opt-in Compose overlay that preserves the exact verified P06 default topology.
+- Opt-in P07A Compose overlay while preserving the verified P06 default topology.
 
-## Candidate verification included
+## Executed verification
 
-- Five real PostgreSQL integration cases covering durable creation/replay/conflict, restricted-role enforcement, synchronized two-scheduler execution, insufficient funds, catch-up expiry, edits and lifecycle races.
-- Existing deterministic schedule policy cases for Halifax DST gaps/overlaps, daily/weekly recurrence, catch-up boundaries and versioned occurrence identity.
-- A live Compose campaign with two scheduler processes, real API/CSRF/idempotency, owner isolation, one-time execution, lifecycle commands, accounting checks and independent reconciliation.
-- A scoped P07A OpenAPI document, requirements manifest and evidence assertion layered on the complete P01–P06 gate.
+The permanent gate completed 133 core/security JUnit cases, 119 PostgreSQL/real-HTTP integration cases, 70 TypeScript cases, 42 P05 live Compose checks, 32 P06 live adjustment checks and 15 P07A live schedule checks. Fifty scoped P03–P07A requirements were bound to executed evidence. All required suites reported zero failures, errors and skips; 264 tracked files produced zero high-signal literal-secret findings; reconciliation ended with zero discrepancies.
 
-## Status discipline
-
-No P07A result is claimed in this source checkpoint. Generated evidence belongs to the exact tested implementation SHA. A later documentation-only commit may record a successful run without pretending to be the tested source.
-
-P07A does not complete P07. Signed, encrypted-secret, bounded-retry durable webhook delivery and the sandbox receiver remain P07B.
+Durable provenance is recorded in `docs/evidence/p07a-9478663.md` and `docs/evidence/p07a-9478663.json`.
 
 ## Next executable action
 
-Publish this source candidate to `main` and run the permanent `LedgerGuard P07A verification` workflow. Fix any observed root cause and rerun the complete gate. When the final source SHA passes, record its workflow/job identities, suite/check counts and artifact digest as durable evidence. Then implement **P07B signed durable webhook delivery** before beginning P08 interfaces.
+Implement **P07B signed durable webhook delivery** as the next vertical slice: encrypted-at-rest endpoint secrets, exact-byte HMAC signatures, replay-window validation, durable logical delivery jobs and immutable attempts, a separately restartable dispatcher, bounded retries/backoff, strict destination controls, sandbox receiver verification, owner/admin inspection and restart/duplicate/security tests. Do not begin P08 interface completion before P07B is integrated and verified.

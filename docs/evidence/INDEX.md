@@ -1,27 +1,29 @@
-# Evidence index — P06 verified, P07A candidate, full product NO_GO
+# Evidence index — P07A verified, full product NO_GO
 
-## Current verified P06 evidence
+## Current verified P07A evidence
 
-Published implementation `bb1eeb1167b71fb92fb28f82c110fc489f60f03b` passed permanent `LedgerGuard P06 verification` workflow run `36306335283` for the exact `main` SHA.
+Implementation `9478663f97f9dc65d0c85117f244e1b8b80c37cb` passed permanent `LedgerGuard P07A verification` push workflow run `36319414655` for the exact `main` source SHA.
+
+- [Durable human-readable P07A report](p07a-9478663.md)
+- [Machine-readable P07A provenance](p07a-9478663.json)
+- [Scoped P07A requirements/test-ID source](../implementation/P07A_REQUIREMENTS.json)
+- [Scheduled-transfer architecture and limits](../architecture/adr/0016-p07a-scheduled-transfers.md)
+- [Verified P07A schedule OpenAPI](../../backend/src/main/resources/openapi/p07a-schedules.json)
+
+Actual results include 133 core/security JUnit cases, 119 real PostgreSQL/HTTP integration cases, 70 TypeScript client/contract cases, 42 live P05 Compose checks, 32 live P06 adjustment checks and 15 live P07A schedule checks. All required suites had zero failures, errors and skips. Fifty scoped P03–P07A requirements were bound to executed evidence, the tracked source was clean, 264 tracked files produced zero high-signal literal-secret findings and reconciliation reported zero discrepancies.
+
+P07A proofs cover owner-scoped durable lifecycle commands, edit-source preservation, replay/conflict behavior, restricted runtime boundaries, two-scheduler one-effect execution, rejection without financial fragments, catch-up expiry, immutable occurrence history, lifecycle serialization, DST gap/overlap policy, versioned occurrence identity, event publication and independent reconciliation.
+
+## Preserved P06 evidence
+
+P06 implementation `bb1eeb1167b71fb92fb28f82c110fc489f60f03b` passed run `36306335283`.
 
 - [Durable human-readable P06 report](p06-bb1eeb.md)
 - [Scoped P06 requirements/test-ID source](../implementation/P06_REQUIREMENTS.json)
 - [Payment-adjustment architecture and limits](../architecture/adr/0015-p06-payment-adjustments.md)
 - [Verified P06 OpenAPI](../../backend/src/main/resources/openapi/p06.json)
 
-Actual results include 133 core/security JUnit cases, 114 real PostgreSQL/HTTP integration cases, 70 TypeScript client/contract cases, 42 live P05 Compose checks and 32 live P06 adjustment checks. All required suites had zero failures, errors and skips. Forty-four scoped P03–P06 requirements were bound to executed evidence, the tracked source was clean, limited literal-secret scanning passed and reconciliation reported zero discrepancies.
-
-P06 proofs cover payer/administrator cancellation, hold release without a journal, cancellation-versus-settlement serialization, partial/full recipient-authorized refunds, administrator full reversal, immutable settlement history, parent-scoped idempotency, commit-response loss, concurrent refund bounds, forbidden transitions, reversal-versus-spending, database enforcement and independent adjustment reconciliation.
-
-## P07A source candidate
-
-The current tree adds durable scheduled transfers but has no verified P07A report until its permanent source-SHA gate passes.
-
-- [P07A requirements](../implementation/P07A_REQUIREMENTS.json)
-- [P07A architecture](../architecture/adr/0016-p07a-scheduled-transfers.md)
-- [Scoped P07A schedule OpenAPI](../../backend/src/main/resources/openapi/p07a-schedules.json)
-
-Candidate evidence includes a five-case real PostgreSQL schedule suite, the existing deterministic DST/catch-up policy cases and a live two-scheduler Compose campaign. These must not be relabeled as passing before the remote workflow verifies the final source SHA.
+Its original report retains the exact P06 source, artifact and scope. P07A verification reran and preserved the P06 campaign rather than relabeling historical evidence.
 
 ## Preserved P05, P04, P03 and foundation evidence
 
@@ -37,12 +39,12 @@ Historical component records remain available under `component/` and `unit-probe
 
 ## Honest failure history
 
-P05 candidate execution caught an incorrect poison-work assertion, a publisher-diagnostic/failed-code width mismatch and unnecessary migration history. P06 candidate execution caught workflow publication and remote-gate issues before the final source SHA passed. Each verified report records only the exact successful source and preserves its own scope.
+The P07A candidate gate caught a schedule-edit source-field mismatch and later caught that Surefire dynamic-test names were unsuitable for named requirement traceability. The implementation was repaired, regression coverage was added, traceability was rebound to independently generated stable case identities, and the complete permanent gate was rerun successfully on the exact final implementation SHA.
 
 Failed runs are not counted as required seeded-defect experiments or passing evidence.
 
 ## Remaining evidence
 
-P07A remains unverified until its permanent gate passes. P07B signed durable webhooks, P08 React/Playwright/axe, P09 complete F01–F08 and D01–D24 campaigns, P10 Pact/ZAP/k6/backup-restore/nightly/release lanes, and P11 final exploratory package/video remain incomplete.
+P07B signed durable webhooks, P08 React/Playwright/axe, P09 complete F01–F08 and D01–D24 campaigns, P10 Pact/ZAP/k6/backup-restore/nightly/release lanes, and P11 final exploratory package/video remain incomplete.
 
 No public application, release tag, security certification, accessibility conformance or measured performance claim exists. GitHub Actions results are the authority for Docker/PostgreSQL/RabbitMQ/Compose execution.
