@@ -1,0 +1,62 @@
+{
+  "phase": "P07B",
+  "status": "VERIFIED_PASS",
+  "fullProductStatus": "INCOMPLETE_NO_GO",
+  "sourceSha": "cc6b3ca81d2368c188aa7a79cec2d37b2dd8b975",
+  "workflow": {
+    "name": "LedgerGuard P07B verification",
+    "runId": 36330862462,
+    "completedAt": "2026-09-27T15:54:52Z",
+    "jobs": [
+      {
+        "id": 108652383318,
+        "name": "Build, signed webhooks, schedules, adjustments, recovery, security and financial invariants",
+        "conclusion": "success"
+      },
+      {
+        "id": 108653566120,
+        "name": "Required P07B gate",
+        "conclusion": "success"
+      }
+    ]
+  },
+  "artifact": {
+    "id": 10935339693,
+    "name": "ledgerguard-p07b-evidence-cc6b3ca81d2368c188aa7a79cec2d37b2dd8b975",
+    "sizeBytes": 157131,
+    "sha256": "83378eb2ba6040004d7ba95f7280d00f3d7fc6953635abc1a78a12aa3327d94f",
+    "expiresAt": "2026-10-11T15:54:44Z"
+  },
+  "executed": {
+    "coreSecurityJUnit": 133,
+    "postgresHttpIntegration": 124,
+    "typescriptContracts": 77,
+    "p05ComposeChecks": 42,
+    "p06ComposeChecks": 32,
+    "p07aComposeChecks": 15,
+    "p07bComposeChecks": 26,
+    "p07bRequirements": 8,
+    "filesSecretScanned": 282,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "trackedTreeDirty": false,
+    "reconciliationDiscrepancies": 0
+  },
+  "verifiedBoundary": [
+    "owner-scoped endpoint lifecycle",
+    "one-time secret disclosure",
+    "AES-256-GCM encrypted versioned secrets",
+    "exact-byte HMAC-SHA256 signing and replay-window validation",
+    "durable unique delivery fan-out",
+    "immutable attempts and lease recovery",
+    "two competing isolated dispatchers",
+    "bounded retry, exhaustion and audited manual retry",
+    "strict sandbox egress controls",
+    "receiver deduplication after accepted-response loss",
+    "owner and administrator delivery inspection",
+    "financial-state isolation",
+    "OpenAPI-TypeScript-Java-Compose contract agreement"
+  ],
+  "remaining": ["P08", "P09", "P10", "P11"]
+}
