@@ -43,7 +43,7 @@ class Browser:
         self.token=body["token"]
     def register_login(self,label):
         self.csrf()
-        email=f"{label}-{uuid.uuid4().hex}@example.test"
+        email=f"p06-{uuid.uuid4().hex}@example.test"
         password="P06-"+secrets.token_urlsafe(24)
         status,registered,_=self.call("/auth/register",{"email":email,"password":password,"displayName":label})
         assert status==201,(status,registered)
