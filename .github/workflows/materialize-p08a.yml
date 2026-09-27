@@ -118,6 +118,9 @@ jobs:
               raise SystemExit('unexpected parseAmount destructuring source')
           money_path.write_text(money.replace(old, new), encoding='utf-8')
           PY
+      - name: Print P08A client contract source
+        shell: bash
+        run: nl -ba tests/contracts/p08a-client.test.cjs
       - name: Generate exact frontend lock and verify source
         shell: bash
         run: |
