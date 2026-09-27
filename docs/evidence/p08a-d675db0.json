@@ -1,0 +1,64 @@
+{
+  "phase": "P08A",
+  "status": "VERIFIED_PASS",
+  "fullProductStatus": "INCOMPLETE_NO_GO",
+  "sourceSha": "d675db096b8f023469e253737ade80a2b8b3b0fa",
+  "workflow": {
+    "name": "LedgerGuard P08A verification",
+    "runId": 36345292129,
+    "completedAt": "2026-09-27T19:50:51Z",
+    "jobs": [
+      {
+        "id": 108693127471,
+        "name": "Build, customer UI, browser accessibility, signed webhooks and financial invariants",
+        "conclusion": "success"
+      },
+      {
+        "id": 108694570086,
+        "name": "Required P08A gate",
+        "conclusion": "success"
+      }
+    ]
+  },
+  "artifact": {
+    "id": 10940665452,
+    "name": "ledgerguard-p08a-evidence-d675db096b8f023469e253737ade80a2b8b3b0fa",
+    "sizeBytes": 1110905,
+    "sha256": "c48ec1b997c8fef477ff664009bcf37e3c91c3e8ad70904bc9b684830f20a7ff",
+    "expiresAt": "2026-10-11T19:50:05Z"
+  },
+  "executed": {
+    "coreSecurityJUnit": 133,
+    "postgresHttpIntegration": 124,
+    "typescriptContracts": 83,
+    "p08aTypeScriptContracts": 6,
+    "p08aChromiumJourneys": 12,
+    "p08aViewportProjects": 3,
+    "p05ComposeChecks": 42,
+    "p06ComposeChecks": 32,
+    "p07aComposeChecks": 15,
+    "p07bComposeChecks": 26,
+    "p08aRequirements": 7,
+    "responsiveScreenshots": 3,
+    "filesSecretScanned": 305,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "trackedTreeDirty": false,
+    "reconciliationDiscrepancies": 0
+  },
+  "verifiedBoundary": [
+    "non-root loopback-bound same-origin React topology",
+    "registration, login, logout and authenticated bootstrap",
+    "expired-session recovery",
+    "authoritative posted, reserved and available balances",
+    "zero-balance wallet creation",
+    "deterministic account-history pagination",
+    "customer-safe immutable transaction detail",
+    "explicit loading, empty, validation and dependency-outage states",
+    "keyboard and semantic accessibility behavior",
+    "authenticated axe WCAG A/AA checks",
+    "desktop, tablet and mobile Chromium journeys"
+  ],
+  "remaining": ["P08B", "later P08 slices", "P09", "P10", "P11"]
+}
