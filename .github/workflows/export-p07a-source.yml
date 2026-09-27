@@ -1,0 +1,35 @@
+name: Export P07A source
+
+on:
+  push:
+    branches: [p07a-source-export]
+
+permissions:
+  contents: read
+
+jobs:
+  export:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Check out source
+        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+      - name: Preserve P06 suite while allowing later migrations
+        shell: python
+        run: |
+          from pathlib import Path
+          path = Path("backend/src/test/java/lab/ledgerguard/PaymentAdjustmentReliabilityIT.java")
+          source = path.read_text(encoding="utf-8")
+          old = 'assertEquals(8,scalar("SELECT count(*) FROM public.flyway_schema_history WHERE success"));'
+          new = ('assertEquals(8,scalar("SELECT count(*) FROM public.flyway_schema_history '
+                 'WHERE success AND version::integer BETWEEN 1 AND 8"));'
+                 'assertEquals(1,scalar("SELECT count(*) FROM public.flyway_schema_history '
+                 'WHERE success AND version=\'8\'"));')
+          if source.count(old) != 1:
+              raise SystemExit("Expected exactly one obsolete migration-count assertion")
+          path.write_text(source.replace(old, new), encoding="utf-8")
+      - name: Upload exact patched source
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: p07a-forward-compatible-p06-test
+          path: backend/src/test/java/lab/ledgerguard/PaymentAdjustmentReliabilityIT.java
+          retention-days: 1
