@@ -1,0 +1,160 @@
+#!/usr/bin/env python3
+"""Live P07A Compose smoke for schedules, two workers and immutable occurrences."""
+from __future__ import annotations
+import http.cookiejar
+import json
+import secrets
+import subprocess
+import time
+import urllib.error
+import urllib.request
+import uuid
+from datetime import datetime, timedelta, timezone
+from pathlib import Path
+
+ROOT=Path(__file__).resolve().parent.parent
+ENV=ROOT/".ledgerguard/runtime.env"
+VALUES=dict(line.split("=",1) for line in ENV.read_text().splitlines() if line and not line.startswith("#"))
+BASE="http://127.0.0.1:"+VALUES.get("LEDGER_HTTP_PORT","8080")+"/api/v1"
+COMPOSE=["docker","compose","--env-file",str(ENV),"-f",str(ROOT/"compose.yaml"),"-f",str(ROOT/"compose.p07.yaml")]
+
+class Browser:
+    def __init__(self):
+        self.jar=http.cookiejar.CookieJar()
+        self.opener=urllib.request.build_opener(urllib.request.HTTPCookieProcessor(self.jar))
+        self.token=None
+    def call(self,path,body=None,method=None,headers=None):
+        request_headers={"Accept":"application/json",**(headers or {})}
+        if self.token: request_headers["X-XSRF-TOKEN"]=self.token
+        data=None
+        if body is not None:
+            request_headers["Content-Type"]="application/json"
+            data=json.dumps(body,separators=(",",":")).encode()
+        request=urllib.request.Request(BASE+path,data=data,headers=request_headers,
+            method=method or ("POST" if body is not None else "GET"))
+        try: response=self.opener.open(request,timeout=20)
+        except urllib.error.HTTPError as error: response=error
+        with response:
+            raw=response.read()
+            return response.status,json.loads(raw) if raw else None,dict(response.headers.items())
+    def csrf(self):
+        status,body,_=self.call("/auth/csrf")
+        assert status==200,(status,body)
+        self.token=body["token"]
+    def register_login(self,label):
+        self.csrf()
+        email=f"p07a-{uuid.uuid4().hex}@example.test"
+        password="P07A-"+secrets.token_urlsafe(24)
+        status,registered,_=self.call("/auth/register",{"email":email,"password":password,"displayName":label})
+        assert status==201,(status,registered)
+        status,session,_=self.call("/auth/login",{"email":email,"password":password})
+        assert status==200,(status,session)
+        self.csrf()
+        return registered
+
+def compose(*args,check=True,capture=False):
+    return subprocess.run([*COMPOSE,*args],cwd=ROOT,text=True,check=check,capture_output=capture)
+
+def sql(query):
+    result=compose("exec","-T","-e",f"PGPASSWORD={VALUES['LEDGER_OWNER_PASSWORD']}","postgres",
+        "psql","-X","-A","-t","-q","-v","ON_ERROR_STOP=1","-U","ledger_owner",
+        "-d",VALUES["POSTGRES_DB"],"-c",query,capture=True)
+    return result.stdout.strip()
+
+def wait_sql(query,expected,seconds=60):
+    deadline=time.monotonic()+seconds;latest=None
+    while time.monotonic()<deadline:
+        latest=sql(query)
+        if latest==str(expected): return latest
+        time.sleep(.4)
+    raise AssertionError(f"SQL condition did not reach {expected!r}; last={latest!r}; query={query}")
+
+def check(name,condition):
+    if not condition: raise AssertionError(name)
+    checks.append({"test":name,"status":"PASS"})
+
+def key(prefix): return prefix+"-"+uuid.uuid4().hex
+
+def account(browser,name):
+    status,body,_=browser.call("/accounts",{"name":name,"currency":"CAD"})
+    assert status==201,(status,body)
+    return body
+
+def fund(account_id,amount):
+    asset=str(uuid.uuid4());operation=str(uuid.uuid4())
+    sql(f"BEGIN; INSERT INTO ledger.accounts(id,label,currency,kind) VALUES('{asset}','P07A synthetic asset','CAD','SANDBOX_FUNDING_ASSET'); "
+        f"INSERT INTO ledger.account_balances(account_id) VALUES('{asset}'); "
+        f"SELECT ledger._post('{operation}','FUNDING','{asset}','{account_id}',{amount},'CAD'); COMMIT;")
+
+def schedule_body(source,recipient,amount,intended,zone,recurrence):
+    return {"sourceId":source,"recipientRef":recipient,"amountMinor":str(amount),"currency":"CAD",
+            "intendedLocal":intended,"zoneId":zone,"recurrence":recurrence}
+
+def command(browser,path,body,command_key,method="POST"):
+    return browser.call(path,body,method=method,headers={"Idempotency-Key":command_key})
+
+checks=[]
+running=set(compose("ps","--status","running","--services",capture=True).stdout.split())
+check("p07a-two-schedulers-running",{"scheduler-a","scheduler-b","api"}.issubset(running))
+check("p07a-nine-migrations",sql("SELECT count(*) FROM public.flyway_schema_history WHERE success")=="9")
+
+payer=Browser();payer_identity=payer.register_login("P07A payer")
+recipient=Browser();recipient_identity=recipient.register_login("P07A recipient")
+outsider=Browser();outsider.register_login("P07A outsider")
+source=account(payer,"P07A source");destination=account(recipient,"P07A destination")
+fund(source["id"],10000)
+check("p07a-funded-fixture",payer.call("/accounts/"+source["id"])[1]["availableMinor"]=="10000")
+
+# One-time occurrence runs through the two competing scheduler processes.
+due=(datetime.now(timezone.utc)+timedelta(seconds=12)).replace(microsecond=0)
+body=schedule_body(source["id"],destination["publicRef"],2500,due.strftime("%Y-%m-%dT%H:%M:%S"),"UTC","ONCE")
+create_key=key("p07a-create")
+status,created,headers=command(payer,"/schedules",body,create_key)
+status2,replay,headers2=command(payer,"/schedules",body,create_key)
+check("p07a-create-and-replay",status==201 and status2==201 and created==replay
+      and headers2.get("Idempotency-Replayed",headers2.get("Idempotency-replayed","")).lower()=="true")
+schedule_id=created["id"]
+status,hidden,_=outsider.call("/schedules/"+schedule_id)
+check("p07a-owner-scope",status==404)
+
+deadline=time.monotonic()+70; occurrence=None
+while time.monotonic()<deadline:
+    status,page,_=payer.call(f"/schedules/{schedule_id}/occurrences?limit=10&offset=0")
+    if status==200 and page["items"]:
+        occurrence=page["items"][0]
+        break
+    time.sleep(.5)
+check("p07a-one-time-occurrence-succeeded",occurrence is not None and occurrence["outcome"]=="SUCCEEDED" and occurrence["journalId"])
+status,current,_=payer.call("/schedules/"+schedule_id)
+check("p07a-one-time-finishes",status==200 and current["status"]=="FINISHED")
+check("p07a-single-financial-effect",sql(f"SELECT (SELECT count(*) FROM ledger.schedule_occurrences WHERE schedule_id='{schedule_id}')||':'||(SELECT count(*) FROM ledger.transfers WHERE id='{occurrence['operationId']}')||':'||(SELECT count(*) FROM ledger.journals WHERE operation_id='{occurrence['operationId']}')")=="1:1:1")
+wait_sql(f"SELECT count(*) FROM ledger.outbox_events e JOIN ledger.consumer_inbox i ON i.event_id=e.id AND i.consumer='event-observer-v1' WHERE e.aggregate_id='{schedule_id}' AND e.event_type IN ('schedule.created','schedule.occurrence') AND e.published_at IS NOT NULL","2")
+check("p07a-schedule-events-published-and-observed",True)
+check("p07a-balances",payer.call("/accounts/"+source["id"])[1]["postedMinor"]=="7500" and recipient.call("/accounts/"+destination["id"])[1]["postedMinor"]=="2500")
+
+# Versioned future lifecycle and changed-intent conflict.
+future=(datetime.now(timezone.utc)+timedelta(days=2)).replace(microsecond=0)
+future_body=schedule_body(source["id"],destination["publicRef"],100,future.strftime("%Y-%m-%dT%H:%M:%S"),"UTC","DAILY")
+future_key=key("p07a-future")
+status,future_schedule,_=command(payer,"/schedules",future_body,future_key)
+check("p07a-daily-created",status==201 and future_schedule["version"]==1)
+changed=dict(future_body);changed["amountMinor"]="101"
+status,conflict,_=command(payer,"/schedules",changed,future_key)
+check("p07a-changed-intent-conflict",status==409 and conflict["code"]=="IDEMPOTENCY_CONFLICT")
+future_id=future_schedule["id"]
+status,paused,_=command(payer,f"/schedules/{future_id}/pause",{"expectedVersion":1},key("p07a-pause"))
+status2,resumed,_=command(payer,f"/schedules/{future_id}/resume",{"expectedVersion":1},key("p07a-resume"))
+status3,cancelled,_=command(payer,f"/schedules/{future_id}/cancel",{"expectedVersion":1},key("p07a-cancel"))
+check("p07a-lifecycle",status==200 and paused["status"]=="PAUSED" and status2==200 and resumed["status"]=="ACTIVE" and status3==200 and cancelled["status"]=="CANCELLED" and cancelled["version"]==1)
+
+status,contract,_=payer.call("/openapi/p07a-schedules.json")
+check("p07a-scoped-contract",status==200 and "/api/v1/schedules" in contract["paths"] and "/api/v1/schedules/{id}/occurrences" in contract["paths"])
+check("p07a-reconciles",sql("SELECT count(*) FROM ledger.account_balances b JOIN ledger.accounts a ON a.id=b.account_id WHERE b.posted_minor::numeric<>(SELECT coalesce(sum(CASE WHEN a.kind='WALLET_LIABILITY' THEN CASE WHEN e.side='CREDIT' THEN e.amount_minor::numeric ELSE -e.amount_minor::numeric END ELSE CASE WHEN e.side='DEBIT' THEN e.amount_minor::numeric ELSE -e.amount_minor::numeric END END),0) FROM ledger.journal_entries e WHERE e.account_id=a.id) OR b.reserved_minor::numeric<>(SELECT coalesce(sum(h.amount_minor::numeric),0) FROM ledger.holds h WHERE h.account_id=a.id AND h.state='ACTIVE')")=="0")
+
+report={"sourceSha":subprocess.check_output(["git","rev-parse","HEAD"],cwd=ROOT,text=True).strip(),
+        "timestamp":datetime.now(timezone.utc).isoformat(),
+        "scope":"real Compose P07A API/two-scheduler/idempotency/occurrence/accounting smoke",
+        "checks":checks}
+out=ROOT/".evidence/schedule-compose";out.mkdir(parents=True,exist_ok=True)
+(out/"results.json").write_text(json.dumps(report,indent=2)+"\n")
+print(json.dumps(report,indent=2))

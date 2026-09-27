@@ -1,0 +1,105 @@
+{
+  "phase": "P07A",
+  "sourceContract": "docs/implementation/MASTER_SPEC.md",
+  "scope": "Durable one-time/daily/weekly scheduled transfers, DST-aware wall-clock intent, versioned lifecycle commands, bounded 24-hour catch-up, multi-scheduler duplicate protection and immutable occurrence history. Signed durable webhooks remain P07B.",
+  "requirements": [
+    {
+      "id": "P07A-R01",
+      "sections": [
+        "7",
+        "8",
+        "12"
+      ],
+      "statement": "Schedule creation and lifecycle changes use customer ownership, canonical durable idempotency, expected definition versions and a restricted security-definer boundary; runtime SQL cannot bypass it.",
+      "tests": {
+        "ScheduledTransferReliabilityIT": [
+          "P07A01"
+        ],
+        "schedule-compose": [
+          "p07a-create-and-replay",
+          "p07a-owner-scope",
+          "p07a-changed-intent-conflict"
+        ]
+      }
+    },
+    {
+      "id": "P07A-R02",
+      "sections": [
+        "7",
+        "12"
+      ],
+      "statement": "Two independent scheduler processes observing the same due tuple can commit only one occurrence, transfer, journal, audit chain and outbox effect.",
+      "tests": {
+        "ScheduledTransferReliabilityIT": [
+          "P07A02"
+        ],
+        "schedule-compose": [
+          "p07a-two-schedulers-running",
+          "p07a-one-time-occurrence-succeeded",
+          "p07a-single-financial-effect",
+          "p07a-schedule-events-published-and-observed"
+        ]
+      }
+    },
+    {
+      "id": "P07A-R03",
+      "sections": [
+        "5",
+        "7",
+        "12"
+      ],
+      "statement": "Funds are checked only when an occurrence executes; insufficient funds records one immutable rejected occurrence without a journal, transfer, balance change or new retry identity.",
+      "tests": {
+        "ScheduledTransferReliabilityIT": [
+          "P07A03"
+        ]
+      }
+    },
+    {
+      "id": "P07A-R04",
+      "sections": [
+        "10",
+        "12"
+      ],
+      "statement": "Overdue occurrences older than 24 hours are recorded individually as SKIPPED_LATE and the schedule advances one local obligation at a time rather than collapsing debt.",
+      "tests": {
+        "ScheduledTransferReliabilityIT": [
+          "P07A04"
+        ]
+      }
+    },
+    {
+      "id": "P07A-R05",
+      "sections": [
+        "7",
+        "12"
+      ],
+      "statement": "Editing increments definition version and invalidates stale ticks while preserving immutable history; pause, resume and cancel serialize against occurrence execution without resurrecting stale versions.",
+      "tests": {
+        "ScheduledTransferReliabilityIT": [
+          "P07A05"
+        ],
+        "schedule-compose": [
+          "p07a-lifecycle"
+        ]
+      }
+    },
+    {
+      "id": "P07A-R06",
+      "sections": [
+        "12"
+      ],
+      "statement": "Daily and weekly recurrence use intended local wall time, spring gaps move forward by the gap, autumn overlaps select the earlier offset and stable occurrence identity includes schedule ID, version and intended local time.",
+      "tests": {
+        "CoreTest": [
+          "SCHEDULE-gap",
+          "SCHEDULE-overlap",
+          "SCHEDULE-daily-spring",
+          "SCHEDULE-daily-fall",
+          "SCHEDULE-weekly",
+          "SCHEDULE-version-identity"
+        ]
+      }
+    }
+  ]
+}

@@ -55,7 +55,8 @@ public class FoundationSecurityConfiguration {
                 .requestMatchers(HttpMethod.POST,"/api/v1/payments/*/cancel","/api/v1/payments/*/refunds","/api/v1/payments/*/reversal").hasAnyRole("CUSTOMER","ADMIN")
                 .requestMatchers(HttpMethod.GET,"/api/v1/payments/*/adjustments","/api/v1/payments/*/adjustments/*").hasAnyRole("CUSTOMER","ADMIN")
                 .requestMatchers("/api/v1/accounts","/api/v1/accounts/**","/api/v1/recipients/**",
-                    "/api/v1/transfers","/api/v1/transfers/**","/api/v1/payments","/api/v1/payments/**").hasRole("CUSTOMER")
+                    "/api/v1/transfers","/api/v1/transfers/**","/api/v1/payments","/api/v1/payments/**",
+                    "/api/v1/schedules","/api/v1/schedules/**").hasRole("CUSTOMER")
                 .requestMatchers("/api/v1/admin/**","/actuator/metrics","/actuator/metrics/**").hasRole("ADMIN")
                 .anyRequest().denyAll())
             .exceptionHandling(errors->errors

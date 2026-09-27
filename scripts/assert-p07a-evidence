@@ -1,0 +1,98 @@
+#!/usr/bin/env python3
+"""Require verified P01-P06 regression plus executed P07A schedule evidence."""
+import json
+import subprocess
+import xml.etree.ElementTree as ET
+from datetime import datetime,timezone
+from pathlib import Path
+
+ROOT=Path(__file__).resolve().parent.parent
+subprocess.run(["python3","scripts/assert-p06-evidence"],cwd=ROOT,check=True)
+
+executed={}
+rows=[]
+for relative,suite_name,minimum in (
+    ("backend/target/surefire-reports/TEST-lab.ledgerguard.CoreTest.xml","CoreTest",120),
+    ("backend/target/failsafe-reports/TEST-lab.ledgerguard.ScheduledTransferReliabilityIT.xml","ScheduledTransferReliabilityIT",5),
+):
+    path=ROOT/relative
+    if not path.is_file(): raise SystemExit(f"Missing P07A test result: {relative}")
+    suite=ET.parse(path).getroot()
+    counts={key:int(suite.get(key,"0")) for key in ("tests","failures","errors","skipped")}
+    cases=suite.findall(".//testcase")
+    if counts["tests"]<minimum or len(cases)!=counts["tests"]:
+        raise SystemExit(f"Missing expected discovery: {relative}: {counts}, cases={len(cases)}")
+    if any(counts[key] for key in ("failures","errors","skipped")):
+        raise SystemExit(f"P07A suite did not pass without skips: {relative}: {counts}")
+    executed[suite_name]=[case.get("name","") for case in cases]
+    rows.append({"suite":relative,**counts})
+
+compose_path=ROOT/".evidence/schedule-compose/results.json"
+if not compose_path.is_file(): raise SystemExit("Missing real P07A Compose evidence")
+compose=json.loads(compose_path.read_text(encoding="utf-8"))
+if not compose.get("checks") or any(item.get("status")!="PASS" for item in compose["checks"]):
+    raise SystemExit("P07A Compose evidence contains non-passing checks")
+executed["schedule-compose"]=[item["test"] for item in compose["checks"]]
+rows.append({"suite":str(compose_path.relative_to(ROOT)),"tests":len(executed["schedule-compose"]),"failures":0,"errors":0,"skipped":0})
+
+def match(prefix,name):
+    return name==prefix or name.startswith(prefix+"_") or name.startswith(prefix+"-") or name.startswith(prefix+"[")
+
+manifest=json.loads((ROOT/"docs/implementation/P07A_REQUIREMENTS.json").read_text(encoding="utf-8"))
+if not (ROOT/manifest["sourceContract"]).is_file(): raise SystemExit("Missing P07A source contract")
+traceability=[];seen=set()
+for requirement in manifest["requirements"]:
+    identity=requirement["id"]
+    if identity in seen: raise SystemExit(f"Duplicate P07A requirement: {identity}")
+    seen.add(identity);matches=[]
+    for suite_name,prefixes in requirement["tests"].items():
+        for prefix in prefixes:
+            actual=[name for name in executed.get(suite_name,[]) if match(prefix,name)]
+            if not actual: raise SystemExit(f"No executed oracle for {identity}: {suite_name}/{prefix}")
+            matches.extend({"suite":suite_name,"test":name} for name in actual)
+    traceability.append({"id":identity,"phase":manifest["phase"],"statement":requirement["statement"],"status":"VERIFIED_PASS","tests":matches})
+
+spec=json.loads((ROOT/"backend/src/main/resources/openapi/p07a-schedules.json").read_text(encoding="utf-8"))
+for path in ("/api/v1/schedules","/api/v1/schedules/{id}","/api/v1/schedules/{id}/pause",
+             "/api/v1/schedules/{id}/resume","/api/v1/schedules/{id}/cancel",
+             "/api/v1/schedules/{id}/occurrences"):
+    if path not in spec["paths"]: raise SystemExit(f"P07A OpenAPI missing {path}")
+
+def validate_refs(value):
+    if isinstance(value,dict):
+        ref=value.get("$ref")
+        if ref:
+            if not ref.startswith("#/"): raise SystemExit(f"Unexpected external OpenAPI reference: {ref}")
+            target=spec
+            for part in ref[2:].split("/"): target=target[part.replace("~1","/").replace("~0","~")]
+        for child in value.values(): validate_refs(child)
+    elif isinstance(value,list):
+        for child in value: validate_refs(child)
+validate_refs(spec)
+
+for relative in (
+    "backend/src/main/resources/db/p07/V9__p07_scheduled_transfer_execution.sql",
+    "backend/src/main/java/lab/ledgerguard/schedules/ScheduleCommands.java",
+    "backend/src/main/java/lab/ledgerguard/schedules/ScheduleService.java",
+    "backend/src/main/java/lab/ledgerguard/schedules/ScheduleController.java",
+    "backend/src/main/java/lab/ledgerguard/schedules/ScheduleWorker.java",
+    "backend/src/test/java/lab/ledgerguard/ScheduledTransferReliabilityIT.java",
+    "compose.p07.yaml",
+    "scripts/smoke-schedules",
+):
+    if not (ROOT/relative).is_file(): raise SystemExit(f"Missing P07A implementation source: {relative}")
+
+sha=subprocess.check_output(["git","rev-parse","HEAD"],cwd=ROOT,text=True).strip()
+dirty=bool(subprocess.check_output(["git","status","--porcelain","--untracked-files=no"],cwd=ROOT,text=True).strip())
+report={"sourceSha":sha,"trackedTreeDirty":dirty,"timestamp":datetime.now(timezone.utc).isoformat(),
+        "status":"VERIFIED_PASS","suites":rows,"requirements":traceability,
+        "scope":"P01-P06 regression plus P07A durable schedules, two-worker Compose execution and accounting proofs; P07B webhooks and P08-P11 remain incomplete"}
+out=ROOT/".evidence/p07a";out.mkdir(parents=True,exist_ok=True)
+(out/"test-summary.json").write_text(json.dumps(report,indent=2)+"\n",encoding="utf-8")
+matrix=["# Executed P07A requirements","",f"Source: `{sha}`; tracked tree dirty: `{dirty}`.","",
+        "| Requirement | Executed cases | Result |","|---|---:|---|"]
+for item in traceability: matrix.append(f"| {item['id']} | {len(item['tests'])} | {item['status']} |")
+matrix.extend(["","Exact case/check names and source identity are in test-summary.json."])
+(out/"requirements-matrix.md").write_text("\n".join(matrix)+"\n",encoding="utf-8")
+print(json.dumps({key:value for key,value in report.items() if key!="requirements"},indent=2))
+print(f"Verified {len(traceability)} P07A requirements against executed evidence.")

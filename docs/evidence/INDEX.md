@@ -1,20 +1,31 @@
-# Evidence index — P05 verified, full product NO_GO
+# Evidence index — P06 verified, P07A candidate, full product NO_GO
 
-## Current P05 evidence
+## Current verified P06 evidence
 
-Published implementation `bbca6dd7478e33320aa134f6cd59c9652f4b60db`, tree `992c8c0b89e17a96b42e631d7ba6e313957d1984`, passed the permanent `LedgerGuard P05 verification` workflow for the exact `main` SHA.
+Published implementation `bb1eeb1167b71fb92fb28f82c110fc489f60f03b` passed permanent `LedgerGuard P06 verification` workflow run `36306335283` for the exact `main` SHA.
 
-- [Durable human-readable P05 report](p05-bbca6dd.md)
-- [Machine-readable P05 result](p05-bbca6dd.json)
-- [Scoped P05 requirements/test-ID source](../implementation/P05_REQUIREMENTS.json)
-- [Asynchronous-payment architecture and limits](../architecture/adr/0014-p05-asynchronous-payments.md)
-- [Current OpenAPI](../../backend/src/main/resources/openapi/p05.json)
+- [Durable human-readable P06 report](p06-bb1eeb.md)
+- [Scoped P06 requirements/test-ID source](../implementation/P06_REQUIREMENTS.json)
+- [Payment-adjustment architecture and limits](../architecture/adr/0015-p06-payment-adjustments.md)
+- [Verified P06 OpenAPI](../../backend/src/main/resources/openapi/p06.json)
 
-Actual results: 133 core/security-configuration JUnit, 58 authentication/account HTTP, 28 immediate-transfer HTTP, 13 PostgreSQL financial/payment and 1 outbox failure-boundary integration case passed. TypeScript passed 44 existing, 6 authentication, 7 transfer and 5 payment cases. Forty-two live Compose checks, seven migrations, restricted runtime, repeated zero-discrepancy reconciliation, 34-requirement traceability, limited literal scan and teardown passed. The standalone 120-core run repeats CoreTest bodies and is not double-counted.
+Actual results include 133 core/security JUnit cases, 114 real PostgreSQL/HTTP integration cases, 70 TypeScript client/contract cases, 42 live P05 Compose checks and 32 live P06 adjustment checks. All required suites had zero failures, errors and skips. Forty-four scoped P03–P06 requirements were bound to executed evidence, the tracked source was clean, limited literal-secret scanning passed and reconciliation reported zero discrepancies.
 
-P05 proofs cover atomic payment/hold acceptance, publisher confirms, two manual-ack workers, broker-outage continuity, publisher death after confirmation, worker death after settlement commit, duplicate/logical-duplicate deduplication, stale projection rejection, per-consumer poison work, audited replay and bounded failure diagnostics.
+P06 proofs cover payer/administrator cancellation, hold release without a journal, cancellation-versus-settlement serialization, partial/full recipient-authorized refunds, administrator full reversal, immutable settlement history, parent-scoped idempotency, commit-response loss, concurrent refund bounds, forbidden transitions, reversal-versus-spending, database enforcement and independent adjustment reconciliation.
 
-## Preserved P04, P03 and foundation evidence
+## P07A source candidate
+
+The current tree adds durable scheduled transfers but has no verified P07A report until its permanent source-SHA gate passes.
+
+- [P07A requirements](../implementation/P07A_REQUIREMENTS.json)
+- [P07A architecture](../architecture/adr/0016-p07a-scheduled-transfers.md)
+- [Scoped P07A schedule OpenAPI](../../backend/src/main/resources/openapi/p07a-schedules.json)
+
+Candidate evidence includes a five-case real PostgreSQL schedule suite, the existing deterministic DST/catch-up policy cases and a live two-scheduler Compose campaign. These must not be relabeled as passing before the remote workflow verifies the final source SHA.
+
+## Preserved P05, P04, P03 and foundation evidence
+
+P05 implementation `bbca6dd7478e33320aa134f6cd59c9652f4b60db` passed run `36285547632`; its [human-readable report](p05-bbca6dd.md) and [JSON provenance](p05-bbca6dd.json) retain original scope.
 
 P04 implementation `60a95db82350983eaf1ad3c7545190866c831f98` passed run `36276049817`; its [human-readable](p04-60a95db.md) and [JSON](p04-60a95db.json) reports retain original scope.
 
@@ -26,12 +37,12 @@ Historical component records remain available under `component/` and `unit-probe
 
 ## Honest failure history
 
-P05 candidate execution caught an incorrect poison-work assertion, a publisher-diagnostic/failed-code width mismatch and unnecessary V8 migration history. Each root cause was corrected and the complete lane rerun. A pre-publication workflow's final Git push failed because its Actions token could not modify workflow files after every verification step had passed; the authorized Git-data route published the exact tree and the permanent push workflow tested the final remote SHA.
+P05 candidate execution caught an incorrect poison-work assertion, a publisher-diagnostic/failed-code width mismatch and unnecessary migration history. P06 candidate execution caught workflow publication and remote-gate issues before the final source SHA passed. Each verified report records only the exact successful source and preserves its own scope.
 
-Earlier phase reports preserve their own failed-run history. Failed runs are not counted as required seeded-defect experiments or passing evidence.
+Failed runs are not counted as required seeded-defect experiments or passing evidence.
 
 ## Remaining evidence
 
-P06 adjustments, P07 schedules/webhooks, P08 React/Playwright/axe, P09 complete F01–F08 and D01–D24 campaigns, P10 Pact/ZAP/k6/backup-restore/nightly/release lanes, and P11 final exploratory package/video remain incomplete.
+P07A remains unverified until its permanent gate passes. P07B signed durable webhooks, P08 React/Playwright/axe, P09 complete F01–F08 and D01–D24 campaigns, P10 Pact/ZAP/k6/backup-restore/nightly/release lanes, and P11 final exploratory package/video remain incomplete.
 
-No public application, release tag, security certification, accessibility conformance or measured performance claim exists. GitHub Actions results are the current authority for Docker/PostgreSQL/RabbitMQ/Compose execution.
+No public application, release tag, security certification, accessibility conformance or measured performance claim exists. GitHub Actions results are the authority for Docker/PostgreSQL/RabbitMQ/Compose execution.

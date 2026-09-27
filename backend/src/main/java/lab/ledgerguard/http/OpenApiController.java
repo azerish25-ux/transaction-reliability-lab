@@ -18,4 +18,9 @@ public class OpenApiController {
 
     @GetMapping(value="/api/v1/openapi/p06.json",produces="application/json")
     public Resource p06Specification() { return new ClassPathResource("openapi/p06.json"); }
+
+    @GetMapping(value="/api/v1/openapi/p07a-schedules.json",produces="application/json")
+    public Resource p07aScheduleCandidate() {
+        return new ClassPathResource("openapi/p07a-schedules.json");
+    }
 }

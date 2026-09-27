@@ -3,6 +3,7 @@ package lab.ledgerguard.config;
 import java.time.Clock;
 import javax.sql.DataSource;
 import lab.ledgerguard.db.FinancialCommands;
+import lab.ledgerguard.schedules.ScheduleCommands;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -16,5 +17,10 @@ public class FoundationConfiguration {
     @Bean
     FinancialCommands financialCommands(DataSource dataSource) {
         return new FinancialCommands(dataSource);
+    }
+
+    @Bean
+    ScheduleCommands scheduleCommands(DataSource dataSource) {
+        return new ScheduleCommands(dataSource);
     }
 }

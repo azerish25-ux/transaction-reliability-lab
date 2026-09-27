@@ -1,0 +1,71 @@
+# Opt-in P07A overlay. Use only with compose.yaml; the verified P06 default
+# topology and migration history remain unchanged until P07 receives its gate.
+services:
+  api:
+    environment:
+      LEDGER_FLYWAY_LOCATIONS: classpath:db/migration,classpath:db/p07
+      LEDGER_SCHEDULES_ENABLED: "true"
+
+  scheduler-a:
+    build:
+      context: .
+      dockerfile: infra/docker/Dockerfile.backend
+    environment:
+      LEDGER_SANDBOX_HTTP: "true"
+      LEDGER_AUTH_KEY: ${LEDGER_AUTH_KEY:?LEDGER_AUTH_KEY is required}
+      LEDGER_DATABASE_URL: jdbc:postgresql://postgres:5432/${POSTGRES_DB:-ledgerguard}
+      LEDGER_RUNTIME_USER: ledger_runtime
+      LEDGER_RUNTIME_PASSWORD: ${LEDGER_RUNTIME_PASSWORD:?LEDGER_RUNTIME_PASSWORD is required}
+      SPRING_PROFILES_ACTIVE: sandbox
+      SPRING_MAIN_WEB_APPLICATION_TYPE: none
+      LEDGER_PROCESS_NAME: LedgerGuard-Scheduler-A
+      LEDGER_FLYWAY_ENABLED: "false"
+      LEDGER_MESSAGING_ENABLED: "false"
+      LEDGER_OUTBOX_PUBLISHER_ENABLED: "false"
+      LEDGER_PAYMENT_WORKER_ENABLED: "false"
+      LEDGER_SCHEDULER_ENABLED: "true"
+      LEDGER_DATABASE_POOL_SIZE: 8
+    depends_on:
+      api:
+        condition: service_healthy
+    read_only: true
+    tmpfs:
+      - /tmp
+    security_opt:
+      - no-new-privileges:true
+    restart: unless-stopped
+    stop_grace_period: 25s
+    networks:
+      - ledgerguard
+
+  scheduler-b:
+    build:
+      context: .
+      dockerfile: infra/docker/Dockerfile.backend
+    environment:
+      LEDGER_SANDBOX_HTTP: "true"
+      LEDGER_AUTH_KEY: ${LEDGER_AUTH_KEY:?LEDGER_AUTH_KEY is required}
+      LEDGER_DATABASE_URL: jdbc:postgresql://postgres:5432/${POSTGRES_DB:-ledgerguard}
+      LEDGER_RUNTIME_USER: ledger_runtime
+      LEDGER_RUNTIME_PASSWORD: ${LEDGER_RUNTIME_PASSWORD:?LEDGER_RUNTIME_PASSWORD is required}
+      SPRING_PROFILES_ACTIVE: sandbox
+      SPRING_MAIN_WEB_APPLICATION_TYPE: none
+      LEDGER_PROCESS_NAME: LedgerGuard-Scheduler-B
+      LEDGER_FLYWAY_ENABLED: "false"
+      LEDGER_MESSAGING_ENABLED: "false"
+      LEDGER_OUTBOX_PUBLISHER_ENABLED: "false"
+      LEDGER_PAYMENT_WORKER_ENABLED: "false"
+      LEDGER_SCHEDULER_ENABLED: "true"
+      LEDGER_DATABASE_POOL_SIZE: 8
+    depends_on:
+      api:
+        condition: service_healthy
+    read_only: true
+    tmpfs:
+      - /tmp
+    security_opt:
+      - no-new-privileges:true
+    restart: unless-stopped
+    stop_grace_period: 25s
+    networks:
+      - ledgerguard

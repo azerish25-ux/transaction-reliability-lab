@@ -58,7 +58,7 @@ public class ReliableEventConsumers {
     @RabbitListener(id="event-observer",queues=MessagingTopology.OBSERVATION_QUEUE)
     public void observe(Message message,Channel channel) throws Exception {
         consume("event-observer-v1",MessagingTopology.OBSERVATION_RETRY_KEY,"transfer.settled",message,channel,event->{
-            if(!"transfer.settled".equals(event.eventType()))
+            if(!event.eventType().matches("transfer\\.settled|schedule\\.(created|updated|occurrence)"))
                 throw new IllegalArgumentException("UNSUPPORTED_OBSERVATION_EVENT");
             database.observe(event);
         });
@@ -114,7 +114,11 @@ public class ReliableEventConsumers {
     }
 
     @FunctionalInterface private interface Processor { void process(EventEnvelope event) throws Exception; }
-    private static String receivedRouting(Message message,String fallback){String routing=message.getMessageProperties().getReceivedRoutingKey();return routing!=null&&routing.matches("(payment\\.(requested|updated)|transfer\\.settled)")?routing:fallback;}
+    private static String receivedRouting(Message message,String fallback){
+        String routing=message.getMessageProperties().getReceivedRoutingKey();
+        return routing!=null&&routing.matches("(payment\\.(requested|updated)|transfer\\.settled|schedule\\.(created|updated|occurrence))")
+            ?routing:fallback;
+    }
     private static int retry(Message message){Object value=message.getMessageProperties().getHeaders().get("x-ledger-retry");return value instanceof Number n?n.intValue():0;}
     private static Duration backoff(int attempt){return Duration.ofSeconds(Math.min(60,1L<<Math.min(6,Math.max(0,attempt-1))));}
     private static UUID stableMessageId(Message message,byte[] body){

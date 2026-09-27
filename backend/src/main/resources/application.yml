@@ -20,7 +20,7 @@ spring:
     url: ${LEDGER_MIGRATION_URL:jdbc:postgresql://localhost:5432/ledgerguard}
     user: ${LEDGER_OWNER_USER:ledger_owner}
     password: ${LEDGER_OWNER_PASSWORD:unused-when-flyway-disabled}
-    locations: classpath:db/migration
+    locations: ${LEDGER_FLYWAY_LOCATIONS:classpath:db/migration}
     default-schema: public
     schemas: public
     connect-retries: 20
@@ -82,6 +82,12 @@ ledgerguard:
     enabled: ${LEDGER_OUTBOX_PUBLISHER_ENABLED:false}
   payment-worker:
     enabled: ${LEDGER_PAYMENT_WORKER_ENABLED:false}
+  schedules:
+    enabled: ${LEDGER_SCHEDULES_ENABLED:false}
+  scheduler:
+    enabled: ${LEDGER_SCHEDULER_ENABLED:false}
+    poll-ms: ${LEDGER_SCHEDULER_POLL_MS:500}
+    batch-size: ${LEDGER_SCHEDULER_BATCH_SIZE:32}
   outbox:
     poll-ms: ${LEDGER_OUTBOX_POLL_MS:250}
     recovery-ms: ${LEDGER_OUTBOX_RECOVERY_MS:30000}
@@ -100,7 +106,7 @@ ledgerguard:
 info:
   app:
     name: LedgerGuard
-    version: 0.5.0-INCOMPLETE
+    version: 0.6.0-P07A-INCOMPLETE
     boundary: synthetic-money-only
 
 logging:

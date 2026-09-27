@@ -2,7 +2,13 @@ package lab.ledgerguard.messaging;
 
 import java.util.List;
 import java.util.Map;
-import org.springframework.amqp.core.*;
+import org.springframework.amqp.core.BindingBuilder;
+import org.springframework.amqp.core.Declarables;
+import org.springframework.amqp.core.DirectExchange;
+import org.springframework.amqp.core.ExchangeBuilder;
+import org.springframework.amqp.core.FanoutExchange;
+import org.springframework.amqp.core.Queue;
+import org.springframework.amqp.core.QueueBuilder;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -41,6 +47,9 @@ public class MessagingTopology {
             BindingBuilder.bind(projection).to(events).with("payment.requested"),
             BindingBuilder.bind(projection).to(events).with("payment.updated"),
             BindingBuilder.bind(observation).to(events).with("transfer.settled"),
+            BindingBuilder.bind(observation).to(events).with("schedule.created"),
+            BindingBuilder.bind(observation).to(events).with("schedule.updated"),
+            BindingBuilder.bind(observation).to(events).with("schedule.occurrence"),
             BindingBuilder.bind(paymentRetry).to(retry).with(PAYMENT_RETRY_KEY),
             BindingBuilder.bind(projectionRetry).to(retry).with(PROJECTION_RETRY_KEY),
             BindingBuilder.bind(observationRetry).to(retry).with(OBSERVATION_RETRY_KEY),
