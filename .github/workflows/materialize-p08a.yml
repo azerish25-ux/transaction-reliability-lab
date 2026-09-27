@@ -1,4 +1,4 @@
-name: Materialize reviewed P08A source
+name: Materialize reviewed P08B source
 
 on:
   push:
@@ -9,19 +9,20 @@ on:
 
 permissions:
   contents: write
+  actions: write
 
 concurrency:
-  group: ledgerguard-p08a-materialization
+  group: ledgerguard-p08b-materialization
   cancel-in-progress: false
 
 jobs:
   materialize:
-    name: Verify and publish reviewed P08A source
+    name: Verify and publish reviewed P08B source
     runs-on: ubuntu-latest
-    timeout-minutes: 45
+    timeout-minutes: 60
     env:
       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      P08A_ARCHIVE_SHA256: 63b4c1f910996ed826509cb35d03987c7cb7d864aa9c27f1565a60e6b7b41060
+      P08B_ARCHIVE_SHA256: 792d65ad3215f5c8e85fbc84be1f17f1e627f14db3b261f43447b973e0771542
     steps:
       - name: Check out staging commit
         uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
@@ -38,18 +39,21 @@ jobs:
         uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
         with:
           node-version: '22'
-      - name: Reassemble checksum-pinned source
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - name: Reassemble checksum-pinned P08B source
         shell: bash
         run: |
           set -euo pipefail
           chunks=(
-            "dac7d6456cc8c97533e435eef14d468f3b8a9311:416152b8ed2de6c0eacf709e05db1e65f0d217e15c3c9733cb329ab19c8d1a12"
-            "ff436fbb78258cdc872f1b01430478bda0616258:614e0d89905917f668445070e9ba1d45e0e23788b9ecc2b9078908b7b03dcfee"
-            "d86c14190a2ad7b126c11b9a7523e6eaaf5b7ed4:2c9f2602ef74ca58dc992aa4a3bbaf4835541a8832be4f2d9dd9d4d799243dd3"
-            "a5ae1554f93c04e2c9a9963b1095cdb48ff452de:411958cdd6aad03a4891c33212b5f47f2cfb144743488d2969ab4fa2b336d677"
-            "ffe23ce79be070998193181879a55a604e3e6c3e:787d1cbc7de98aa84a6a83e318f44c7c44153294e30e46392870803ac63afb25"
+            "407bbbb79947e071fd294b8b7dadc154d3c6f2f0:fa6ca63b39fd5db7f36af29a64fe48d70194dff25166acec14744d860c2e4d11"
+            "ba7022a827bf525adabd8a817a586a55dec422ed:6b5fb24c530818cb86b57d5e2af138841cf222c5eea2a2d77a5ac675c29a9dc1"
+            "f0de589d30983f5c68b58c83bee3c281bf30428c:61a1f05f4576929affe43066479f07bf557bb3d04e12e3846592216402ffa14d"
+            "46e923255c916c14c71417402eab47b5a32a2aa0:414d44113b9bc5959ed64ea40f761030330381284b08d0bea66b770eca65d807"
+            "ae5504ee8623227a9ca62b934c19a394d476ffb4:c7cf2808d8b924a10f90b7373dfbee95ed87371a960d71e976a8fe6e33d2278e"
+            "5945aedfff91f6e6bf010211a91066d76edbc845:b319d59a9bb9589345d23d9b37780b50563f338955d2f447477eca8910809315"
           )
-          : > /tmp/p08a-source.tar.gz
+          : > /tmp/p08b-source.tar.gz
           index=0
           for item in "${chunks[@]}"; do
             sha="${item%%:*}"
@@ -59,117 +63,114 @@ jobs:
               -H "Accept: application/vnd.github+json" \
               -H "X-GitHub-Api-Version: 2022-11-28" \
               "$GITHUB_API_URL/repos/$GITHUB_REPOSITORY/git/blobs/$sha" \
-              -o /tmp/p08a-blob.json
+              -o /tmp/p08b-blob.json
             python3 - "$sha" "$index" <<'PY'
           import base64, json, pathlib, sys
           sha, index = sys.argv[1], sys.argv[2]
-          payload = json.loads(pathlib.Path('/tmp/p08a-blob.json').read_text(encoding='utf-8'))
+          payload = json.loads(pathlib.Path('/tmp/p08b-blob.json').read_text(encoding='utf-8'))
           if payload.get('sha') != sha or payload.get('encoding') != 'base64':
               raise SystemExit(f'unexpected blob response for {sha}')
           data = base64.b64decode(payload['content'].replace('\n', ''), validate=True)
-          pathlib.Path(f'/tmp/p08a-chunk-{index}').write_bytes(data)
+          pathlib.Path(f'/tmp/p08b-chunk-{index}').write_bytes(data)
           PY
-            printf '%s  %s\n' "$expected" "/tmp/p08a-chunk-$index" | sha256sum --check --strict
-            cat "/tmp/p08a-chunk-$index" >> /tmp/p08a-source.tar.gz
+            printf '%s  %s\n' "$expected" "/tmp/p08b-chunk-$index" | sha256sum --check --strict
+            cat "/tmp/p08b-chunk-$index" >> /tmp/p08b-source.tar.gz
             index=$((index + 1))
           done
-          printf '%s  %s\n' "$P08A_ARCHIVE_SHA256" /tmp/p08a-source.tar.gz | sha256sum --check --strict
+          printf '%s  %s\n' "$P08B_ARCHIVE_SHA256" /tmp/p08b-source.tar.gz | sha256sum --check --strict
           python3 <<'PY'
           import pathlib, tarfile
-          archive = pathlib.Path('/tmp/p08a-source.tar.gz')
+          archive = pathlib.Path('/tmp/p08b-source.tar.gz')
+          expected = {
+              '.github/workflows/pr.yml',
+              'README.md',
+              'backend/src/main/java/lab/ledgerguard/http/OpenApiController.java',
+              'backend/src/main/resources/openapi/p08b-ui.json',
+              'docs/architecture/adr/0019-p08b-replay-safe-customer-money-movement.md',
+              'docs/implementation/P08B_REQUIREMENTS.json',
+              'docs/implementation/PROGRESS.md',
+              'docs/implementation/RELEASE_READINESS.md',
+              'frontend/package.json',
+              'frontend/src/intent-store.ts',
+              'frontend/src/main.tsx',
+              'frontend/src/p08b-core.ts',
+              'frontend/src/p08b-ui.tsx',
+              'frontend/src/p08b.css',
+              'frontend/src/product-router.tsx',
+              'frontend/tests/e2e/p08b.spec.ts',
+              'frontend/tsconfig.core.json',
+              'scripts/assert-p08b-evidence',
+              'scripts/test-client',
+              'tests/contracts/p08b-client.test.cjs',
+          }
           with tarfile.open(archive, 'r:gz') as source:
-              for member in source.getmembers():
+              members = source.getmembers()
+              names = {member.name.removeprefix('./') for member in members if member.isfile()}
+              if names != expected:
+                  raise SystemExit(f'unexpected archive paths: missing={sorted(expected - names)} extra={sorted(names - expected)}')
+              for member in members:
                   path = pathlib.PurePosixPath(member.name)
                   if path.is_absolute() or '..' in path.parts or member.issym() or member.islnk():
                       raise SystemExit(f'unsafe archive member: {member.name}')
               source.extractall('.', filter='data')
           PY
-      - name: Apply reviewed source repairs
+      - name: Verify reviewed P08B source before publication
         shell: bash
         run: |
           set -euo pipefail
-          python3 <<'PY'
-          from pathlib import Path
-
-          app_path = Path('frontend/src/App.tsx')
-          app = app_path.read_text(encoding='utf-8')
-          replacements = [
-              ("{logoutError && <div className=\"shell-problem\"><ProblemPanel failure={logoutError} /></div>}",
-               "{logoutError !== undefined && <div className=\"shell-problem\"><ProblemPanel failure={logoutError} /></div>}", 1),
-              ("{failure && <ProblemPanel failure={failure} headingRef={errorHeading} />}",
-               "{failure !== undefined && <ProblemPanel failure={failure} headingRef={errorHeading} />}", 2),
-              ("{failure && <ProblemPanel failure={failure} />}",
-               "{failure !== undefined && <ProblemPanel failure={failure} />}", 4),
-              ("message: CODE_MESSAGES.INVALID_LABEL, correlationId: ''",
-               "message: CODE_MESSAGES.INVALID_LABEL ?? 'Enter a valid account name.', correlationId: ''", 1),
-          ]
-          for old, new, expected in replacements:
-              actual = app.count(old)
-              if actual != expected:
-                  raise SystemExit(f'expected {expected} App.tsx occurrence(s), found {actual}: {old}')
-              app = app.replace(old, new)
-          app_path.write_text(app, encoding='utf-8')
-
-          money_path = Path('frontend/src/money.ts')
-          money = money_path.read_text(encoding='utf-8')
-          old = "const [whole, fraction = ''] = input.split('.');"
-          new = "const [whole = '', fraction = ''] = input.split('.');"
-          if money.count(old) != 1:
-              raise SystemExit('unexpected parseAmount destructuring source')
-          money_path.write_text(money.replace(old, new), encoding='utf-8')
-
-          test_path = Path('tests/contracts/p08a-client.test.cjs')
-          tests = test_path.read_text(encoding='utf-8')
-          test_replacements = [
-              ("await assert.rejects(api.accountTransaction('../other', journalId), /Invalid account identity/);",
-               "assert.throws(() => api.accountTransaction('../other', journalId), /Invalid account identity/);"),
-              ("await assert.rejects(api.accountTransaction(accountId, 'not-a-journal'), /Invalid journal identity/);",
-               "assert.throws(() => api.accountTransaction(accountId, 'not-a-journal'), /Invalid journal identity/);"),
-              ("await assert.rejects(api.accountTransactions(accountId, 101, 0), /Invalid pagination/);",
-               "assert.throws(() => api.accountTransactions(accountId, 101, 0), /Invalid pagination/);"),
-              ("await assert.rejects(api.accountTransactions(accountId, 15, 10001), /Invalid pagination/);",
-               "assert.throws(() => api.accountTransactions(accountId, 15, 10001), /Invalid pagination/);"),
-          ]
-          for old, new in test_replacements:
-              if tests.count(old) != 1:
-                  raise SystemExit(f'unexpected P08A contract assertion source: {old}')
-              tests = tests.replace(old, new)
-          test_path.write_text(tests, encoding='utf-8')
-
-          adr_path = Path('docs/architecture/adr/0018-p08a-same-origin-customer-interface.md')
-          adr = adr_path.read_text(encoding='utf-8')
-          old = "Status: accepted for P08A candidate verification  \n"
-          new = "Status: accepted for P08A candidate verification\n"
-          if adr.count(old) != 1:
-              raise SystemExit('unexpected P08A ADR status formatting')
-          adr_path.write_text(adr.replace(old, new), encoding='utf-8')
-          PY
-      - name: Generate exact frontend lock and verify source
-        shell: bash
-        run: |
-          set -euo pipefail
-          chmod +x scripts/lab scripts/test-client scripts/assert-p08a-evidence
-          npm install --package-lock-only --ignore-scripts --prefix frontend --no-audit --no-fund
+          chmod +x scripts/lab scripts/test-client scripts/assert-p08a-evidence scripts/assert-p08b-evidence scripts/scan-secrets
           npm ci --ignore-scripts --prefix frontend --no-audit --no-fund
           npm --prefix frontend run verify
-          python3 -m py_compile scripts/lab scripts/assert-p08a-evidence
+          python3 -m py_compile scripts/lab scripts/assert-p08a-evidence scripts/assert-p08b-evidence scripts/scan-secrets
           python3 - <<'PY'
           import json, pathlib
-          for name in ('backend/src/main/resources/openapi/p08a-ui.json', 'docs/implementation/P08A_REQUIREMENTS.json'):
+          for name in (
+              'backend/src/main/resources/openapi/p08b-ui.json',
+              'docs/implementation/P08B_REQUIREMENTS.json',
+              'frontend/package.json',
+              'frontend/tsconfig.core.json',
+          ):
               json.loads(pathlib.Path(name).read_text(encoding='utf-8'))
           PY
           ./mvnw -B -ntp -f backend/pom.xml -DskipTests package
           docker compose --env-file .env.example -f compose.yaml config --quiet
           docker compose --env-file .env.example -f compose.yaml -f compose.p07.yaml config --quiet
+          ./scripts/scan-secrets
       - name: Commit reviewed ordinary source
+        id: publish
         shell: bash
         run: |
           set -euo pipefail
           git config user.name github-actions[bot]
           git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git rm --ignore-unmatch .github/workflows/materialize-p08a.yml
           git add -A
           git diff --cached --check
           git diff --cached --quiet && { echo 'No reviewed source changes found.' >&2; exit 1; }
-          git commit -m "feat(p08a): add real customer product journey" \
-            -m "Add the same-origin React product shell, real authentication/session behavior, live balances, authorized history and transaction detail, responsive accessibility states, Playwright/axe journeys, Compose serving, traceability and the candidate P08A gate."
+          git commit -m "feat(p08b): add replay-safe transfer and payment journeys" \
+            -m "Add real transfer confirmation and receipts, asynchronous payment history and authoritative polling, preserved same-key uncertainty recovery, pending cancellation, responsive Playwright/axe coverage, scoped contracts and a permanent P08B verification gate."
+          candidate_sha="$(git rev-parse HEAD)"
+          echo "candidate_sha=$candidate_sha" >> "$GITHUB_OUTPUT"
           git push origin HEAD:main
+      - name: Dispatch exact candidate verification
+        shell: bash
+        run: |
+          set -euo pipefail
+          body='{"ref":"main"}'
+          for attempt in 1 2 3 4 5; do
+            status="$(curl --silent --show-error --output /tmp/dispatch-response --write-out '%{http_code}' \
+              --request POST \
+              -H "Authorization: Bearer $GITHUB_TOKEN" \
+              -H "Accept: application/vnd.github+json" \
+              -H "X-GitHub-Api-Version: 2022-11-28" \
+              "$GITHUB_API_URL/repos/$GITHUB_REPOSITORY/actions/workflows/pr.yml/dispatches" \
+              --data "$body")"
+            if [[ "$status" == "204" ]]; then
+              echo "Dispatched LedgerGuard P08B verification for ${{ steps.publish.outputs.candidate_sha }}"
+              exit 0
+            fi
+            cat /tmp/dispatch-response >&2 || true
+            sleep $((attempt * 2))
+          done
+          echo "Workflow dispatch failed after five attempts." >&2
+          exit 1
