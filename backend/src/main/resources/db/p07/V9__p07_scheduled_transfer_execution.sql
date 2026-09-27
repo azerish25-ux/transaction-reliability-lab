@@ -178,7 +178,7 @@ BEGIN
     IF current_schedule.status NOT IN ('ACTIVE','PAUSED') THEN
      RAISE EXCEPTION USING ERRCODE='P4090',MESSAGE='INVALID_SCHEDULE_STATE';
     END IF;
-    UPDATE ledger.schedules SET source_id=source_id,destination_ref=recipient,amount_minor=amount,
+    UPDATE ledger.schedules SET source_id=(p_payload->>'sourceAccountId')::uuid,destination_ref=recipient,amount_minor=amount,
       currency=currency_value,intended_local=intended,zone_id=zone,recurrence=recurrence_value,
       next_instant=next_at,version=version+1,event_version=event_version+1,updated_at=clock_timestamp()
      WHERE id=schedule_id;
