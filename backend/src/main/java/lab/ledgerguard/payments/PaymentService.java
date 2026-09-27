@@ -37,64 +37,102 @@ public class PaymentService {
     }
 
     public record CreatePayment(String sourceId, String recipientRef, String amountMinor, String currency) { }
+    public record CancelPayment(String reason) { }
+    public record RefundPayment(String amountMinor, String reason) { }
+    public record ReversePayment(String reason) { }
     public record Payment(UUID id, String direction, UUID accountId, String counterpartyRef,
                           String amountMinor, String currency, String state, String version,
                           String adjustmentState, UUID journalId, String failureCode,
                           String projectionState, String projectionVersion,
                           Instant createdAt, Instant updatedAt) { }
-    public record CommandResult(int status, JsonNode body, boolean replayed, UUID paymentId) { }
+    public record Adjustment(UUID id, UUID paymentId, String kind, String amountMinor, String currency,
+                             UUID journalId, String reason, Instant createdAt) { }
+    public record CommandResult(int status, JsonNode body, boolean replayed, UUID resourceId) { }
     private record Normalized(UUID sourceId, String recipientRef, String amountMinor, String currency) { }
+    private record Authority(UUID payerId, UUID recipientOwnerId) { }
 
     public CommandResult create(Identity identity, String idempotencyKey, CreatePayment request) {
-        String key;
-        try {
-            key = Idempotency.key(idempotencyKey);
-        } catch (DomainFailure failure) {
-            throw new ApiException(failure.status(), failure.code());
-        }
+        String key = key(idempotencyKey);
         Normalized intent = normalize(request);
         ObjectNode payload = json.createObjectNode();
         payload.put("sourceId", intent.sourceId().toString());
         payload.put("recipientRef", intent.recipientRef());
         payload.put("amountMinor", intent.amountMinor());
         payload.put("currency", intent.currency());
-        try {
-            FinancialCommands.Result result = commands.execute(identity.userId(), "PAYMENT", null, key,
-                json.writeValueAsString(payload), ApiProblems.correlation());
-            JsonNode body = json.readTree(result.json());
-            if (body == null || !body.isObject() || result.status() < 200 || result.status() > 599) {
+        FinancialCommands.Result result = execute(identity, "PAYMENT", null, key, payload);
+        JsonNode body = body(result);
+        UUID paymentId = null;
+        if (result.status() < 300) {
+            paymentId = uuid(body, "id");
+            if (result.status() != 202 || !"PAYMENT".equals(body.path("kind").asText())
+                || !"PENDING".equals(body.path("state").asText())
+                || !intent.amountMinor().equals(body.path("amountMinor").asText())
+                || !intent.currency().equals(body.path("currency").asText())) {
                 throw new ApiException(503, "DURABLE_OUTCOME_INVALID");
             }
-            UUID paymentId = null;
-            if (result.status() < 300) {
-                try {
-                    paymentId = UUID.fromString(body.path("id").asText());
-                } catch (IllegalArgumentException invalid) {
-                    throw new ApiException(503, "DURABLE_OUTCOME_INVALID");
-                }
-                if (result.status() != 202 || !"PAYMENT".equals(body.path("kind").asText())
-                    || !"PENDING".equals(body.path("state").asText())
-                    || !intent.amountMinor().equals(body.path("amountMinor").asText())
-                    || !intent.currency().equals(body.path("currency").asText())) {
-                    throw new ApiException(503, "DURABLE_OUTCOME_INVALID");
-                }
-            } else if (body.path("code").asText().isBlank()) {
-                throw new ApiException(503, "DURABLE_OUTCOME_INVALID");
-            }
-            return new CommandResult(result.status(), body, result.replayed(), paymentId);
-        } catch (ApiException failure) {
-            throw failure;
-        } catch (Exception failure) {
-            if (failure instanceof InterruptedException) Thread.currentThread().interrupt();
-            throw publicFailure(failure);
+        } else {
+            requireRejection(body);
         }
+        return new CommandResult(result.status(), body, result.replayed(), paymentId);
+    }
+
+    public CommandResult cancel(Identity identity, UUID paymentId, String idempotencyKey, CancelPayment request) {
+        authorize(identity, paymentId, "CANCEL");
+        ObjectNode payload = json.createObjectNode();
+        putOptionalReason(payload, request == null ? null : request.reason());
+        FinancialCommands.Result result = execute(identity, "CANCEL", paymentId, key(idempotencyKey), payload);
+        JsonNode body = body(result);
+        if (result.status() < 300) {
+            if (result.status() != 200 || !paymentId.equals(uuid(body, "id"))
+                || !"CANCELLED".equals(body.path("state").asText())) {
+                throw new ApiException(503, "DURABLE_OUTCOME_INVALID");
+            }
+        } else {
+            requireRejection(body);
+        }
+        return new CommandResult(result.status(), body, result.replayed(), paymentId);
+    }
+
+    public CommandResult refund(Identity identity, UUID paymentId, String idempotencyKey, RefundPayment request) {
+        authorize(identity, paymentId, "REFUND");
+        if (request == null) throw new ApiException(400, "INVALID_REFUND");
+        String amount = amount(request.amountMinor());
+        ObjectNode payload = json.createObjectNode();
+        payload.put("amountMinor", amount);
+        putOptionalReason(payload, request.reason());
+        FinancialCommands.Result result = execute(identity, "REFUND", paymentId, key(idempotencyKey), payload);
+        JsonNode body = body(result);
+        UUID adjustmentId = null;
+        if (result.status() < 300) {
+            adjustmentId = validateAdjustment(body, result.status(), paymentId, "REFUND", amount);
+        } else {
+            requireRejection(body);
+        }
+        return new CommandResult(result.status(), body, result.replayed(), adjustmentId);
+    }
+
+    public CommandResult reverse(Identity identity, UUID paymentId, String idempotencyKey, ReversePayment request) {
+        authorize(identity, paymentId, "REVERSAL");
+        if (request == null) throw new ApiException(400, "INVALID_REVERSAL");
+        String reason = requiredReason(request.reason());
+        ObjectNode payload = json.createObjectNode();
+        payload.put("reason", reason);
+        FinancialCommands.Result result = execute(identity, "REVERSAL", paymentId, key(idempotencyKey), payload);
+        JsonNode body = body(result);
+        UUID adjustmentId = null;
+        if (result.status() < 300) {
+            adjustmentId = validateAdjustment(body, result.status(), paymentId, "REVERSAL", null);
+        } else {
+            requireRejection(body);
+        }
+        return new CommandResult(result.status(), body, result.replayed(), adjustmentId);
     }
 
     public Payment get(Identity identity, UUID id) {
         var rows = jdbc.query(selectPayment() + " WHERE p.id=? AND (s.owner_id=? OR d.owner_id=?)",
             (rs, row) -> paymentRow(identity.userId(), rs), id, identity.userId(), identity.userId());
         if (rows.isEmpty()) {
-            events.denied(identity.userId(), "ACCESS_DENIED");
+            denied(identity);
             throw new ApiException(404, "NOT_FOUND");
         }
         return rows.getFirst();
@@ -106,6 +144,108 @@ public class PaymentService {
             + " WHERE s.owner_id=? OR d.owner_id=? ORDER BY p.created_at DESC,p.id DESC LIMIT ? OFFSET ?",
             (rs, row) -> paymentRow(identity.userId(), rs), identity.userId(), identity.userId(), limit + 1, offset),
             limit, offset);
+    }
+
+    public Adjustment getAdjustment(Identity identity, UUID paymentId, UUID adjustmentId) {
+        ensureVisible(identity, paymentId, true);
+        var rows = jdbc.query(selectAdjustment()
+            + " WHERE a.payment_id=? AND a.id=?", this::adjustmentRow, paymentId, adjustmentId);
+        if (rows.isEmpty()) throw new ApiException(404, "NOT_FOUND");
+        return rows.getFirst();
+    }
+
+    public Page<Adjustment> listAdjustments(Identity identity, UUID paymentId, int limit, int offset) {
+        Page.validate(limit, offset);
+        ensureVisible(identity, paymentId, true);
+        return Page.from(jdbc.query(selectAdjustment()
+            + " WHERE a.payment_id=? ORDER BY a.created_at DESC,a.id DESC LIMIT ? OFFSET ?",
+            this::adjustmentRow, paymentId, limit + 1, offset), limit, offset);
+    }
+
+    private FinancialCommands.Result execute(Identity identity, String operation, UUID parent,
+                                               String key, ObjectNode payload) {
+        try {
+            return commands.execute(identity.userId(), operation, parent, key,
+                json.writeValueAsString(payload), ApiProblems.correlation());
+        } catch (ApiException failure) {
+            throw failure;
+        } catch (Exception failure) {
+            if (failure instanceof InterruptedException) Thread.currentThread().interrupt();
+            throw publicFailure(failure);
+        }
+    }
+
+    private JsonNode body(FinancialCommands.Result result) {
+        try {
+            JsonNode body = json.readTree(result.json());
+            if (body == null || !body.isObject() || result.status() < 200 || result.status() > 599) {
+                throw new ApiException(503, "DURABLE_OUTCOME_INVALID");
+            }
+            return body;
+        } catch (ApiException failure) {
+            throw failure;
+        } catch (Exception failure) {
+            throw new ApiException(503, "DURABLE_OUTCOME_INVALID");
+        }
+    }
+
+    private static UUID validateAdjustment(JsonNode body, int status, UUID paymentId,
+                                           String expectedKind, String expectedAmount) {
+        UUID adjustmentId = uuid(body, "id");
+        if (status != 201 || !paymentId.equals(uuid(body, "paymentId"))
+            || !expectedKind.equals(body.path("kind").asText())
+            || body.path("currency").asText().isBlank()
+            || body.path("journalId").asText().isBlank()) {
+            throw new ApiException(503, "DURABLE_OUTCOME_INVALID");
+        }
+        uuid(body, "journalId");
+        if (expectedAmount != null && !expectedAmount.equals(body.path("amountMinor").asText())) {
+            throw new ApiException(503, "DURABLE_OUTCOME_INVALID");
+        }
+        return adjustmentId;
+    }
+
+    private void authorize(Identity identity, UUID paymentId, String operation) {
+        boolean admin = "ADMIN".equals(identity.role());
+        if ("REVERSAL".equals(operation) && !admin) {
+            denied(identity);
+            throw new ApiException(403, "FORBIDDEN");
+        }
+        Authority authority = authority(paymentId);
+        if (authority == null) throw new ApiException(404, "NOT_FOUND");
+        if (admin) return;
+        if ("CANCEL".equals(operation)) {
+            if (!identity.userId().equals(authority.payerId())) {
+                denied(identity);
+                throw new ApiException(404, "NOT_FOUND");
+            }
+            return;
+        }
+        if ("REFUND".equals(operation)) {
+            if (identity.userId().equals(authority.recipientOwnerId())) return;
+            denied(identity);
+            if (identity.userId().equals(authority.payerId())) throw new ApiException(403, "FORBIDDEN");
+            throw new ApiException(404, "NOT_FOUND");
+        }
+    }
+
+    private Authority authority(UUID paymentId) {
+        var rows = jdbc.query("SELECT p.actor_id,d.owner_id FROM ledger.payments p "
+                + "JOIN ledger.accounts d ON d.id=p.destination_id WHERE p.id=?",
+            (rs, row) -> new Authority(rs.getObject(1, UUID.class), rs.getObject(2, UUID.class)), paymentId);
+        return rows.isEmpty() ? null : rows.getFirst();
+    }
+
+    private void ensureVisible(Identity identity, UUID paymentId, boolean adminAllowed) {
+        boolean admin = adminAllowed && "ADMIN".equals(identity.role());
+        Integer found = jdbc.query("SELECT 1 FROM ledger.payments p "
+                + "JOIN ledger.accounts s ON s.id=p.source_id JOIN ledger.accounts d ON d.id=p.destination_id "
+                + "WHERE p.id=? AND (? OR s.owner_id=? OR d.owner_id=?)",
+            rs -> rs.next() ? 1 : null, paymentId, admin, identity.userId(), identity.userId());
+        if (found == null) {
+            denied(identity);
+            throw new ApiException(404, "NOT_FOUND");
+        }
     }
 
     private Payment paymentRow(UUID actor, ResultSet rs) throws SQLException {
@@ -125,6 +265,13 @@ public class PaymentService {
             rs.getTimestamp("created_at").toInstant(), rs.getTimestamp("updated_at").toInstant());
     }
 
+    private Adjustment adjustmentRow(ResultSet rs, int row) throws SQLException {
+        return new Adjustment(rs.getObject("id", UUID.class), rs.getObject("payment_id", UUID.class),
+            rs.getString("kind"), rs.getString("amount_minor"), rs.getString("currency"),
+            rs.getObject("journal_id", UUID.class), rs.getString("reason"),
+            rs.getTimestamp("created_at").toInstant());
+    }
+
     private static String selectPayment() {
         return "SELECT p.id,p.source_id,p.destination_id,p.amount_minor,p.currency,p.state,p.refunded_minor,"
             + "p.reversed,p.version,p.journal_id,p.failure_code,p.created_at,p.updated_at,"
@@ -133,6 +280,11 @@ public class PaymentService {
             + "FROM ledger.payments p JOIN ledger.accounts s ON s.id=p.source_id "
             + "JOIN ledger.accounts d ON d.id=p.destination_id "
             + "LEFT JOIN ledger.payment_projection pr ON pr.payment_id=p.id";
+    }
+
+    private static String selectAdjustment() {
+        return "SELECT a.id,a.payment_id,a.kind,a.amount_minor::text,p.currency,a.journal_id,a.reason,a.created_at "
+            + "FROM ledger.adjustments a JOIN ledger.payments p ON p.id=a.payment_id";
     }
 
     private static Normalized normalize(CreatePayment request) {
@@ -148,12 +300,51 @@ public class PaymentService {
         recipient = recipient.strip();
         if (!recipient.matches("LG-[a-fA-F0-9]{32}")) throw new ApiException(400, "INVALID_RECIPIENT");
         recipient = "LG-" + recipient.substring(3).toLowerCase(Locale.ROOT);
-        String amount = request.amountMinor();
-        if (amount == null || !amount.matches("[1-9][0-9]{0,12}")
-            || new BigInteger(amount).compareTo(MAX_AMOUNT) > 0) {
+        return new Normalized(source, recipient, amount(request.amountMinor()), Inputs.currency(request.currency()));
+    }
+
+    private static String key(String value) {
+        try {
+            return Idempotency.key(value);
+        } catch (DomainFailure failure) {
+            throw new ApiException(failure.status(), failure.code());
+        }
+    }
+
+    private static String amount(String value) {
+        if (value == null || !value.matches("[1-9][0-9]{0,12}")
+            || new BigInteger(value).compareTo(MAX_AMOUNT) > 0) {
             throw new ApiException(400, "INVALID_AMOUNT");
         }
-        return new Normalized(source, recipient, amount, Inputs.currency(request.currency()));
+        return value;
+    }
+
+    private static void putOptionalReason(ObjectNode payload, String value) {
+        if (value == null) return;
+        payload.put("reason", requiredReason(value));
+    }
+
+    private static String requiredReason(String value) {
+        if (value == null) throw new ApiException(400, "INVALID_REASON");
+        String normalized = value.strip();
+        if (normalized.isEmpty() || normalized.length() > 500) throw new ApiException(400, "INVALID_REASON");
+        return normalized;
+    }
+
+    private static UUID uuid(JsonNode body, String field) {
+        try {
+            return UUID.fromString(body.path(field).asText());
+        } catch (IllegalArgumentException invalid) {
+            throw new ApiException(503, "DURABLE_OUTCOME_INVALID");
+        }
+    }
+
+    private static void requireRejection(JsonNode body) {
+        if (body.path("code").asText().isBlank()) throw new ApiException(503, "DURABLE_OUTCOME_INVALID");
+    }
+
+    private void denied(Identity identity) {
+        events.denied(identity.userId(), "ACCESS_DENIED");
     }
 
     private static ApiException publicFailure(Throwable failure) {

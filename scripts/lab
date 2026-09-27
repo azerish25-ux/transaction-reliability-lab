@@ -34,13 +34,14 @@ Implemented commands:
   ./scripts/lab test auth
   ./scripts/lab test transfer
   ./scripts/lab test payment
+  ./scripts/lab test adjustment
   ./scripts/lab test pr
   ./scripts/lab reconcile
   ./scripts/lab evidence
 
-P05 provides authentication, accounts, immediate transfers and asynchronously settled
-payments through a transactional outbox, RabbitMQ and two restartable workers.
-Adjustments, schedules, webhooks, React and release-laboratory phases remain blockers.
+P06 provides authentication, accounts, immediate transfers, asynchronously settled
+payments, cancellation, recipient-authorized refunds and administrative reversal.
+Schedules, webhooks, React and release-laboratory phases remain blockers.
 """
 
 def run(command: list[str], *, check: bool = True, capture: bool = False, input_text: str | None = None) -> subprocess.CompletedProcess[str]:
@@ -111,7 +112,7 @@ def command_up() -> int:
     ensure_environment()
     try: compose("up","-d","--build","postgres","rabbitmq","api","outbox-publisher","payment-worker-a","payment-worker-b"); system=wait_for_readiness(); compose("run","--rm","seed"); reconcile()
     except (subprocess.CalledProcessError,RuntimeError) as failure: capture_logs(); print(f"STARTUP FAILED: {failure}",file=sys.stderr); return 1
-    base=api_base_url(); print("LedgerGuard P05 API and asynchronous payment workers are ready (synthetic money only; no React UI yet)."); print(f"API health: {base}/actuator/health/readiness"); print(f"System boundary: {base}/api/v1/system"); print(f"Current OpenAPI: {base}/api/v1/openapi/p05.json"); print(f"P04 compatibility OpenAPI: {base}/api/v1/openapi/p04.json"); print(f"P03 compatibility OpenAPI: {base}/api/v1/openapi.json"); print(f"Database runtime role: {system.get('databaseRole')}"); print("Sandbox identities: alice@example.test, bob@example.test, merchant@example.test, admin@example.test."); print("Their generated password is LEDGER_DEMO_PASSWORD in private .ledgerguard/runtime.env; it is not printed in CI logs."); print("Acquire CSRF before login and again after login/logout. Money commands require a stable Idempotency-Key."); return 0
+    base=api_base_url(); print("LedgerGuard P06 API and asynchronous payment workers are ready (synthetic money only; no React UI yet)."); print(f"API health: {base}/actuator/health/readiness"); print(f"System boundary: {base}/api/v1/system"); print(f"Current OpenAPI: {base}/api/v1/openapi/p06.json"); print(f"P05 compatibility OpenAPI: {base}/api/v1/openapi/p05.json"); print(f"P04 compatibility OpenAPI: {base}/api/v1/openapi/p04.json"); print(f"P03 compatibility OpenAPI: {base}/api/v1/openapi.json"); print(f"Database runtime role: {system.get('databaseRole')}"); print("Sandbox identities: alice@example.test, bob@example.test, merchant@example.test, admin@example.test."); print("Their generated password is LEDGER_DEMO_PASSWORD in private .ledgerguard/runtime.env; it is not printed in CI logs."); print("Acquire CSRF before login and again after login/logout. Money commands require a stable Idempotency-Key."); return 0
 def command_down() -> int:
     if not ENV_FILE.exists() or not compose_available(): print("LedgerGuard environment is not initialized."); return 0
     capture_logs(); return compose("down","--remove-orphans",check=False).returncode
@@ -131,9 +132,9 @@ def command_test(target: str) -> int:
             result=run([executable],check=False)
             if result.returncode: return result.returncode
         return 0
-    if target in {"database","auth","transfer","payment"}:
+    if target in {"database","auth","transfer","payment","adjustment"}:
         if not docker_ready(): print("BLOCKED: a working Docker daemon is required by Testcontainers.",file=sys.stderr); return 2
-        return maven_verify({"database":None,"auth":"AuthenticationAccountsIT","transfer":"TransferReliabilityIT","payment":"TransferReliabilityIT"}[target])
+        return maven_verify({"database":None,"auth":"AuthenticationAccountsIT","transfer":"TransferReliabilityIT","payment":"TransferReliabilityIT","adjustment":"PaymentAdjustmentReliabilityIT"}[target])
     if target=="pr":
         if not docker_ready(): print("BLOCKED: PR verification requires Docker.",file=sys.stderr); return 2
         preflight=[["npm","ci","--prefix","frontend"],["./scripts/lab","test","unit"],["./mvnw","-B","-ntp","-f","backend/pom.xml","verify"],["./scripts/scan-secrets"],["docker","compose","--env-file",".env.example","-f","compose.yaml","config","--quiet"]]
@@ -144,7 +145,7 @@ def command_test(target: str) -> int:
         if started: return started
         outcome=0
         try:
-            for command in [["python3","scripts/smoke-auth"],["python3","scripts/assert-p05-evidence"]]:
+            for command in [["python3","scripts/smoke-auth"],["python3","scripts/smoke-adjustments"],["python3","scripts/assert-p06-evidence"]]:
                 result=run(command,check=False)
                 if result.returncode: outcome=result.returncode; break
             if not outcome: outcome=command_status()

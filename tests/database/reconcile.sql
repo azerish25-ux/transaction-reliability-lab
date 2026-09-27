@@ -31,17 +31,47 @@ WITH ledger_totals AS (
   HAVING count(e.id)<2
      OR coalesce(sum(e.amount_minor::numeric) FILTER(WHERE e.side='DEBIT'),0)
         <>coalesce(sum(e.amount_minor::numeric) FILTER(WHERE e.side='CREDIT'),0)
+), adjustment_totals AS (
+  SELECT p.id,
+         coalesce(sum(a.amount_minor::numeric) FILTER(WHERE a.kind='REFUND'),0) AS refunds,
+         coalesce(sum(a.amount_minor::numeric) FILTER(WHERE a.kind='REVERSAL'),0) AS reversals,
+         count(*) FILTER(WHERE a.kind='REVERSAL') AS reversal_count
+  FROM ledger.payments p LEFT JOIN ledger.adjustments a ON a.payment_id=p.id
+  GROUP BY p.id
 ), payment_problems AS (
   SELECT 'PAYMENT'::text AS kind,p.id::text AS identity
-  FROM ledger.payments p LEFT JOIN ledger.holds h ON h.payment_id=p.id
+  FROM ledger.payments p
+  LEFT JOIN ledger.holds h ON h.payment_id=p.id
+  JOIN adjustment_totals totals ON totals.id=p.id
   WHERE h.payment_id IS NULL OR h.account_id<>p.source_id OR h.amount_minor<>p.amount_minor
      OR (p.state='PENDING' AND h.state<>'ACTIVE')
      OR (p.state='SETTLED' AND h.state<>'CONSUMED')
      OR (p.state IN ('FAILED','CANCELLED') AND h.state<>'RELEASED')
-     OR p.refunded_minor::numeric<>(
-       SELECT coalesce(sum(a.amount_minor::numeric),0)
-       FROM ledger.adjustments a WHERE a.payment_id=p.id AND a.kind='REFUND'
-     )
+     OR p.refunded_minor::numeric<>totals.refunds
+     OR totals.refunds+totals.reversals>p.amount_minor
+     OR (p.reversed AND (totals.reversals<>p.amount_minor OR totals.reversal_count<>1 OR totals.refunds<>0))
+     OR (NOT p.reversed AND totals.reversals<>0)
+), adjustment_entry_totals AS (
+  SELECT a.id,a.payment_id,a.kind,a.amount_minor,a.journal_id,p.source_id,p.destination_id,p.currency,
+         j.operation_id,j.kind AS journal_kind,j.currency AS journal_currency,
+         count(e.id) FILTER(WHERE e.side='DEBIT') AS debits,
+         count(e.id) FILTER(WHERE e.side='CREDIT') AS credits,
+         coalesce(sum(e.amount_minor::numeric) FILTER(WHERE e.side='DEBIT'),0) AS debit_minor,
+         coalesce(sum(e.amount_minor::numeric) FILTER(WHERE e.side='CREDIT'),0) AS credit_minor,
+         max(e.account_id::text) FILTER(WHERE e.side='DEBIT') AS debit_account,
+         max(e.account_id::text) FILTER(WHERE e.side='CREDIT') AS credit_account
+  FROM ledger.adjustments a
+  JOIN ledger.payments p ON p.id=a.payment_id
+  LEFT JOIN ledger.journals j ON j.id=a.journal_id
+  LEFT JOIN ledger.journal_entries e ON e.journal_id=a.journal_id
+  GROUP BY a.id,a.payment_id,a.kind,a.amount_minor,a.journal_id,p.source_id,p.destination_id,p.currency,
+           j.operation_id,j.kind,j.currency
+), adjustment_problems AS (
+  SELECT 'ADJUSTMENT'::text AS kind,id::text AS identity
+  FROM adjustment_entry_totals
+  WHERE operation_id<>id OR journal_kind<>kind OR journal_currency<>currency
+     OR debits<>1 OR credits<>1 OR debit_minor<>amount_minor OR credit_minor<>amount_minor
+     OR debit_account<>destination_id::text OR credit_account<>source_id::text
 ), idempotency_problems AS (
   SELECT 'IDEMPOTENCY'::text AS kind,
          concat_ws(':',actor_id,operation_kind,parent_scope,key) AS identity
@@ -50,6 +80,7 @@ WITH ledger_totals AS (
   SELECT * FROM balance_problems
   UNION ALL SELECT * FROM journal_problems
   UNION ALL SELECT * FROM payment_problems
+  UNION ALL SELECT * FROM adjustment_problems
   UNION ALL SELECT * FROM idempotency_problems
 )
 SELECT (count(*) > 0) AS has_discrepancies,

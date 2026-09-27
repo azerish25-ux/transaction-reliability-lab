@@ -52,6 +52,8 @@ public class FoundationSecurityConfiguration {
                 .requestMatchers(HttpMethod.GET,"/actuator/health/**","/actuator/info","/api/v1/system","/api/v1/openapi.json","/api/v1/openapi/**","/api/v1/auth/csrf").permitAll()
                 .requestMatchers(HttpMethod.POST,"/api/v1/auth/register","/api/v1/auth/login").permitAll()
                 .requestMatchers("/api/v1/auth/me","/api/v1/auth/logout").authenticated()
+                .requestMatchers(HttpMethod.POST,"/api/v1/payments/*/cancel","/api/v1/payments/*/refunds","/api/v1/payments/*/reversal").hasAnyRole("CUSTOMER","ADMIN")
+                .requestMatchers(HttpMethod.GET,"/api/v1/payments/*/adjustments","/api/v1/payments/*/adjustments/*").hasAnyRole("CUSTOMER","ADMIN")
                 .requestMatchers("/api/v1/accounts","/api/v1/accounts/**","/api/v1/recipients/**",
                     "/api/v1/transfers","/api/v1/transfers/**","/api/v1/payments","/api/v1/payments/**").hasRole("CUSTOMER")
                 .requestMatchers("/api/v1/admin/**","/actuator/metrics","/actuator/metrics/**").hasRole("ADMIN")

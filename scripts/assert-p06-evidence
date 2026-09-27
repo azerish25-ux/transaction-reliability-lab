@@ -1,0 +1,95 @@
+#!/usr/bin/env python3
+"""Require passing P01-P06 suites and bind scoped requirements to executed evidence."""
+import json
+import subprocess
+import xml.etree.ElementTree as ET
+from datetime import datetime,timezone
+from pathlib import Path
+
+ROOT=Path(__file__).resolve().parent.parent
+REQUIRED={
+ "backend/target/surefire-reports/TEST-lab.ledgerguard.CoreTest.xml":("CoreTest",120),
+ "backend/target/surefire-reports/TEST-lab.ledgerguard.SecuritySettingsTest.xml":("SecuritySettingsTest",13),
+ "backend/target/failsafe-reports/TEST-lab.ledgerguard.PostgresFinancialIT.xml":("PostgresFinancialIT",13),
+ "backend/target/failsafe-reports/TEST-lab.ledgerguard.AuthenticationAccountsIT.xml":("AuthenticationAccountsIT",58),
+ "backend/target/failsafe-reports/TEST-lab.ledgerguard.TransferReliabilityIT.xml":("TransferReliabilityIT",28),
+ "backend/target/failsafe-reports/TEST-lab.ledgerguard.PaymentAdjustmentReliabilityIT.xml":("PaymentAdjustmentReliabilityIT",14),
+ ".evidence/client/results.xml":("client",44),
+ ".evidence/client/auth-results.xml":("auth-client",6),
+ ".evidence/client/transfer-results.xml":("transfer-client",7),
+ ".evidence/client/payment-results.xml":("payment-client",5),
+ ".evidence/client/payment-adjustment-results.xml":("adjustment-client",8),
+}
+rows=[];executed={}
+for relative,(suite_name,minimum) in REQUIRED.items():
+ path=ROOT/relative
+ if not path.is_file():raise SystemExit(f"Missing required test result: {relative}")
+ suite=ET.parse(path).getroot();counts={key:int(suite.get(key,"0")) for key in ("tests","failures","errors","skipped")};cases=suite.findall(".//testcase")
+ if counts["tests"]<minimum or len(cases)!=counts["tests"]:raise SystemExit(f"Missing expected discovery: {relative}: {counts}, cases={len(cases)}")
+ if any(counts[key] for key in ("failures","errors","skipped")):raise SystemExit(f"Required suite did not pass without skips: {relative}: {counts}")
+ for case in cases:
+  if any(case.find(tag) is not None for tag in ("failure","error","skipped")):raise SystemExit(f"Non-passing test case: {relative}: {case.get('name')}")
+ executed[suite_name]=[case.get("name","") for case in cases];rows.append({"suite":relative,**counts})
+
+for evidence_name,suite_name in (("payment-compose/results.json","compose"),("payment-adjustment-compose/results.json","adjustment-compose")):
+ compose_path=ROOT/".evidence"/evidence_name
+ if not compose_path.is_file():raise SystemExit(f"Missing real Compose evidence: {evidence_name}")
+ compose=json.loads(compose_path.read_text(encoding="utf-8"))
+ if not compose.get("checks") or any(item.get("status")!="PASS" for item in compose["checks"]):raise SystemExit(f"Compose evidence contains non-passing checks: {evidence_name}")
+ executed[suite_name]=[item["test"] for item in compose["checks"]]
+ rows.append({"suite":str(compose_path.relative_to(ROOT)),"tests":len(executed[suite_name]),"failures":0,"errors":0,"skipped":0})
+
+def match(prefix,name):return name==prefix or name.startswith(prefix+"_") or name.startswith(prefix+"-") or name.startswith(prefix+"[")
+traceability=[]
+for manifest_name in ("P03_REQUIREMENTS.json","P04_REQUIREMENTS.json","P05_REQUIREMENTS.json","P06_REQUIREMENTS.json"):
+ manifest=json.loads((ROOT/"docs/implementation"/manifest_name).read_text(encoding="utf-8"))
+ if not (ROOT/manifest["sourceContract"]).is_file():raise SystemExit(f"Missing source contract for {manifest_name}")
+ seen=set()
+ for requirement in manifest["requirements"]:
+  identity=requirement["id"]
+  if identity in seen:raise SystemExit(f"Duplicate requirement in {manifest_name}: {identity}")
+  seen.add(identity);matches=[]
+  for suite_name,prefixes in requirement["tests"].items():
+   for prefix in prefixes:
+    actual=[name for name in executed.get(suite_name,[]) if match(prefix,name)]
+    if not actual:raise SystemExit(f"No executed oracle for {identity}: {suite_name}/{prefix}")
+    matches.extend({"suite":suite_name,"test":name} for name in actual)
+  traceability.append({"id":identity,"phase":manifest["phase"],"statement":requirement["statement"],"status":"VERIFIED_PASS","tests":matches})
+
+p05=json.loads((ROOT/"backend/src/main/resources/openapi/p05.json").read_text(encoding="utf-8"))
+if "/api/v1/payments/{id}/cancel" in p05["paths"]:raise SystemExit("P05 compatibility contract must not claim P06")
+spec=json.loads((ROOT/"backend/src/main/resources/openapi/p06.json").read_text(encoding="utf-8"))
+for path in ("/api/v1/payments","/api/v1/payments/{id}","/api/v1/payments/{id}/cancel",
+             "/api/v1/payments/{id}/refunds","/api/v1/payments/{id}/reversal",
+             "/api/v1/payments/{id}/adjustments","/api/v1/payments/{id}/adjustments/{adjustmentId}"):
+ if path not in spec["paths"]:raise SystemExit(f"P06 OpenAPI missing {path}")
+def validate_refs(value):
+ if isinstance(value,dict):
+  ref=value.get("$ref")
+  if ref:
+   if not ref.startswith("#/"):raise SystemExit(f"Unexpected external OpenAPI reference: {ref}")
+   target=spec
+   for part in ref[2:].split("/"):target=target[part.replace("~1","/").replace("~0","~")]
+  for child in value.values():validate_refs(child)
+ elif isinstance(value,list):
+  for child in value:validate_refs(child)
+validate_refs(spec)
+
+for relative in (
+ "backend/src/main/java/lab/ledgerguard/payments/PaymentController.java",
+ "backend/src/main/java/lab/ledgerguard/payments/PaymentService.java",
+ "backend/src/main/resources/db/migration/V8__p06_payment_adjustment_integrity.sql",
+ "backend/src/test/java/lab/ledgerguard/PaymentAdjustmentReliabilityIT.java",
+ "tests/contracts/payment-adjustment-client.test.cjs",
+ "scripts/smoke-adjustments",
+):
+ if not (ROOT/relative).is_file():raise SystemExit(f"Missing P06 implementation source: {relative}")
+sha=subprocess.check_output(["git","rev-parse","HEAD"],cwd=ROOT,text=True).strip()
+dirty=bool(subprocess.check_output(["git","status","--porcelain","--untracked-files=no"],cwd=ROOT,text=True).strip())
+report={"sourceSha":sha,"trackedTreeDirty":dirty,"timestamp":datetime.now(timezone.utc).isoformat(),"status":"VERIFIED_PASS","suites":rows,"requirements":traceability,"scope":"P01-P06 fast lane with real PostgreSQL/two-API adjustment races and real Compose cancellation/refund/reversal/accounting proofs; not P07-P11 or release readiness"}
+out=ROOT/".evidence/p06";out.mkdir(parents=True,exist_ok=True);(out/"test-summary.json").write_text(json.dumps(report,indent=2)+"\n",encoding="utf-8")
+matrix=["# Executed P03/P04/P05/P06 requirements","",f"Source: `{sha}`; tracked tree dirty: `{dirty}`.","","| Requirement | Phase | Executed cases/checks | Result |","|---|---|---:|---|"]
+for item in traceability:matrix.append(f"| {item['id']} | {item['phase']} | {len(item['tests'])} | {item['status']} |")
+matrix.extend(["","Exact case/check names and source identity are in test-summary.json.","Requirements share tests; counts must not be summed as unique cases."])
+(out/"requirements-matrix.md").write_text("\n".join(matrix)+"\n",encoding="utf-8")
+print(json.dumps({key:value for key,value in report.items() if key!="requirements"},indent=2));print(f"Verified {len(traceability)} scoped requirements against executed evidence.")

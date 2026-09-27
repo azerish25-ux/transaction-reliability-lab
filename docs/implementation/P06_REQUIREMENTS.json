@@ -1,0 +1,101 @@
+{
+  "phase": "P06",
+  "sourceContract": "docs/implementation/MASTER_SPEC.md",
+  "scope": "Payment cancellation before settlement, recipient/admin partial and full compensating refunds, ADMIN full reversal, immutable adjustment history, idempotency, authorization and concurrent race proofs. P07 schedules/webhooks and P08-P11 remain later phases.",
+  "requirements": [
+    {
+      "id": "P06-R01",
+      "sections": ["7", "8", "9"],
+      "statement": "The payer can cancel only a PENDING payment before settlement wins the payment lock; cancellation releases the ACTIVE hold exactly once, posts no journal, records audit/outbox/idempotency and safely absorbs later settlement delivery.",
+      "tests": {
+        "PaymentAdjustmentReliabilityIT": ["P0601"],
+        "adjustment-client": ["P06TS01"],
+        "adjustment-compose": ["payer-cancellation-and-replay", "cancellation-releases-once-without-journal", "cancelled-delivery-cannot-settle"]
+      }
+    },
+    {
+      "id": "P06-R02",
+      "sections": ["9", "13"],
+      "statement": "Cancellation is authorized only for the original payer or an ADMIN; unrelated customers receive a non-disclosing response and an ADMIN must supply a bounded recorded reason.",
+      "tests": {
+        "PaymentAdjustmentReliabilityIT": ["P0602"],
+        "adjustment-compose": ["recipient-cannot-cancel", "admin-cancellation-requires-reason", "admin-cancellation-with-reason"]
+      }
+    },
+    {
+      "id": "P06-R03",
+      "sections": ["7", "9"],
+      "statement": "Synchronized cancellation and settlement across independent processes produce exactly one economic winner with one final payment/hold state, no leaked reservation, no duplicate journal and reconciled balances.",
+      "tests": {
+        "PaymentAdjustmentReliabilityIT": ["P0603"]
+      }
+    },
+    {
+      "id": "P06-R04",
+      "sections": ["5", "7", "9"],
+      "statement": "Recipient-authorized partial and full refunds are immutable compensating postings with distinct operation, journal, audit, outbox and idempotency identities; the original settlement journal remains unchanged and base state remains SETTLED.",
+      "tests": {
+        "PaymentAdjustmentReliabilityIT": ["P0604"],
+        "adjustment-client": ["P06TS02", "P06TS06"],
+        "adjustment-compose": ["partial-refund-and-replay", "full-refund-committed", "adjustment-history-and-detail", "original-settlement-journal-preserved", "full-refund-restores-economics"]
+      }
+    },
+    {
+      "id": "P06-R05",
+      "sections": ["7", "9", "13"],
+      "statement": "Only the original recipient owner or ADMIN can refund; the payer cannot self-authorize, unrelated users cannot enumerate resources, invalid input is rejected before key claim and current recipient availability is required without overdraft.",
+      "tests": {
+        "PaymentAdjustmentReliabilityIT": ["P0605", "P0606"],
+        "adjustment-client": ["P06TS07"],
+        "adjustment-compose": ["payer-cannot-refund-own-payment", "outsider-cannot-enumerate-adjustments"]
+      }
+    },
+    {
+      "id": "P06-R06",
+      "sections": ["8", "9"],
+      "statement": "Adjustment commands use actor/kind/payment/key scoped durable idempotency; same intent replays one operation, changed amount or reason conflicts, and a lost response is resolved by replaying the exact stored key and normalized intent.",
+      "tests": {
+        "PaymentAdjustmentReliabilityIT": ["P0608", "P0609", "P0610"],
+        "adjustment-client": ["P06TS04", "P06TS05", "P06TS08"],
+        "adjustment-compose": ["partial-refund-and-replay", "refund-intent-conflict"]
+      }
+    },
+    {
+      "id": "P06-R07",
+      "sections": ["7", "9"],
+      "statement": "Concurrent partial refunds lock the parent payment and balances so successful adjustments never exceed the original settlement and balances remain reconciled.",
+      "tests": {
+        "PaymentAdjustmentReliabilityIT": ["P0607"]
+      }
+    },
+    {
+      "id": "P06-R08",
+      "sections": ["5", "9", "13"],
+      "statement": "ADMIN full reversal requires a bounded reason, no prior adjustment and current recipient availability; it creates one full immutable compensating journal while preserving the original SETTLED payment and exposing REVERSED separately.",
+      "tests": {
+        "PaymentAdjustmentReliabilityIT": ["P0611"],
+        "adjustment-client": ["P06TS03"],
+        "adjustment-compose": ["recipient-cannot-reverse", "reversal-reason-required", "admin-reversal-and-replay", "reversal-keeps-base-settled", "reversal-restores-original-balances"]
+      }
+    },
+    {
+      "id": "P06-R09",
+      "sections": ["7", "9"],
+      "statement": "The complete forbidden-transition and race matrix rejects cancellation after settlement, reversal after refund, refund or a second reversal after reversal, refund before settlement, and reversal-versus-spending cannot double-spend recipient funds.",
+      "tests": {
+        "PaymentAdjustmentReliabilityIT": ["P0612", "P0613"],
+        "adjustment-compose": ["forbidden-post-reversal-transitions", "reversal-is-single-immutable-adjustment"]
+      }
+    },
+    {
+      "id": "P06-R10",
+      "sections": ["6", "13", "14"],
+      "statement": "P06 exposes documented CSRF/idempotency-protected adjustment endpoints and owner/admin-scoped reads, applies a historical V8 migration with a deferred posting-integrity trigger, prevents runtime SQL bypass and extends independent reconciliation to adjustments.",
+      "tests": {
+        "PaymentAdjustmentReliabilityIT": ["P0614"],
+        "adjustment-client": ["P06TS06", "P06TS07"],
+        "adjustment-compose": ["p06-eight-migrations", "p06-deferred-adjustment-trigger-installed", "p06-adjustment-accounting-reconciles"]
+      }
+    }
+  ]
+}

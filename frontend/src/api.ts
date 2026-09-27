@@ -13,6 +13,12 @@ export interface TransferReceipt { id: string; kind: 'TRANSFER'; state: 'SETTLED
 export interface TransferRecord { id: string; sourceId: string; recipientRef: string; amountMinor: string; currency: Currency; state: 'SETTLED'; journalId: string; createdAt: string; }
 export interface PaymentReceipt { id: string; kind: 'PAYMENT'; state: 'PENDING'; amountMinor: string; currency: Currency; }
 export interface PaymentRecord { id: string; direction: 'OUTGOING' | 'INCOMING'; accountId: string; counterpartyRef: string; amountMinor: string; currency: Currency; state: 'PENDING' | 'SETTLED' | 'FAILED' | 'CANCELLED'; version: string; adjustmentState: 'NONE' | 'PARTIALLY_REFUNDED' | 'FULLY_REFUNDED' | 'REVERSED'; journalId?: string; failureCode?: string; projectionState?: 'PENDING' | 'SETTLED' | 'FAILED' | 'CANCELLED'; projectionVersion?: string; createdAt: string; updatedAt: string; }
+export interface CancellationReceipt { id: string; state: 'CANCELLED'; }
+export interface AdjustmentReceipt { id: string; paymentId: string; kind: 'REFUND' | 'REVERSAL'; amountMinor: string; currency: Currency; journalId: string; }
+export interface PaymentAdjustment { id: string; paymentId: string; kind: 'REFUND' | 'REVERSAL'; amountMinor: string; currency: Currency; journalId: string; reason: string; createdAt: string; }
+export interface PaymentCancellationIntent { paymentId: string; reason?: string; }
+export interface PaymentRefundIntent { paymentId: string; amountMinor: string; reason?: string; }
+export interface PaymentReversalIntent { paymentId: string; reason: string; }
 export interface CommandResponse<T> { status: number; body: T; replayed: boolean; }
 export class ApiError extends Error {
   constructor(readonly status: number, readonly problem: Problem) { super(problem.message); this.name = 'ApiError'; }
@@ -20,9 +26,23 @@ export class ApiError extends Error {
 export class OutcomeUnknown extends Error {
   constructor() { super('Outcome not yet confirmed. Keep this intent and safely retry the same key.'); this.name = 'OutcomeUnknown'; }
 }
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+function identity(value: string, label: string): string {
+  if (!UUID.test(value)) throw new TypeError(`Invalid ${label} identity`);
+  return value.toLowerCase();
+}
+function reason(value: string | undefined, required = false): string | undefined {
+  if (value === undefined) {
+    if (required) throw new TypeError('Reason is required');
+    return undefined;
+  }
+  const normalized = value.trim();
+  if (!normalized || normalized.length > 500) throw new TypeError('Invalid reason');
+  return normalized;
+}
 export function normalizeIntent(input: Intent): Intent {
   const amount = minor(input.amountMinor, MAX_TRANSACTION);
-  if (amount === 0n || !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(input.sourceId)) throw new TypeError('Invalid intent');
+  if (amount === 0n || !UUID.test(input.sourceId)) throw new TypeError('Invalid intent');
   const recipient = input.recipientRef.trim();
   if (!recipient || recipient.length > 80) throw new TypeError('Invalid recipient reference');
   return Object.freeze({ sourceId: input.sourceId.toLowerCase(), recipientRef: recipient, amountMinor: amount.toString(), currency: currency(input.currency) });
@@ -33,6 +53,23 @@ export function normalizeTransferIntent(input: Intent): Intent {
   return Object.freeze({ ...normalized, recipientRef: `LG-${normalized.recipientRef.slice(3).toLowerCase()}` });
 }
 export const normalizePaymentIntent = normalizeTransferIntent;
+export function normalizePaymentCancellationIntent(input: PaymentCancellationIntent): PaymentCancellationIntent {
+  const paymentId = identity(input.paymentId, 'payment');
+  const normalizedReason = reason(input.reason);
+  return Object.freeze(normalizedReason === undefined ? { paymentId } : { paymentId, reason: normalizedReason });
+}
+export function normalizePaymentRefundIntent(input: PaymentRefundIntent): PaymentRefundIntent {
+  const paymentId = identity(input.paymentId, 'payment');
+  const amount = minor(input.amountMinor, MAX_TRANSACTION);
+  if (amount === 0n) throw new TypeError('Invalid refund amount');
+  const normalizedReason = reason(input.reason);
+  return Object.freeze(normalizedReason === undefined
+    ? { paymentId, amountMinor: amount.toString() }
+    : { paymentId, amountMinor: amount.toString(), reason: normalizedReason });
+}
+export function normalizePaymentReversalIntent(input: PaymentReversalIntent): PaymentReversalIntent {
+  return Object.freeze({ paymentId: identity(input.paymentId, 'payment'), reason: reason(input.reason, true)! });
+}
 
 export class ApiClient {
   private csrf: { headerName: string; token: string } | undefined;
@@ -67,8 +104,7 @@ export class ApiClient {
     return this.command<TransferReceipt>('/transfers', normalizeTransferIntent(input), key);
   }
   transferById(id: string): Promise<TransferRecord> {
-    if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id)) throw new TypeError('Invalid transfer identity');
-    return this.get<TransferRecord>(`/transfers/${id.toLowerCase()}`);
+    return this.get<TransferRecord>(`/transfers/${identity(id, 'transfer')}`);
   }
   transfers(limit = 50, offset = 0): Promise<Page<TransferRecord>> {
     if (!Number.isInteger(limit) || limit < 1 || limit > 100 || !Number.isInteger(offset) || offset < 0 || offset > 10000) throw new TypeError('Invalid pagination');
@@ -78,12 +114,33 @@ export class ApiClient {
     return this.command<PaymentReceipt>('/payments', normalizePaymentIntent(input), key);
   }
   paymentById(id: string): Promise<PaymentRecord> {
-    if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id)) throw new TypeError('Invalid payment identity');
-    return this.get<PaymentRecord>(`/payments/${id.toLowerCase()}`);
+    return this.get<PaymentRecord>(`/payments/${identity(id, 'payment')}`);
   }
   payments(limit = 50, offset = 0): Promise<Page<PaymentRecord>> {
     if (!Number.isInteger(limit) || limit < 1 || limit > 100 || !Number.isInteger(offset) || offset < 0 || offset > 10000) throw new TypeError('Invalid pagination');
     return this.get<Page<PaymentRecord>>(`/payments?limit=${limit}&offset=${offset}`);
+  }
+  cancelPayment(id: string, key: string, cancellationReason?: string): Promise<CommandResponse<CancellationReceipt>> {
+    const input = normalizePaymentCancellationIntent({ paymentId: id, reason: cancellationReason });
+    return this.command<CancellationReceipt>(`/payments/${input.paymentId}/cancel`, input.reason === undefined ? {} : { reason: input.reason }, key);
+  }
+  refundPayment(id: string, amountMinor: string, key: string, refundReason?: string): Promise<CommandResponse<AdjustmentReceipt>> {
+    const input = normalizePaymentRefundIntent({ paymentId: id, amountMinor, reason: refundReason });
+    const body: { amountMinor: string; reason?: string } = { amountMinor: input.amountMinor };
+    if (input.reason !== undefined) body.reason = input.reason;
+    return this.command<AdjustmentReceipt>(`/payments/${input.paymentId}/refunds`, body, key);
+  }
+  reversePayment(id: string, reversalReason: string, key: string): Promise<CommandResponse<AdjustmentReceipt>> {
+    const input = normalizePaymentReversalIntent({ paymentId: id, reason: reversalReason });
+    return this.command<AdjustmentReceipt>(`/payments/${input.paymentId}/reversal`, { reason: input.reason }, key);
+  }
+  paymentAdjustments(id: string, limit = 50, offset = 0): Promise<Page<PaymentAdjustment>> {
+    const paymentId = identity(id, 'payment');
+    if (!Number.isInteger(limit) || limit < 1 || limit > 100 || !Number.isInteger(offset) || offset < 0 || offset > 10000) throw new TypeError('Invalid pagination');
+    return this.get<Page<PaymentAdjustment>>(`/payments/${paymentId}/adjustments?limit=${limit}&offset=${offset}`);
+  }
+  paymentAdjustment(id: string, adjustmentId: string): Promise<PaymentAdjustment> {
+    return this.get<PaymentAdjustment>(`/payments/${identity(id, 'payment')}/adjustments/${identity(adjustmentId, 'adjustment')}`);
   }
   async command<T>(path: string, body: unknown, key?: string): Promise<CommandResponse<T>> {
     if (!this.csrf) await this.csrfToken();
