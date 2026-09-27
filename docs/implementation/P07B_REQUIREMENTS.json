@@ -1,0 +1,82 @@
+{
+  "phase": "P07B",
+  "sourceContract": "docs/implementation/MASTER_SPEC.md",
+  "scope": "Owner-managed signed webhook subscriptions, encrypted and versioned endpoint secrets, durable endpoint/event delivery identity, immutable attempts, separately restartable dispatchers, bounded retry/exhaustion, strict sandbox egress, receiver deduplication and owner/admin inspection. The React product interface remains P08.",
+  "requirements": [
+    {
+      "id": "P07B-R01",
+      "sections": ["3", "6", "11", "13", "14"],
+      "statement": "Customers can create, inspect, enable, disable and rotate only their own approved webhook endpoint; secrets are encrypted at rest, returned only on create/rotation and unavailable through ordinary runtime reads.",
+      "tests": {
+        "WebhookDeliveryReliabilityIT": ["P07B01"],
+        "webhook-compose": ["p07b-endpoint-secret-one-time", "p07b-owner-scope", "p07b-encrypted-at-rest"],
+        "webhook-client": ["P07BTS01", "P07BTS02", "P07BTS07"]
+      }
+    },
+    {
+      "id": "P07B-R02",
+      "sections": ["6", "7", "10", "11"],
+      "statement": "Each committed eligible event and endpoint creates one durable logical delivery; duplicate fan-out and competing dispatchers cannot create another logical delivery or duplicate a committed attempt identity.",
+      "tests": {
+        "WebhookDeliveryReliabilityIT": ["P07B02"],
+        "webhook-compose": ["p07b-two-dispatchers-running", "p07b-one-logical-delivery", "p07b-delivered-once"]
+      }
+    },
+    {
+      "id": "P07B-R03",
+      "sections": ["11", "13"],
+      "statement": "The sender signs the exact transmitted bytes with HMAC-SHA256 over timestamp, event identity and body; the receiver validates the replay window and rejects altered bytes, event identity, key version or signature using constant-time comparison.",
+      "tests": {
+        "CoreTest": ["WEBHOOK-independent-vector", "WEBHOOK-exact-bytes", "WEBHOOK-replay-window", "WEBHOOK-invalid-header"],
+        "webhook-compose": ["p07b-valid-signature-accepted", "p07b-invalid-signature-rejected"]
+      }
+    },
+    {
+      "id": "P07B-R04",
+      "sections": ["10", "11", "18", "20"],
+      "statement": "Delivery attempts, lease recovery, exponential backoff, eight-attempt exhaustion and audited manual retry cycles survive dispatcher restarts without resetting or erasing immutable history.",
+      "tests": {
+        "WebhookDeliveryReliabilityIT": ["P07B03"],
+        "CoreTest": ["WEBHOOK-attempt-budget", "WEBHOOK-age-budget", "WEBHOOK-backoff-bounds", "WEBHOOK-retry-after-cap"],
+        "webhook-compose": ["p07b-response-loss-retried", "p07b-restart-preserves-attempts", "p07b-manual-retry-audited"]
+      }
+    },
+    {
+      "id": "P07B-R05",
+      "sections": ["11", "13", "17"],
+      "statement": "Destinations are exact allowlisted endpoints, redirects and unsafe URL/address forms are rejected, and the sandbox receiver durably deduplicates an accepted event when its response is lost.",
+      "tests": {
+        "CoreTest": ["EGRESS-exact-internal", "EGRESS-metadata-denied", "EGRESS-cgnat-denied"],
+        "WebhookDeliveryReliabilityIT": ["P07B05"],
+        "webhook-compose": ["p07b-response-loss-receiver-dedup", "p07b-permanent-400-not-retried"]
+      }
+    },
+    {
+      "id": "P07B-R06",
+      "sections": ["11", "13", "14"],
+      "statement": "Owners can inspect only their own deliveries and immutable attempts; administrators can inspect all and request an audited retry without exposing signing secrets.",
+      "tests": {
+        "webhook-compose": ["p07b-owner-delivery-scope", "p07b-admin-inspection", "p07b-manual-retry-audited"],
+        "webhook-client": ["P07BTS03", "P07BTS04", "P07BTS05", "P07BTS06"]
+      }
+    },
+    {
+      "id": "P07B-R07",
+      "sections": ["7", "10", "11", "16"],
+      "statement": "Webhook dispatch runs in separately restartable bounded processes; receiver failure cannot roll back settled money, modify ledger authority or stop unrelated financial processing.",
+      "tests": {
+        "webhook-compose": ["p07b-financial-state-independent", "p07b-dispatcher-isolated-processes", "p07b-reconciles"]
+      }
+    },
+    {
+      "id": "P07B-R08",
+      "sections": ["14", "20", "21"],
+      "statement": "The scoped OpenAPI, TypeScript client, Java API and live Compose behavior agree on endpoint, delivery, attempt and receiver contracts with no unexplained failures or skips.",
+      "tests": {
+        "webhook-compose": ["p07b-scoped-contract"],
+        "webhook-client": ["P07BTS01", "P07BTS03", "P07BTS05"],
+        "WebhookDeliveryReliabilityIT": ["P07B01", "P07B02", "P07B03", "P07B04", "P07B05"]
+      }
+    }
+  ]
+}

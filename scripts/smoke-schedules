@@ -96,7 +96,7 @@ def command(browser,path,body,command_key,method="POST"):
 checks=[]
 running=set(compose("ps","--status","running","--services",capture=True).stdout.split())
 check("p07a-two-schedulers-running",{"scheduler-a","scheduler-b","api"}.issubset(running))
-check("p07a-nine-migrations",sql("SELECT count(*) FROM public.flyway_schema_history WHERE success")=="9")
+check("p07a-ten-migrations-with-p07b",sql("SELECT count(*) FROM public.flyway_schema_history WHERE success")=="10")
 
 payer=Browser();payer_identity=payer.register_login("P07A payer")
 recipient=Browser();recipient_identity=recipient.register_login("P07A recipient")
@@ -153,7 +153,7 @@ check("p07a-reconciles",sql("SELECT count(*) FROM ledger.account_balances b JOIN
 
 report={"sourceSha":subprocess.check_output(["git","rev-parse","HEAD"],cwd=ROOT,text=True).strip(),
         "timestamp":datetime.now(timezone.utc).isoformat(),
-        "scope":"real Compose P07A API/two-scheduler/idempotency/occurrence/accounting smoke",
+        "scope":"real Compose P07A API/two-scheduler/idempotency/occurrence/accounting smoke under the additive P07B schema",
         "checks":checks}
 out=ROOT/".evidence/schedule-compose";out.mkdir(parents=True,exist_ok=True)
 (out/"results.json").write_text(json.dumps(report,indent=2)+"\n")

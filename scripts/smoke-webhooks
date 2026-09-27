@@ -1,0 +1,242 @@
+#!/usr/bin/env python3
+"""Live P07B Compose smoke for durable signed webhook delivery and recovery."""
+from __future__ import annotations
+import base64
+import http.cookiejar
+import json
+import secrets
+import subprocess
+import time
+import urllib.error
+import urllib.request
+import uuid
+from datetime import datetime, timezone
+from pathlib import Path
+
+ROOT=Path(__file__).resolve().parent.parent
+ENV=ROOT/".ledgerguard/runtime.env"
+VALUES=dict(line.split("=",1) for line in ENV.read_text().splitlines() if line and not line.startswith("#"))
+BASE="http://127.0.0.1:"+VALUES.get("LEDGER_HTTP_PORT","8080")+"/api/v1"
+COMPOSE=["docker","compose","--env-file",str(ENV),"-f",str(ROOT/"compose.yaml"),"-f",str(ROOT/"compose.p07.yaml")]
+
+class Browser:
+    def __init__(self):
+        self.jar=http.cookiejar.CookieJar()
+        self.opener=urllib.request.build_opener(urllib.request.HTTPCookieProcessor(self.jar))
+        self.token=None
+    def call(self,path,body=None,method=None,headers=None,timeout=20):
+        request_headers={"Accept":"application/json",**(headers or {})}
+        if self.token: request_headers["X-XSRF-TOKEN"]=self.token
+        data=None
+        if body is not None:
+            request_headers["Content-Type"]="application/json"
+            data=json.dumps(body,separators=(",",":")).encode()
+        request=urllib.request.Request(BASE+path,data=data,headers=request_headers,
+            method=method or ("POST" if body is not None else "GET"))
+        try: response=self.opener.open(request,timeout=timeout)
+        except urllib.error.HTTPError as error: response=error
+        with response:
+            raw=response.read()
+            parsed=None
+            if raw:
+                try: parsed=json.loads(raw)
+                except json.JSONDecodeError: parsed=raw.decode("utf-8","replace")
+            return response.status,parsed,dict(response.headers.items())
+    def csrf(self):
+        status,body,_=self.call("/auth/csrf")
+        assert status==200,(status,body)
+        self.token=body["token"]
+    def register_login(self,label):
+        self.csrf()
+        email=f"p07b-{uuid.uuid4().hex}@example.test"
+        password="P07B-"+secrets.token_urlsafe(24)
+        status,registered,_=self.call("/auth/register",{"email":email,"password":password,"displayName":label})
+        assert status==201,(status,registered)
+        self.login(email,password)
+        return registered
+    def login(self,email,password):
+        self.csrf()
+        status,session,_=self.call("/auth/login",{"email":email,"password":password})
+        assert status==200,(status,session)
+        self.csrf()
+        return session
+
+def compose(*args,check=True,capture=False,input_bytes=None):
+    return subprocess.run([*COMPOSE,*args],cwd=ROOT,check=check,capture_output=capture,
+        input=input_bytes,text=input_bytes is None)
+
+def sql(query):
+    result=compose("exec","-T","-e",f"PGPASSWORD={VALUES['LEDGER_OWNER_PASSWORD']}","postgres",
+        "psql","-X","-A","-t","-q","-v","ON_ERROR_STOP=1","-U","ledger_owner",
+        "-d",VALUES["POSTGRES_DB"],"-c",query,capture=True)
+    return result.stdout.strip()
+
+def wait_sql(query,predicate,seconds=90):
+    deadline=time.monotonic()+seconds;latest=None
+    while time.monotonic()<deadline:
+        latest=sql(query)
+        if predicate(latest): return latest
+        time.sleep(.35)
+    raise AssertionError(f"SQL condition timed out; last={latest!r}; query={query}")
+
+def check(name,condition,detail=None):
+    if not condition: raise AssertionError(f"{name}: {detail!r}")
+    checks.append({"test":name,"status":"PASS"})
+
+def key(prefix): return prefix+"-"+uuid.uuid4().hex
+
+def account(browser,name):
+    status,body,_=browser.call("/accounts",{"name":name,"currency":"CAD"})
+    assert status==201,(status,body)
+    return body
+
+def fund(account_id,amount):
+    asset=str(uuid.uuid4());operation=str(uuid.uuid4())
+    sql(f"BEGIN; INSERT INTO ledger.accounts(id,label,currency,kind) VALUES('{asset}','P07B synthetic asset','CAD','SANDBOX_FUNDING_ASSET'); "
+        f"INSERT INTO ledger.account_balances(account_id) VALUES('{asset}'); "
+        f"SELECT ledger._post('{operation}','FUNDING','{asset}','{account_id}',{amount},'CAD'); COMMIT;")
+
+def transfer(browser,source,recipient,amount,label):
+    status,body,_=browser.call("/transfers",{"sourceId":source,"recipientRef":recipient,
+        "amountMinor":str(amount),"currency":"CAD"},headers={"Idempotency-Key":key(label)})
+    assert status==201,(status,body)
+    operation=body["id"]
+    event=wait_sql(f"SELECT id FROM ledger.outbox_events WHERE aggregate_id='{operation}' AND event_type='transfer.settled'",
+        lambda value: bool(value))
+    return operation,event
+
+def delivery_for(event,terminal=None,seconds=90):
+    delivery=wait_sql(f"SELECT id FROM ledger.webhook_deliveries WHERE event_id='{event}'",
+        lambda value: bool(value),seconds)
+    if terminal:
+        wait_sql(f"SELECT state FROM ledger.webhook_deliveries WHERE id='{delivery}'",
+            lambda value: value==terminal,seconds)
+    return delivery
+
+def detail(browser,delivery):
+    status,body,_=browser.call("/webhook-deliveries/"+delivery)
+    assert status==200,(status,body)
+    return body
+
+def set_mode(mode):
+    sql(f"UPDATE ledger.webhook_receiver_control SET mode='{mode}',updated_at=clock_timestamp() WHERE singleton")
+
+def receiver_invalid_signature(endpoint,event,delivery):
+    encoded=sql(f"SELECT encode(payload,'base64') FROM ledger.webhook_deliveries WHERE id='{delivery}'")
+    payload=base64.b64decode(encoded)
+    key_version=sql(f"SELECT secret_key_version FROM ledger.webhook_deliveries WHERE id='{delivery}'")
+    timestamp=str(int(time.time()))
+    result=compose("exec","-T","receiver","curl","-sS","-o","/dev/null","-w","%{http_code}",
+        "-H","Content-Type: application/json",
+        "-H",f"X-LedgerGuard-Endpoint-Id: {endpoint}",
+        "-H",f"X-LedgerGuard-Event-Id: {event}",
+        "-H",f"X-LedgerGuard-Timestamp: {timestamp}",
+        "-H",f"X-LedgerGuard-Key-Version: {key_version}",
+        "-H","X-LedgerGuard-Signature: v1="+"0"*64,
+        "--data-binary","@-","http://localhost:8081/events",capture=True,input_bytes=payload)
+    return result.stdout.decode().strip()
+
+checks=[]
+running=set(compose("ps","--status","running","--services",capture=True).stdout.split())
+required={"api","receiver","webhook-dispatcher-a","webhook-dispatcher-b"}
+check("p07b-two-dispatchers-running",required.issubset(running),running)
+check("p07b-dispatcher-isolated-processes",{"webhook-dispatcher-a","webhook-dispatcher-b"}.issubset(running))
+check("p07b-ten-migrations",sql("SELECT count(*) FROM public.flyway_schema_history WHERE success")=="10")
+
+payer=Browser();payer_identity=payer.register_login("P07B payer")
+recipient=Browser();recipient.register_login("P07B recipient")
+outsider=Browser();outsider.register_login("P07B outsider")
+admin=Browser();admin.login("admin@example.test",VALUES["LEDGER_DEMO_PASSWORD"])
+source=account(payer,"P07B source");destination=account(recipient,"P07B destination")
+fund(source["id"],50_000)
+
+status,created,_=payer.call("/webhook-endpoints",{"destinationId":"sandbox-receiver"})
+check("p07b-endpoint-secret-one-time",status==201 and len(created["signingSecret"])==43
+      and "signingSecret" not in created["endpoint"],(status,created))
+endpoint=created["endpoint"];endpoint_id=endpoint["id"];first_secret=created["signingSecret"]
+status,ordinary,_=payer.call("/webhook-endpoints/"+endpoint_id)
+status2,listed,_=payer.call("/webhook-endpoints?limit=10&offset=0")
+check("p07b-owner-scope",status==200 and status2==200 and ordinary["ownerId"]==payer_identity["id"])
+check("p07b-encrypted-at-rest",sql(f"SELECT (encrypted_secret<>'{first_secret}')::text FROM ledger.webhook_endpoints WHERE id='{endpoint_id}'")=="true")
+check("p07b-endpoint-secret-not-readable",status==200 and "signingSecret" not in ordinary
+      and all("signingSecret" not in item for item in listed["items"]))
+status,denied,_=outsider.call("/webhook-endpoints/"+endpoint_id)
+check("p07b-owner-endpoint-scope",status==404,denied)
+status,bad_destination,_=payer.call("/webhook-endpoints",{"destinationId":"https://example.invalid/hook"})
+check("p07b-destination-denied",status==400,bad_destination)
+
+# A normal delivery proves exact signing and durable endpoint/event uniqueness.
+op1,event1=transfer(payer,source["id"],destination["publicRef"],1_000,"p07b-normal")
+delivery1=delivery_for(event1,"DELIVERED")
+normal=detail(payer,delivery1)
+check("p07b-one-logical-delivery",sql(f"SELECT count(*) FROM ledger.webhook_deliveries WHERE endpoint_id='{endpoint_id}' AND event_id='{event1}'")=="1")
+check("p07b-delivered-once",normal["delivery"]["state"]=="DELIVERED" and len(normal["attempts"])==1
+      and normal["attempts"][0]["outcome"]=="DELIVERED",normal)
+check("p07b-valid-signature-accepted",sql(f"SELECT receive_count FROM ledger.webhook_receiver_receipts WHERE endpoint_id='{endpoint_id}' AND event_id='{event1}'")=="1")
+check("p07b-invalid-signature-rejected",receiver_invalid_signature(endpoint_id,event1,delivery1)=="401")
+status,hidden_delivery,_=outsider.call("/webhook-deliveries/"+delivery1)
+check("p07b-owner-delivery-scope",status==404,hidden_delivery)
+status,admin_detail,_=admin.call("/admin/webhook-deliveries/"+delivery1)
+check("p07b-admin-inspection",status==200 and admin_detail["delivery"]["id"]==delivery1)
+
+# Rotation returns a second one-time secret while the old delivery remains bound to v1.
+status,rotated,_=payer.call(f"/webhook-endpoints/{endpoint_id}/rotate-secret",{"expectedVersion":1})
+check("p07b-secret-rotation-versioned",status==200 and rotated["endpoint"]["version"]==2
+      and rotated["signingSecret"]!=first_secret and sql(f"SELECT count(*) FROM ledger.webhook_endpoint_secrets WHERE endpoint_id='{endpoint_id}'")=="2")
+
+# Receiver persists acceptance then intentionally loses the first response. Sender retries; receiver deduplicates.
+set_mode("ACCEPT_THEN_503")
+op2,event2=transfer(payer,source["id"],destination["publicRef"],1_100,"p07b-response-loss")
+delivery2=delivery_for(event2,"DELIVERED",120)
+loss=detail(payer,delivery2)
+check("p07b-response-loss-retried",len(loss["attempts"])==2
+      and [item["outcome"] for item in loss["attempts"]]==["RETRY_SCHEDULED","DELIVERED"],loss)
+check("p07b-response-loss-receiver-dedup",sql(f"SELECT receive_count FROM ledger.webhook_receiver_receipts WHERE endpoint_id='{endpoint_id}' AND event_id='{event2}'")=="2")
+check("p07b-rotated-secret-used",sql(f"SELECT secret_key_version FROM ledger.webhook_deliveries WHERE id='{delivery2}'")=="2")
+set_mode("NORMAL")
+
+# A retryable outage survives dispatcher process restart without resetting durable attempts.
+set_mode("STATUS_503")
+op3,event3=transfer(payer,source["id"],destination["publicRef"],1_200,"p07b-restart")
+delivery3=delivery_for(event3,None)
+wait_sql(f"SELECT count(*) FROM ledger.webhook_attempts WHERE delivery_id='{delivery3}'",lambda value:int(value)>=1,60)
+before=int(sql(f"SELECT count(*) FROM ledger.webhook_attempts WHERE delivery_id='{delivery3}'"))
+compose("restart","webhook-dispatcher-a","webhook-dispatcher-b")
+set_mode("NORMAL")
+delivery_for(event3,"DELIVERED",120)
+after_detail=detail(payer,delivery3)
+check("p07b-restart-preserves-attempts",before>=1 and len(after_detail["attempts"])>before
+      and len(after_detail["attempts"])<=8,after_detail)
+
+# A permanent 400 gets one attempt. An authorized audited manual retry starts cycle two and succeeds.
+set_mode("STATUS_400")
+op4,event4=transfer(payer,source["id"],destination["publicRef"],1_300,"p07b-permanent")
+delivery4=delivery_for(event4,"FAILED",90)
+failed=detail(payer,delivery4)
+check("p07b-permanent-400-not-retried",len(failed["attempts"])==1
+      and failed["attempts"][0]["outcome"]=="PERMANENT_FAILURE",failed)
+set_mode("NORMAL")
+status,retried,_=payer.call(f"/webhook-deliveries/{delivery4}/retry",{"reason":"Sandbox receiver corrected"})
+check("p07b-manual-retry-requested",status==200 and retried["delivery"]["cycle"]==2
+      and retried["delivery"]["state"] in {"PENDING","IN_FLIGHT","DELIVERED"},(status,retried))
+delivery_for(event4,"DELIVERED",120)
+check("p07b-manual-retry-audited",sql(f"SELECT count(*) FROM ledger.webhook_audit WHERE delivery_id='{delivery4}' AND action='MANUAL_RETRY_REQUESTED'")=="1")
+
+# Webhook failures never alter the already-settled transfers or financial reconciliation.
+operations=[op1,op2,op3,op4]
+quoted=",".join("'"+value+"'" for value in operations)
+check("p07b-financial-state-independent",sql(f"SELECT (SELECT count(*) FROM ledger.transfers WHERE id IN ({quoted}))||':'||(SELECT count(*) FROM ledger.journals WHERE operation_id IN ({quoted}))")=="4:4")
+check("p07b-reconciles",sql("SELECT count(*) FROM ledger.account_balances b JOIN ledger.accounts a ON a.id=b.account_id WHERE b.posted_minor::numeric<>(SELECT coalesce(sum(CASE WHEN a.kind='WALLET_LIABILITY' THEN CASE WHEN e.side='CREDIT' THEN e.amount_minor::numeric ELSE -e.amount_minor::numeric END ELSE CASE WHEN e.side='DEBIT' THEN e.amount_minor::numeric ELSE -e.amount_minor::numeric END END),0) FROM ledger.journal_entries e WHERE e.account_id=a.id) OR b.reserved_minor::numeric<>(SELECT coalesce(sum(h.amount_minor::numeric),0) FROM ledger.holds h WHERE h.account_id=a.id AND h.state='ACTIVE')")=="0")
+
+status,contract,_=payer.call("/openapi/p07b-webhooks.json")
+required_paths={"/api/v1/webhook-endpoints","/api/v1/webhook-endpoints/{id}/rotate-secret",
+    "/api/v1/webhook-deliveries/{id}","/api/v1/admin/webhook-deliveries","/events"}
+check("p07b-scoped-contract",status==200 and required_paths.issubset(contract["paths"].keys()),contract)
+
+report={"sourceSha":subprocess.check_output(["git","rev-parse","HEAD"],cwd=ROOT,text=True).strip(),
+        "timestamp":datetime.now(timezone.utc).isoformat(),
+        "scope":"real Compose P07B owner/admin API, two dispatchers, signed receiver, response loss, restart, permanent failure, manual retry and financial isolation",
+        "checks":checks}
+out=ROOT/".evidence/webhook-compose";out.mkdir(parents=True,exist_ok=True)
+(out/"results.json").write_text(json.dumps(report,indent=2)+"\n",encoding="utf-8")
+print(json.dumps(report,indent=2))

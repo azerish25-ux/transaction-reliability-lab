@@ -88,6 +88,19 @@ ledgerguard:
     enabled: ${LEDGER_SCHEDULER_ENABLED:false}
     poll-ms: ${LEDGER_SCHEDULER_POLL_MS:500}
     batch-size: ${LEDGER_SCHEDULER_BATCH_SIZE:32}
+  webhooks:
+    enabled: ${LEDGER_WEBHOOKS_ENABLED:false}
+    api-enabled: ${LEDGER_WEBHOOK_API_ENABLED:false}
+    dispatcher-enabled: ${LEDGER_WEBHOOK_DISPATCHER_ENABLED:false}
+    receiver-enabled: ${LEDGER_WEBHOOK_RECEIVER_ENABLED:false}
+    sandbox: ${LEDGER_WEBHOOK_SANDBOX:${LEDGER_SANDBOX_HTTP:false}}
+    destination-url: ${LEDGER_WEBHOOK_DESTINATION_URL:http://receiver:8081/events}
+    secret-key: ${LEDGER_WEBHOOK_SECRET_KEY:}
+    poll-ms: ${LEDGER_WEBHOOK_POLL_MS:250}
+    batch-size: ${LEDGER_WEBHOOK_BATCH_SIZE:32}
+    lease-seconds: ${LEDGER_WEBHOOK_LEASE_SECONDS:20}
+    connect-timeout-ms: ${LEDGER_WEBHOOK_CONNECT_TIMEOUT_MS:1000}
+    request-timeout-ms: ${LEDGER_WEBHOOK_REQUEST_TIMEOUT_MS:3000}
   outbox:
     poll-ms: ${LEDGER_OUTBOX_POLL_MS:250}
     recovery-ms: ${LEDGER_OUTBOX_RECOVERY_MS:30000}
@@ -106,7 +119,7 @@ ledgerguard:
 info:
   app:
     name: LedgerGuard
-    version: 0.6.0-P07A-INCOMPLETE
+    version: 0.7.0-P07B-INCOMPLETE
     boundary: synthetic-money-only
 
 logging:

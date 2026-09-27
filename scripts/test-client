@@ -7,3 +7,4 @@ node tests/contracts/auth-client.test.cjs
 node tests/contracts/transfer-client.test.cjs
 node tests/contracts/payment-client.test.cjs
 node tests/contracts/payment-adjustment-client.test.cjs
+node tests/contracts/webhook-client.test.cjs

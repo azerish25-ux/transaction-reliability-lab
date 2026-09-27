@@ -1,10 +1,15 @@
-# Opt-in P07A overlay. Use only with compose.yaml; the verified P06 default
-# topology and migration history remain unchanged until P07 receives its gate.
+# Opt-in P07 overlay. Use only with compose.yaml. It activates verified P07A
+# schedules plus the P07B webhook candidate while preserving the P06 default topology.
 services:
   api:
     environment:
-      LEDGER_FLYWAY_LOCATIONS: classpath:db/migration,classpath:db/p07
+      LEDGER_FLYWAY_LOCATIONS: classpath:db/migration,classpath:db/p07,classpath:db/p07b
       LEDGER_SCHEDULES_ENABLED: "true"
+      LEDGER_WEBHOOKS_ENABLED: "true"
+      LEDGER_WEBHOOK_API_ENABLED: "true"
+      LEDGER_WEBHOOK_SECRET_KEY: ${LEDGER_AUTH_KEY:?LEDGER_AUTH_KEY is required}
+      LEDGER_WEBHOOK_DESTINATION_URL: http://receiver:8081/events
+      LEDGER_WEBHOOK_SANDBOX: "true"
 
   scheduler-a:
     build:
@@ -59,6 +64,127 @@ services:
       LEDGER_DATABASE_POOL_SIZE: 8
     depends_on:
       api:
+        condition: service_healthy
+    read_only: true
+    tmpfs:
+      - /tmp
+    security_opt:
+      - no-new-privileges:true
+    restart: unless-stopped
+    stop_grace_period: 25s
+    networks:
+      - ledgerguard
+
+  receiver:
+    build:
+      context: .
+      dockerfile: infra/docker/Dockerfile.backend
+    environment:
+      LEDGER_SANDBOX_HTTP: "true"
+      LEDGER_AUTH_KEY: ${LEDGER_AUTH_KEY:?LEDGER_AUTH_KEY is required}
+      LEDGER_WEBHOOK_SECRET_KEY: ${LEDGER_AUTH_KEY:?LEDGER_AUTH_KEY is required}
+      LEDGER_DATABASE_URL: jdbc:postgresql://postgres:5432/${POSTGRES_DB:-ledgerguard}
+      LEDGER_RUNTIME_USER: ledger_runtime
+      LEDGER_RUNTIME_PASSWORD: ${LEDGER_RUNTIME_PASSWORD:?LEDGER_RUNTIME_PASSWORD is required}
+      LEDGER_HTTP_PORT: "8081"
+      LEDGER_PROCESS_NAME: LedgerGuard-Webhook-Receiver
+      LEDGER_FLYWAY_ENABLED: "false"
+      LEDGER_MESSAGING_ENABLED: "false"
+      LEDGER_OUTBOX_PUBLISHER_ENABLED: "false"
+      LEDGER_PAYMENT_WORKER_ENABLED: "false"
+      LEDGER_SCHEDULER_ENABLED: "false"
+      LEDGER_WEBHOOKS_ENABLED: "true"
+      LEDGER_WEBHOOK_RECEIVER_ENABLED: "true"
+      LEDGER_WEBHOOK_DESTINATION_URL: http://receiver:8081/events
+      LEDGER_WEBHOOK_SANDBOX: "true"
+      LEDGER_DATABASE_POOL_SIZE: 6
+      SPRING_PROFILES_ACTIVE: sandbox
+    depends_on:
+      api:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "--fail", "--silent", "http://localhost:8081/actuator/health/readiness"]
+      interval: 5s
+      timeout: 3s
+      retries: 30
+      start_period: 15s
+    read_only: true
+    tmpfs:
+      - /tmp
+    security_opt:
+      - no-new-privileges:true
+    restart: unless-stopped
+    stop_grace_period: 25s
+    networks:
+      - ledgerguard
+
+  webhook-dispatcher-a:
+    build:
+      context: .
+      dockerfile: infra/docker/Dockerfile.backend
+    environment:
+      LEDGER_SANDBOX_HTTP: "true"
+      LEDGER_AUTH_KEY: ${LEDGER_AUTH_KEY:?LEDGER_AUTH_KEY is required}
+      LEDGER_WEBHOOK_SECRET_KEY: ${LEDGER_AUTH_KEY:?LEDGER_AUTH_KEY is required}
+      LEDGER_DATABASE_URL: jdbc:postgresql://postgres:5432/${POSTGRES_DB:-ledgerguard}
+      LEDGER_RUNTIME_USER: ledger_runtime
+      LEDGER_RUNTIME_PASSWORD: ${LEDGER_RUNTIME_PASSWORD:?LEDGER_RUNTIME_PASSWORD is required}
+      LEDGER_PROCESS_NAME: LedgerGuard-Webhook-Dispatcher-A
+      LEDGER_FLYWAY_ENABLED: "false"
+      LEDGER_MESSAGING_ENABLED: "false"
+      LEDGER_OUTBOX_PUBLISHER_ENABLED: "false"
+      LEDGER_PAYMENT_WORKER_ENABLED: "false"
+      LEDGER_SCHEDULER_ENABLED: "false"
+      LEDGER_WEBHOOKS_ENABLED: "true"
+      LEDGER_WEBHOOK_DISPATCHER_ENABLED: "true"
+      LEDGER_WEBHOOK_DESTINATION_URL: http://receiver:8081/events
+      LEDGER_WEBHOOK_SANDBOX: "true"
+      LEDGER_DATABASE_POOL_SIZE: 6
+      SPRING_PROFILES_ACTIVE: sandbox
+      SPRING_MAIN_WEB_APPLICATION_TYPE: none
+    depends_on:
+      api:
+        condition: service_healthy
+      receiver:
+        condition: service_healthy
+    read_only: true
+    tmpfs:
+      - /tmp
+    security_opt:
+      - no-new-privileges:true
+    restart: unless-stopped
+    stop_grace_period: 25s
+    networks:
+      - ledgerguard
+
+  webhook-dispatcher-b:
+    build:
+      context: .
+      dockerfile: infra/docker/Dockerfile.backend
+    environment:
+      LEDGER_SANDBOX_HTTP: "true"
+      LEDGER_AUTH_KEY: ${LEDGER_AUTH_KEY:?LEDGER_AUTH_KEY is required}
+      LEDGER_WEBHOOK_SECRET_KEY: ${LEDGER_AUTH_KEY:?LEDGER_AUTH_KEY is required}
+      LEDGER_DATABASE_URL: jdbc:postgresql://postgres:5432/${POSTGRES_DB:-ledgerguard}
+      LEDGER_RUNTIME_USER: ledger_runtime
+      LEDGER_RUNTIME_PASSWORD: ${LEDGER_RUNTIME_PASSWORD:?LEDGER_RUNTIME_PASSWORD is required}
+      LEDGER_PROCESS_NAME: LedgerGuard-Webhook-Dispatcher-B
+      LEDGER_FLYWAY_ENABLED: "false"
+      LEDGER_MESSAGING_ENABLED: "false"
+      LEDGER_OUTBOX_PUBLISHER_ENABLED: "false"
+      LEDGER_PAYMENT_WORKER_ENABLED: "false"
+      LEDGER_SCHEDULER_ENABLED: "false"
+      LEDGER_WEBHOOKS_ENABLED: "true"
+      LEDGER_WEBHOOK_DISPATCHER_ENABLED: "true"
+      LEDGER_WEBHOOK_DESTINATION_URL: http://receiver:8081/events
+      LEDGER_WEBHOOK_SANDBOX: "true"
+      LEDGER_DATABASE_POOL_SIZE: 6
+      SPRING_PROFILES_ACTIVE: sandbox
+      SPRING_MAIN_WEB_APPLICATION_TYPE: none
+    depends_on:
+      api:
+        condition: service_healthy
+      receiver:
         condition: service_healthy
     read_only: true
     tmpfs:
