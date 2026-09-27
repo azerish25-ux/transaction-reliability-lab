@@ -1,4 +1,4 @@
-name: LedgerGuard P05 verification
+name: LedgerGuard P06 verification
 
 on:
   push:
@@ -11,9 +11,9 @@ permissions:
 
 jobs:
   verify:
-    name: Build, payments, messaging recovery, security and financial invariants
+    name: Build, payment adjustments, messaging recovery, security and financial invariants
     runs-on: ubuntu-latest
-    timeout-minutes: 70
+    timeout-minutes: 90
     steps:
       - name: Check out candidate
         uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
@@ -31,7 +31,7 @@ jobs:
           cache: npm
           cache-dependency-path: frontend/package-lock.json
       - name: Prepare deterministic tools
-        run: chmod +x mvnw scripts/lab scripts/test-core scripts/test-client scripts/assert-p04-evidence scripts/assert-p05-evidence scripts/smoke-auth scripts/unit-probes scripts/validate-evidence scripts/scan-secrets infra/docker/postgres/00-roles.sh
+        run: chmod +x mvnw scripts/lab scripts/test-core scripts/test-client scripts/assert-p04-evidence scripts/assert-p05-evidence scripts/assert-p06-evidence scripts/smoke-auth scripts/smoke-adjustments scripts/unit-probes scripts/validate-evidence scripts/scan-secrets infra/docker/postgres/00-roles.sh
       - name: Install locked TypeScript dependency
         run: npm ci --prefix frontend
       - name: Run Java and TypeScript component regressions
@@ -42,16 +42,18 @@ jobs:
         run: docker compose --env-file .env.example -f compose.yaml config --quiet
       - name: Scan tracked source for high-signal literal secrets
         run: ./scripts/scan-secrets
-      - name: Start, migrate, seed and reconcile the complete P05 topology
+      - name: Start, migrate, seed and reconcile the complete P06 topology
         run: ./scripts/lab up
-      - name: Exercise real payments, RabbitMQ, duplicate delivery and process-death recovery
+      - name: Preserve P05 payment, RabbitMQ, duplicate-delivery and process-death proofs
         run: python3 scripts/smoke-auth
+      - name: Exercise cancellation, partial/full refunds, reversal and adjustment reconciliation
+        run: python3 scripts/smoke-adjustments
       - name: Verify live status and repeatable reconciliation
         run: |
           ./scripts/lab status
           ./scripts/lab reconcile
-      - name: Require executed P03/P04/P05 requirements with no failures or skips
-        run: python3 scripts/assert-p05-evidence
+      - name: Require executed P03-P06 requirements with no failures or skips
+        run: python3 scripts/assert-p06-evidence
       - name: Capture service logs
         if: always()
         run: ./scripts/lab logs
@@ -62,7 +64,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
-          name: ledgerguard-p05-evidence-${{ github.sha }}
+          name: ledgerguard-p06-evidence-${{ github.sha }}
           if-no-files-found: warn
           include-hidden-files: true
           retention-days: 14
@@ -72,14 +74,15 @@ jobs:
             backend/target/failsafe-reports/
             backend/target/auth-http-evidence/
             backend/target/transfer-http-evidence/
+            backend/target/payment-adjustment-http-evidence/
   gate:
-    name: Required P05 gate
+    name: Required P06 gate
     if: always()
     needs: [verify]
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
-      - name: Require every mandatory P05 job
+      - name: Require every mandatory P06 job
         env:
           VERIFY_RESULT: ${{ needs.verify.result }}
         run: |
