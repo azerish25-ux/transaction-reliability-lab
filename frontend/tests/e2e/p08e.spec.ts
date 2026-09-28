@@ -97,7 +97,9 @@ test('P08EE2E01-create-one-time-secret-and-responsive-subscriptions', async ({ p
   await accessible(page); await screenshot(page, info, 'p08e-subscriptions');
   const list = await read<ApiPage<WebhookEndpoint>>(actor.api, '/webhook-endpoints?limit=50&offset=0');
   expect(list.items).toHaveLength(1);
-  const record = await read<Record<string, unknown>>(actor.api, `/webhook-endpoints/${list.items[0].id}`);
+  const first = list.items[0];
+  if (!first) throw new Error('The created subscription is missing from its owner list');
+  const record = await read<Record<string, unknown>>(actor.api, `/webhook-endpoints/${first.id}`);
   expect('signingSecret' in record || 'encryptedSecret' in record).toBe(false);
   await page.getByRole('link', { name: 'View confirmed record' }).click();
   await expect(page.getByTestId('webhook-version')).toHaveText('1'); await accessible(page);
@@ -214,7 +216,9 @@ test('P08EE2E08-concurrent-command-dedup-conflict-and-immutable-receipt', async 
   expect(new Set(values.map(value => value.command.endpointId)).size).toBe(1);
   expect(values.filter(value => typeof value.signingSecret === 'string').length).toBe(1);
   expect(values.filter(value => value.command.replayed === false).length).toBe(1);
-  const ep = values[0].command.endpointId;
+  const first = values[0];
+  if (!first) throw new Error('Concurrent commands returned no receipts');
+  const ep = first.command.endpointId;
   expect((await command(actor.api, '/webhook-commands', { kind: 'STATE', endpointId: ep, expectedVersion: 1, enabled: false }, key)).status()).toBe(409);
   expect(sql(`SELECT count(*) FROM ledger.webhook_commands WHERE owner_id='${actor.id}';`)).toBe('1');
   expect(sql(`SELECT count(*) FROM ledger.webhook_audit WHERE actor_id='${actor.id}' AND action='ENDPOINT_CREATED';`)).toBe('1');
