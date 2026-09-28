@@ -40,8 +40,11 @@ jobs:
           text = p.read_text()
           text = replace_once(text, '  const reviewLock = useRef(false);', '  const reviewLock = useRef(false);\n  const reviewButton = useRef<HTMLButtonElement>(null);')
           text = replace_once(text, '<button className="button button-primary" type="submit">{reviewing ?', '<button ref={reviewButton} className="button button-primary" type="submit">{reviewing ?')
-          text = replace_once(text, 'onCancel={() => setReview(undefined)} onConfirm={() => void confirm()} initialFocus="cancel">', 'onCancel={() => setReview(undefined)} onConfirm={() => void confirm()} initialFocus="cancel" returnFocus={reviewButton}>')
-          p.write_text(text)
+          form, marker, remainder = text.partition('\nfunction CreateSchedule(')
+          if not marker:
+              raise SystemExit('Schedule form boundary missing')
+          form = replace_once(form, 'onCancel={() => setReview(undefined)} onConfirm={() => void confirm()} initialFocus="cancel">', 'onCancel={() => setReview(undefined)} onConfirm={() => void confirm()} initialFocus="cancel" returnFocus={reviewButton}>')
+          p.write_text(form + marker + remainder)
           p = Path('frontend/tests/e2e/p08d.spec.ts')
           text = p.read_text()
           old = "    await page.keyboard.press('Escape'); await expect(dialog).not.toBeVisible(); await expect(page.getByRole('button', { name: 'Review schedule', exact: true })).toBeFocused();"
