@@ -46,6 +46,24 @@ jobs:
           PY
           git apply --check --unidiff-zero /tmp/p08c-source.patch
           git apply --unidiff-zero /tmp/p08c-source.patch
+          python3 - <<'PY'
+          from pathlib import Path
+          import hashlib
+          def revise(path, before, after, old=None, new=None):
+              p=Path(path); text=p.read_text()
+              assert hashlib.sha256(text.encode()).hexdigest()==before, path
+              if old is None: text=text.rstrip()+'\n'
+              else:
+                  assert text.count(old)==1, path
+                  text=text.replace(old,new)
+              assert hashlib.sha256(text.encode()).hexdigest()==after, path
+              p.write_text(text)
+          revise('frontend/src/product-ui.tsx','44ca00ff1c705cf42faa8e0dcf2209538a4cff73c577fb0863929a9ed867a89d','f8d07ee53bf78ffd260e793c4fbf0f76580bd7887617f657ad18078044f2119e')
+          revise('frontend/src/api.ts','0aadeff6360683c816ab5c4588458a6750341e43aacd97c99ce9a917e5e2989b','fb8ad9d88576efaa919380cc1142c7d535dd247a564a260f45db974be2e388a4',"      if (method === 'POST' && key) throw new OutcomeUnknown();\n      throw cause;","      if (method === 'POST' && key) throw new OutcomeUnknown();\n      if (method === 'GET') throw new Error('Authoritative data could not be loaded. Refresh to retry; no financial outcome has been inferred.', { cause });\n      throw cause;")
+          revise('frontend/tests/e2e/p08b.spec.ts','8bffd1a95a60c52107e57b33cf80f42a09f35cf015755290064e8194e6643783','433538e5366beafd5fd7a2dea92163c16dd1025a3fac8b8763ce7f12ff683846',"[...common, 'up', '-d', '--wait', 'payment-worker-a', 'payment-worker-b']","[...common, 'up', '-d', '--no-deps', '--wait', 'payment-worker-a', 'payment-worker-b']")
+          revise('tests/contracts/p08c-client.test.cjs','faf49b594c50ecaae66619deb59c9577ca7b7f9644eeabea335f25caa3df3d34','813bc22594c5c7d834c585835d1f1753de275ff53da90a7df7c59f55aa633f00',"test('P08CTS17-invalid-context-identity-never-reaches-network', () => {\n  let calls = 0; const api = new ApiClient(async () => { calls++; return Response.json(context); });\n  assert.throws(() => api.paymentAdjustmentContext('invalid', true)); assert.equal(calls, 0);\n});","test('P08CTS17-invalid-context-identity-and-unavailable-read-do-not-imply-money-failure', async () => {\n  let calls = 0; const api = new ApiClient(async () => { calls++; return Response.json(context); });\n  assert.throws(() => api.paymentAdjustmentContext('invalid', true)); assert.equal(calls, 0);\n  const offline = new ApiClient(async () => { throw new TypeError('Failed to fetch'); });\n  await assert.rejects(offline.paymentAdjustmentContext(paymentId), error => !(error instanceof TypeError) && !(error instanceof OutcomeUnknown) && error.message.includes('no financial outcome has been inferred'));\n});")
+          PY
+          git add -N -- . ':(exclude).github'
           git diff --check
           git diff --exit-code -- .github
       - name: Verify locked dependencies, application, contracts and component regressions
