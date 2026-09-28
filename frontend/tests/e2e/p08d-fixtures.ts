@@ -7,7 +7,10 @@ import { expect, sql, command, csrf, read, type Actor, type Lab } from './p08c-f
 export { test, expect, signIn, accessible, screenshot, command, csrf, read, sql } from './p08c-fixtures.js';
 export interface ScheduleFixture { owner: Actor; recipient: Actor; source: Account; destination: Account; }
 const uuid = (value: string): string => { if (!/^[0-9a-f]{8}(-[0-9a-f]{4}){3}-[0-9a-f]{12}$/i.test(value)) throw new Error('Invalid fixture UUID'); return value; };
-export function localUTC(offsetSeconds = 86400): string { return new Date(Date.now() + offsetSeconds * 1000).toISOString().slice(0, 19); }
+/** HTML datetime-local canonicalizes zero seconds away; the production client restores
+ * canonical API seconds without converting the customer's wall time to an instant. */
+export function inputWallTime(value: string): string { return value.replace(/:00$/, ''); }
+export function localUTC(offsetSeconds = 86400): string { return inputWallTime(new Date(Date.now() + offsetSeconds * 1000).toISOString().slice(0, 19)); }
 export async function fixture(lab: Lab, funded = true, currency: Currency = 'CAD'): Promise<ScheduleFixture> {
   const owner = await lab.actor(), recipient = await lab.actor();
   const source = await lab.wallet(owner, currency), destination = await lab.wallet(recipient, currency);
@@ -37,7 +40,7 @@ export async function fillForm(page: Page, f: ScheduleFixture, input = definitio
   await page.getByLabel('Recipient reference', { exact: true }).fill(input.recipientRef);
   await page.getByLabel(/^Amount per occurrence/).fill(amount);
   await page.getByLabel('Recurrence', { exact: true }).selectOption(input.recurrence);
-  await page.getByLabel('Intended local date and time', { exact: true }).fill(input.intendedLocal);
+  await page.getByLabel('Intended local date and time', { exact: true }).fill(inputWallTime(input.intendedLocal));
   await page.getByLabel('IANA time zone', { exact: true }).fill(input.zoneId);
 }
 export async function review(page: Page, editing = false): Promise<void> {

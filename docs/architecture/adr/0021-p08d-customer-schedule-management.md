@@ -24,7 +24,7 @@ A browser wall-time string is parsed without browser-zone conversion. The select
 
 Amounts use existing currency-specific parsing and canonical integer strings. Recipient resolution checks same currency and rejects source=destination without exposing counterparty balances. Future schedules are not blocked solely by a currently empty wallet. Funds are checked by the protected execution path; business failure is recorded once rather than silently creating another obligation.
 
-Occurrence history renders its recorded local value, original definition version and authoritative UTC due instant. It does not apply the current schedule zone to older occurrences, because the existing history resource does not contain an original-zone field. Successful occurrences link to actual transfer/journal references; failed/skipped occurrences never imply a successful posting.
+Occurrence history renders its recorded local value, original definition version and authoritative UTC due instant. It does not apply the current schedule zone to older occurrences, because the existing history resource does not contain an original-zone field. Successful occurrences link to actual transfer/journal references; failed/skipped occurrences never imply a successful posting. The published occurrence wire state for a business failure is `REJECTED`, rendered as "Failed" in the interface. The production-client regression checks this enum against the actual scoped OpenAPI schema.
 
 ## Evidence and isolation
 

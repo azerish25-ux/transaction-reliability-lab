@@ -23,10 +23,10 @@ def suite(relative, minimum):
         raise SystemExit(f'Nonpassing testcase: {relative}')
     return counts, cases, suites
 
-client_counts, client, _ = suite('.evidence/client/p08d-results.xml', 24)
+client_counts, client, _ = suite('.evidence/client/p08d-results.xml', 25)
 unit_counts, unit, _ = suite('backend/target/surefire-reports/TEST-lab.ledgerguard.SchedulePreviewTest.xml', 6)
 browser_counts, browser, projects = suite('.evidence/playwright/junit.xml', 84)
-for prefix, count, cases in [('P08DTS',24,client), ('P08DUT',6,unit)]:
+for prefix, count, cases in [('P08DTS',25,client), ('P08DUT',6,unit)]:
     for index in range(1,count+1):
         if sum(f'{prefix}{index:02}' in c.get('name','') for c in cases) != 1:
             raise SystemExit(f'Missing/duplicate {prefix}{index:02}')

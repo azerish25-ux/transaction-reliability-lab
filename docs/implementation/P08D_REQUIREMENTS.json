@@ -160,7 +160,7 @@
         "15",
         "28"
       ],
-      "statement": "Real competing schedulers record successful/failed/skipped-late outcomes and paged history; later zone edits never reinterpret historical local times.",
+      "statement": "Real competing schedulers record SUCCEEDED/REJECTED/SKIPPED_LATE wire outcomes and paged history; later zone edits never reinterpret historical local times.",
       "tests": {
         "p08d-browser": [
           "P08DE2E01",
@@ -168,7 +168,8 @@
           "P08DE2E10"
         ],
         "p08d-client": [
-          "P08DTS20"
+          "P08DTS20",
+          "P08DTS25"
         ]
       }
     },

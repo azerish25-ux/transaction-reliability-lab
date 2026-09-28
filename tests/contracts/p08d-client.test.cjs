@@ -120,6 +120,25 @@ test('P08DTS23-read-failure-does-not-resolve-saved-write',async()=>{
 test('P08DTS24-definition-does-not-require-current-funds',()=>{
   assert.deepEqual(s.normalizeScheduleDefinition({...definition,availableMinor:'0'}),definition);
 });
+test('P08DTS25-occurrence-wire-status-agrees-with-published-schema',async()=>{
+  const schema=JSON.parse(fs.readFileSync('backend/src/main/resources/openapi/p08d-ui.json','utf8'));
+  const enums=[];
+  function collect(value) {
+    if (!value || typeof value !== 'object') return;
+    if (value.properties?.outcome?.enum) enums.push(value.properties.outcome.enum);
+    for (const child of Object.values(value)) collect(child);
+  }
+  collect(schema);
+  assert.ok(enums.some(values=>JSON.stringify([...values].sort())===JSON.stringify(['REJECTED','SKIPPED_LATE','SUCCEEDED'])),'Published occurrence status enum is required');
+  const base={id:owner,scheduleId:id,scheduleVersion:1,intendedLocal:'2030-01-10T09:30:00',dueAt:'2030-01-10T09:30:00Z',createdAt:'2030-01-10T09:30:01Z'};
+  const rejected={...base,outcome:'REJECTED',operationId:null,journalId:null,errorCode:'INSUFFICIENT_FUNDS'};
+  const response=await client([Response.json({items:[rejected],limit:20,offset:0,hasMore:false})]).scheduleOccurrences(id);
+  assert.deepEqual(response.items,[rejected]);
+  assert.equal(response.items[0].journalId,null);
+  assert.throws(()=>s.validateOccurrence({...rejected,outcome:'FAILED'},id),/Invalid occurrence/);
+  s.validateOccurrence({...base,outcome:'SKIPPED_LATE',operationId:null,journalId:null,errorCode:null},id);
+  s.validateOccurrence({...base,outcome:'SUCCEEDED',operationId:owner,journalId:owner,errorCode:null},id);
+});
 const escape=s=>String(s).replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('"','&quot;');
 (async()=>{let failures=0;const rows=[];for(const c of cases){try{await c.run();console.log('PASS',c.id);rows.push(`<testcase name="${c.id}"/>`);}catch(e){failures++;console.error('FAIL',c.id,e.stack||e.message);rows.push(`<testcase name="${c.id}"><failure message="${escape(e.message)}"/></testcase>`);}}
 fs.mkdirSync('.evidence/client',{recursive:true});fs.writeFileSync('.evidence/client/p08d-results.xml',`<testsuite name="p08d-client" tests="${cases.length}" failures="${failures}" errors="0" skipped="0">${rows.join('\n')}</testsuite>`);console.log(`P08D_CLIENT_SUMMARY tests=${cases.length} failures=${failures}`);process.exitCode=failures?1:0;})();

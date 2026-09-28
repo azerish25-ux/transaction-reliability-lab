@@ -20,7 +20,7 @@ export interface ScheduleRecord extends ScheduleDefinition, ScheduleReceipt {
 }
 export interface ScheduleOccurrence {
   id: string; scheduleId: string; scheduleVersion: number; intendedLocal: string; dueAt: string;
-  outcome: 'SUCCEEDED' | 'FAILED' | 'SKIPPED_LATE'; operationId: string | null;
+  outcome: 'SUCCEEDED' | 'REJECTED' | 'SKIPPED_LATE'; operationId: string | null;
   journalId: string | null; errorCode: string | null; createdAt: string;
 }
 export interface SchedulePreview {
@@ -113,7 +113,7 @@ export function validateScheduleRecord(value: ScheduleRecord): ScheduleRecord {
   return value;
 }
 export function validateOccurrence(value: ScheduleOccurrence, id: string): ScheduleOccurrence {
-  if (!value || value.scheduleId !== id || !['SUCCEEDED', 'FAILED', 'SKIPPED_LATE'].includes(value.outcome)) throw new TypeError('Invalid occurrence record');
+  if (!value || value.scheduleId !== id || !['SUCCEEDED', 'REJECTED', 'SKIPPED_LATE'].includes(value.outcome)) throw new TypeError('Invalid occurrence record');
   scheduleId(value.id); scheduleVersion(value.scheduleVersion); normalizeLocal(value.intendedLocal); instant(value.dueAt); instant(value.createdAt);
   if (value.operationId != null) scheduleId(value.operationId);
   if (value.journalId != null) scheduleId(value.journalId);

@@ -271,7 +271,7 @@ function Occurrences({ id, navigate }: { id: string; navigate: ProductNavigate }
   const [offset, setOffset] = useState(0);
   const load = useCallback((api: ApiClient) => api.scheduleOccurrences(id, PAGE_SIZE, offset), [id, offset]);
   const resource = useResource(load);
-  const outcome = (value: ScheduleOccurrence['outcome']) => value === 'SUCCEEDED' ? 'Succeeded' : value === 'FAILED' ? 'Failed' : 'Skipped late';
+  const outcome = (value: ScheduleOccurrence['outcome']) => value === 'SUCCEEDED' ? 'Succeeded' : value === 'REJECTED' ? 'Failed' : 'Skipped late';
   return <section className="schedule-history" aria-labelledby="occurrences-heading">
     <div className="schedule-section-heading"><div><p className="eyebrow">Immutable execution evidence</p><h2 id="occurrences-heading">Occurrence history</h2></div><button type="button" className="button button-secondary" disabled={resource.loading} onClick={resource.reload}>Refresh occurrences</button></div>
     <p>Recorded local times belong to their original definition version. UTC due instants are authoritative; a later zone edit does not reinterpret older history.</p>

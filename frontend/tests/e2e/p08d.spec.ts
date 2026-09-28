@@ -21,7 +21,15 @@ async function currentId(page: Page): Promise<string> {
 async function control(page: Page, name: 'Pause' | 'Resume' | 'Cancel'): Promise<void> {
   await page.getByRole('button', { name: `${name} schedule`, exact: true }).click();
   const dialog = page.getByRole('dialog', { name: `Confirm ${name.toLowerCase()}`, exact: true });
-  await expect(dialog).toBeVisible(); await dialog.getByRole('button', { name: 'Confirm schedule action', exact: true }).click();
+  await expect(dialog).toBeVisible();
+  // A previous receipt remains visible while a later control is submitted.
+  // Await this command's durable response rather than the previous command's heading.
+  const target = `${new URL(page.url()).pathname}/${name.toLowerCase()}`;
+  const completed = page.waitForResponse(response => response.request().method() === 'POST'
+    && new URL(response.url()).pathname === `/api/v1${target}`);
+  await dialog.getByRole('button', { name: 'Confirm schedule action', exact: true }).click();
+  expect((await completed).status()).toBe(200);
+  await expect(dialog).not.toBeVisible();
   await expect(page.getByRole('heading', { name: 'Schedule instruction confirmed' })).toBeVisible();
 }
 
@@ -156,7 +164,7 @@ test('P08DE2E07 server preview explains Halifax gap overlap and UTC without muta
 test('P08DE2E08 zero-balance customer may schedule but insufficient occurrence has no financial effect', async ({ page, lab }) => {
   const f = await fixture(lab, false); await signIn(page, f.owner); await page.goto('/schedules/new');
   await fillForm(page, f); await page.getByLabel('Intended local date and time').fill(localUTC(12)); await review(page); await confirm(page);
-  const id = await currentId(page); const history = await settledOccurrences(f, id, 1); expect(history[0]?.outcome).toBe('FAILED');
+  const id = await currentId(page); const history = await settledOccurrences(f, id, 1); expect(history[0]?.outcome).toBe('REJECTED');
   await page.getByRole('button', { name: 'Refresh schedule' }).click(); await expect(page.getByRole('heading', { name: 'Failed', exact: true })).toBeVisible();
   await expect(page.getByRole('link', { name: 'View executed transfer' })).toHaveCount(0); oracle(f, id, 1, 0, '0'); await accessible(page);
 });
@@ -190,7 +198,7 @@ test('P08DE2E10 real catch-up results paginate and retain original local history
   await page.getByRole('button', { name: 'Previous occurrence page' }).click();
   await expect(page.getByRole('heading', { name: 'Succeeded', exact: true })).toBeVisible();
   await page.getByRole('link', { name: 'Edit schedule', exact: true }).click();
-  await page.getByLabel('Intended local date and time').fill('2030-01-10T09:30:00'); await page.getByLabel('IANA time zone').fill('America/Halifax');
+  await page.getByLabel('Intended local date and time').fill('2030-01-10T09:30'); await page.getByLabel('IANA time zone').fill('America/Halifax');
   await review(page, true); await confirm(page, true); await currentId(page);
   const after = await occurrences(f, record.id); expect(after).toEqual(history); expect((await read<ScheduleRecord>(f.owner.api, `/schedules/${record.id}`)).version).toBe(2);
   await accessible(page); oracle(f, record.id, 23, 1, '100');
