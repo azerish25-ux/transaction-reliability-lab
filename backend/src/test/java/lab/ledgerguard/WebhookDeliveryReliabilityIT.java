@@ -104,7 +104,10 @@ class WebhookDeliveryReliabilityIT {
         assertNotNull(view);
         assertEquals("sandbox-receiver", view.destinationId());
         assertEquals(1, view.version());
-        assertEquals(10, scalar("SELECT count(*) FROM public.flyway_schema_history WHERE success"));
+        // P08E is additive: all ten historical migrations and exactly V11 must be present.
+        assertEquals(10, scalar("SELECT count(*) FROM public.flyway_schema_history WHERE success AND version::integer BETWEEN 1 AND 10"));
+        assertEquals(1, scalar("SELECT count(*) FROM public.flyway_schema_history WHERE success AND version='11'"));
+        assertEquals(11, scalar("SELECT count(*) FROM public.flyway_schema_history WHERE success"));
 
         String encrypted = owner.queryForObject(
             "SELECT encrypted_secret FROM ledger.webhook_endpoint_secrets WHERE endpoint_id=? AND key_version=1",
