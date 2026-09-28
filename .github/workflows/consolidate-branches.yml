@@ -1,0 +1,141 @@
+name: Audit branch consolidation
+
+on:
+  push:
+    branches: [main]
+    paths: [.github/workflows/consolidate-branches.yml]
+
+permissions:
+  contents: write
+
+concurrency:
+  group: ledgerguard-branch-consolidation
+  cancel-in-progress: false
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+        with:
+          fetch-depth: 0
+          ref: ${{ github.sha }}
+      - name: Inspect every branch and archived source without executing it
+        shell: python
+        run: |
+          import base64, difflib, hashlib, io, json, os, subprocess, tarfile
+          from pathlib import Path
+          BASE = 'e0a1f2a77b84e74e004ee2f093f563da9e1b0816'
+          BRANCHES = {
+              'p05-async-payments': '9c3faa8d9c2d54576f4f6cfafb3b3a7e9b764698',
+              'p05-staging': 'a9e1db246e7933566cb133d9b3ac47dee804a3c1',
+              'p06-payment-adjustments': '578650fe2e3ba0d4cefc4a1be92ed40f5018d941',
+              'p07a-source-export': '3b36983a9476839d77f681d4cd0fbe1699f82c48',
+              'p08c-materialize': '5a55f738c05a6914652d31672bb23a623ce6dbcd',
+          }
+          def git(*args, data=None):
+              return subprocess.check_output(['git', *args], input=data)
+          def text(*args):
+              return git(*args).decode().strip()
+          def tree(sha):
+              out = {}
+              for row in git('ls-tree', '-rz', sha).split(b'\0'):
+                  if not row: continue
+                  meta, path = row.split(b'\t', 1)
+                  mode, kind, oid = meta.decode().split()
+                  if kind == 'blob': out[path.decode()] = (mode, oid)
+              return out
+          git('fetch', '--no-tags', 'origin', '+refs/heads/*:refs/remotes/origin/*')
+          assert text('rev-parse', 'origin/main') == os.environ['GITHUB_SHA'], 'main moved before audit'
+          for name, sha in BRANCHES.items():
+              assert text('rev-parse', 'origin/' + name) == sha, name + ' moved'
+          assert text('rev-parse', 'HEAD^') == BASE, 'Unexpected reviewed main parent'
+          current = tree(BASE)
+          versions = {}
+          for sha in text('rev-list', '--first-parent', BASE).splitlines():
+              for path, (mode, oid) in tree(sha).items():
+                  versions.setdefault(path, {}).setdefault(oid, sha)
+          blob_cache = {}
+          def blob(oid):
+              if oid not in blob_cache: blob_cache[oid] = git('cat-file', 'blob', oid)
+              return blob_cache[oid]
+          def text_hash(data):
+              return hashlib.sha1(b'blob '+str(len(data)).encode()+b'\0'+data).hexdigest()
+          def review(path, content, mode=None):
+              oid = text_hash(content)
+              item = {'path': path, 'blob': oid, 'bytes': len(content)}
+              if mode: item['mode'] = mode
+              history = versions.get(path, {})
+              if current.get(path, (None,None))[1] == oid:
+                  item['status'] = 'IDENTICAL_TO_MAIN'
+              elif oid in history:
+                  item.update(status='EXACT_CONTENT_IN_MAIN_HISTORY', main_commit=history[oid])
+              elif history:
+                  source = content.decode('utf-8', 'replace')
+                  best = max(history, key=lambda v: difflib.SequenceMatcher(None, source.splitlines(), blob(v).decode('utf-8','replace').splitlines(), autojunk=False).ratio())
+                  target = blob(best).decode('utf-8','replace')
+                  diff = ''.join(difflib.unified_diff(source.splitlines(True), target.splitlines(True), fromfile='branch/'+path, tofile='main-history/'+path))
+                  item.update(status='REVIEW_DIFFERENCE', closest_main_commit=history[best], closest_main_blob=best, diff=diff)
+              else:
+                  item.update(status='PATH_NOT_IN_MAIN_HISTORY', content=content.decode('utf-8','replace')[:20000])
+              return item
+          reports = []
+          for name, sha in BRANCHES.items():
+              common = text('merge-base', BASE, sha)
+              changed = text('diff', '--name-only', common, sha).splitlines()
+              bt = tree(sha)
+              r = {'branch':name, 'sha':sha, 'merge_base':common,
+                   'unique_commits': text('rev-list', '--count', BASE+'..'+sha),
+                   'changed_paths':changed, 'files':[], 'transport_files':[], 'payloads':[]}
+              for path in changed:
+                  if path not in bt:
+                      r['files'].append({'path':path, 'status':'DELETED_ON_BRANCH'}); continue
+                  mode, oid = bt[path]
+                  if name != 'p05-async-payments':
+                      r['transport_files'].append({'path':path,'blob':oid,'mode':mode})
+                  else:
+                      r['files'].append(review(path,blob(oid),mode))
+              prefixes = {'p05-staging':'.p05/payload-', 'p06-payment-adjustments':'.p06-bundle/chunk-', 'p08c-materialize':'.github/p08c-payload.part-'}
+              hashes = {'p05-staging':'81eb67e1f7f66f816a8e6bfdfbf00247d82a4a4a1c79e279070f526088506cb1', 'p06-payment-adjustments':'d430738edfef21b4ad069a390419e6bd99a60a2df46f36825dd44f47afef5c37', 'p08c-materialize':'c4e5635e788cdab162565067ded064bd01fba8e18d4b0dd8cf280b0a2a741467'}
+              if name in prefixes:
+                  parts = sorted(path for path in bt if path.startswith(prefixes[name]))
+                  packed = base64.b64decode(b''.join(blob(bt[path][1]) for path in parts), validate=False)
+                  digest = hashlib.sha256(packed).hexdigest()
+                  assert digest == hashes[name], name+' payload checksum mismatch'
+                  payload = {'sha256':digest, 'files':[]}
+                  with tarfile.open(fileobj=io.BytesIO(packed), mode='r:gz') as archive:
+                      for member in archive:
+                          if not member.isfile(): continue
+                          path = member.name.removeprefix('./')
+                          assert not path.startswith('/') and '..' not in path.split('/'), 'unsafe archive member'
+                          assert member.size < 10000000, 'oversized member'
+                          data = archive.extractfile(member).read()
+                          payload['files'].append(review(path, data, oct(member.mode)))
+                  r['payloads'].append(payload)
+              reports.append(r)
+          report = {'reviewed_main':BASE, 'reviewed_main_tree':text('rev-parse',BASE+'^{tree}'), 'branches':reports}
+          output = Path('docs/evidence/branch-consolidation-audit.json')
+          output.parent.mkdir(parents=True, exist_ok=True)
+          output.write_text(json.dumps(report,indent=2)+'\n')
+          summary = ['# Branch consolidation audit', '', 'Reviewed main: `'+BASE+'`.', '', 'Read-only source/history audit. No feature branch was executed or deleted.', '']
+          for r in reports:
+              items = r['files'] + [item for payload in r['payloads'] for item in payload['files']]
+              counts = {}
+              for item in items: counts[item['status']] = counts.get(item['status'],0)+1
+              summary += ['## '+r['branch'], '', '`'+r['sha']+'`; unique commits: '+r['unique_commits']+'.', '', json.dumps(counts), '']
+              for item in items:
+                  if item['status'] in ('REVIEW_DIFFERENCE','PATH_NOT_IN_MAIN_HISTORY','DELETED_ON_BRANCH'):
+                      summary += ['### '+item['path'], '', item['status'], '', '```diff', item.get('diff', item.get('content','')), '```','']
+          Path('docs/evidence/branch-consolidation-audit.md').write_text('\n'.join(summary)+'\n')
+          print(json.dumps({'reviewed_main': BASE, 'branches':[{'name':r['branch'],'unique_commits':r['unique_commits']} for r in reports]}))
+      - name: Publish the audit only; preserve every branch until review
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add docs/evidence/branch-consolidation-audit.json docs/evidence/branch-consolidation-audit.md
+          git diff --cached --check
+          git commit -m 'docs: record branch source audit before consolidation [skip ci]'
+          git push origin HEAD:refs/heads/main
