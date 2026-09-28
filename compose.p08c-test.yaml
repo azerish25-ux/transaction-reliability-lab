@@ -1,0 +1,6 @@
+# Disposable browser campaign only. Normal application's auth defaults are unchanged.
+# Unique identities retain the normal per-identity throttle; one CI IP provisions many actors.
+services:
+  api:
+    environment:
+      SPRING_APPLICATION_JSON: '{"ledgerguard":{"auth":{"ip-limit":1000}}}'

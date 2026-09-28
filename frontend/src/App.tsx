@@ -1,3 +1,4 @@
+import { UnresolvedBanner, unresolved, useStoredIntent } from './product-ui.js';
 import {
   useCallback,
   useEffect,
@@ -159,6 +160,7 @@ function Brand({ navigate }: { navigate: Navigate }): JSX.Element {
 
 function ProductFrame({ navigate, children }: PropsWithChildren<{ navigate: Navigate }>): JSX.Element {
   const session = useSession();
+  const { current: preservedIntent } = useStoredIntent();
   const [loggingOut, setLoggingOut] = useState(false);
   const [logoutError, setLogoutError] = useState<unknown>();
   const logout = async () => {
@@ -186,6 +188,7 @@ function ProductFrame({ navigate, children }: PropsWithChildren<{ navigate: Navi
         </nav>
       </header>
       {logoutError !== undefined && <div className="shell-problem"><ProblemPanel failure={logoutError} /></div>}
+      {unresolved(preservedIntent) && <div className="intent-banner-wrap"><UnresolvedBanner record={preservedIntent} navigate={(path, options) => navigate(path, options?.replace)} /></div>}
       <main id="main-content" tabIndex={-1}>{children}</main>
       <footer className="site-footer">
         <span>P08A product interface</span>

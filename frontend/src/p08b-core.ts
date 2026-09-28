@@ -55,12 +55,15 @@ export function intentRecoveryPath(record: Pick<StoredIntent, 'kind' | 'intent'>
   switch (record.kind) {
     case 'transfers': return '/transfers/new';
     case 'payments': return '/payments/new';
+    case 'payment-refunds':
     case 'payment-cancellations': {
       const paymentId = 'paymentId' in record.intent ? record.intent.paymentId : '';
       return /^[0-9a-f-]{36}$/i.test(paymentId) ? `/payments/${paymentId}` : '/payments';
     }
-    case 'payment-refunds':
-    case 'payment-reversals': return '/payments';
+    case 'payment-reversals': {
+      const paymentId = 'paymentId' in record.intent ? record.intent.paymentId : '';
+      return /^[0-9a-f-]{36}$/i.test(paymentId) ? `/admin/payments/${paymentId}/reversal` : '/admin/adjustments';
+    }
   }
 }
 

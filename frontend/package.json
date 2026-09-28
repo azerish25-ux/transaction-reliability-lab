@@ -9,10 +9,11 @@
     "preview": "vite preview --host 127.0.0.1",
     "typecheck:core": "tsc --project tsconfig.core.json",
     "typecheck:app": "tsc --project tsconfig.app.json --noEmit",
-    "typecheck": "npm run typecheck:core && npm run typecheck:app",
-    "test:contracts": "cd .. && node tests/contracts/client.test.cjs && node tests/contracts/auth-client.test.cjs && node tests/contracts/transfer-client.test.cjs && node tests/contracts/payment-client.test.cjs && node tests/contracts/payment-adjustment-client.test.cjs && node tests/contracts/webhook-client.test.cjs && node tests/contracts/p08a-client.test.cjs && node tests/contracts/p08b-client.test.cjs",
+    "typecheck": "npm run typecheck:core && npm run typecheck:app && npm run typecheck:e2e",
+    "test:contracts": "cd .. && node tests/contracts/client.test.cjs && node tests/contracts/auth-client.test.cjs && node tests/contracts/transfer-client.test.cjs && node tests/contracts/payment-client.test.cjs && node tests/contracts/payment-adjustment-client.test.cjs && node tests/contracts/webhook-client.test.cjs && node tests/contracts/p08a-client.test.cjs && node tests/contracts/p08b-client.test.cjs && node tests/contracts/p08c-client.test.cjs",
     "test:e2e": "playwright test --config playwright.config.ts",
-    "verify": "npm run typecheck && npm run test:contracts && npm run build"
+    "verify": "npm run typecheck && npm run test:contracts && npm run build",
+    "typecheck:e2e": "tsc --project tsconfig.e2e.json --noEmit"
   },
   "dependencies": {
     "react": "18.3.1",
@@ -26,6 +27,7 @@
     "typescript": "5.8.3",
     "vite": "5.4.14",
     "@types/node": "22.13.10",
-    "@vitejs/plugin-react": "4.3.4"
+    "@vitejs/plugin-react": "4.3.4",
+    "playwright-core": "1.51.1"
   }
 }

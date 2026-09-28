@@ -23,6 +23,13 @@ export interface PaymentRecord { id: string; direction: 'OUTGOING' | 'INCOMING';
 export interface CancellationReceipt { id: string; state: 'CANCELLED'; }
 export interface AdjustmentReceipt { id: string; paymentId: string; kind: 'REFUND' | 'REVERSAL'; amountMinor: string; currency: Currency; journalId: string; }
 export interface PaymentAdjustment { id: string; paymentId: string; kind: 'REFUND' | 'REVERSAL'; amountMinor: string; currency: Currency; journalId: string; reason: string; createdAt: string; }
+export interface PaymentAdjustmentContext {
+  paymentId: string; state: PaymentRecord['state']; adjustmentState: PaymentRecord['adjustmentState'];
+  amountMinor: string; refundedMinor: string; remainingRefundableMinor: string; currency: Currency;
+  journalId: string | null; version: string; payerRef: string; recipientRef: string;
+  recipientAvailableMinor: string | null; recipientBalanceVersion: string | null;
+  canRefund: boolean; canReverse: boolean; refundDisabledReason: string | null; reversalDisabledReason: string | null;
+}
 export interface PaymentCancellationIntent { paymentId: string; reason?: string; }
 export interface PaymentRefundIntent { paymentId: string; amountMinor: string; reason?: string; }
 export interface PaymentReversalIntent { paymentId: string; reason: string; }
@@ -89,6 +96,17 @@ export function normalizePaymentRefundIntent(input: PaymentRefundIntent): Paymen
 }
 export function normalizePaymentReversalIntent(input: PaymentReversalIntent): PaymentReversalIntent {
   return Object.freeze({ paymentId: identity(input.paymentId, 'payment'), reason: reason(input.reason, true)! });
+}
+
+function adjustmentResponse(response: CommandResponse<AdjustmentReceipt>, paymentId: string, kind: 'REFUND' | 'REVERSAL', expectedAmount?: string): CommandResponse<AdjustmentReceipt> {
+  try {
+    const body = response.body;
+    if (response.status !== 201 || !body || body.paymentId !== paymentId || body.kind !== kind
+      || !UUID.test(body.id) || !UUID.test(body.journalId) || minor(body.amountMinor, MAX_TRANSACTION) === 0n
+      || (expectedAmount !== undefined && body.amountMinor !== expectedAmount)) throw new TypeError('Invalid adjustment receipt');
+    currency(body.currency);
+    return response;
+  } catch { throw new OutcomeUnknown(); }
 }
 
 export class ApiClient {
@@ -165,11 +183,13 @@ export class ApiClient {
     const input = normalizePaymentRefundIntent({ paymentId: id, amountMinor, reason: refundReason });
     const body: { amountMinor: string; reason?: string } = { amountMinor: input.amountMinor };
     if (input.reason !== undefined) body.reason = input.reason;
-    return this.command<AdjustmentReceipt>(`/payments/${input.paymentId}/refunds`, body, key);
+    return this.command<AdjustmentReceipt>(`/payments/${input.paymentId}/refunds`, body, key)
+      .then(response => adjustmentResponse(response, input.paymentId, 'REFUND', input.amountMinor));
   }
   reversePayment(id: string, reversalReason: string, key: string): Promise<CommandResponse<AdjustmentReceipt>> {
     const input = normalizePaymentReversalIntent({ paymentId: id, reason: reversalReason });
-    return this.command<AdjustmentReceipt>(`/payments/${input.paymentId}/reversal`, { reason: input.reason }, key);
+    return this.command<AdjustmentReceipt>(`/payments/${input.paymentId}/reversal`, { reason: input.reason }, key)
+      .then(response => adjustmentResponse(response, input.paymentId, 'REVERSAL'));
   }
   paymentAdjustments(id: string, limit = 50, offset = 0): Promise<Page<PaymentAdjustment>> {
     const paymentId = identity(id, 'payment');
@@ -178,6 +198,9 @@ export class ApiClient {
   }
   paymentAdjustment(id: string, adjustmentId: string): Promise<PaymentAdjustment> {
     return this.get<PaymentAdjustment>(`/payments/${identity(id, 'payment')}/adjustments/${identity(adjustmentId, 'adjustment')}`);
+  }
+  paymentAdjustmentContext(id: string, administrator = false): Promise<PaymentAdjustmentContext> {
+    return this.get<PaymentAdjustmentContext>(`${administrator ? '/admin' : ''}/payments/${identity(id, 'payment')}/adjustment-context`);
   }
   async command<T>(path: string, body: unknown, key?: string): Promise<CommandResponse<T>> {
     if (!this.csrf) await this.csrfToken();
@@ -207,6 +230,7 @@ export class ApiClient {
       });
     } catch (cause) {
       if (method === 'POST' && key) throw new OutcomeUnknown();
+      if (method === 'GET') throw new Error('Authoritative data could not be loaded. Refresh to retry; no financial outcome has been inferred.', { cause });
       throw cause;
     }
     if (method === 'POST' && key && (response.status >= 500 || response.status === 408)) throw new OutcomeUnknown();

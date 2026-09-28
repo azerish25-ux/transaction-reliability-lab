@@ -1,3 +1,7 @@
+# P08C source candidate — exact-SHA verification pending
+
+P08C refund/reversal UI source is implemented with scoped server review and regression coverage. Existing durable P08B evidence below remains historical, not evidence for P08C. The final product remains INCOMPLETE / NO_GO.
+
 # Delivery record — P08B verified
 
 Repository: `azerish25-ux/transaction-reliability-lab`

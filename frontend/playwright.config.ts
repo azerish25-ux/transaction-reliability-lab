@@ -20,7 +20,7 @@ export default defineConfig({
   fullyParallel: false,
   workers: 1,
   forbidOnly: Boolean(process.env.CI),
-  retries: process.env.CI ? 1 : 0,
+  retries: 0,
   timeout: 45_000,
   expect: { timeout: 8_000 },
   reporter: [
@@ -35,7 +35,7 @@ export default defineConfig({
     trace: 'retain-on-failure',
     screenshot: 'only-on-failure',
     video: 'retain-on-failure',
-    reducedMotion: 'reduce'
+    contextOptions: { reducedMotion: 'reduce' }
   },
   projects: [
     { name: 'chromium-desktop', use: { ...devices['Desktop Chrome'], viewport: { width: 1440, height: 900 } } },

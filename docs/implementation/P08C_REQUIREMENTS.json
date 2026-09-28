@@ -1,0 +1,208 @@
+{
+  "phase": "P08C",
+  "sourceContract": "docs/implementation/MASTER_SPEC.md",
+  "scope": "Customer refund and narrow ADMIN full reversal interface. Existing P06 multi-instance concurrency/authorization proofs remain mandatory; P08C adds browser stale/racing adjustment and independent journal oracles. Schedules, webhooks, broader administrator UI and P09-P11 remain incomplete.",
+  "requirements": [
+    {
+      "id": "P08C-R01",
+      "sections": [
+        "5",
+        "9",
+        "15"
+      ],
+      "statement": "Recipient-owner partial/full refunds use exact currency amounts, explicit confirmation, separate immutable journals and authoritative unrefunded totals.",
+      "tests": {
+        "p08c-browser": [
+          "P08CE2E01",
+          "P08CE2E02"
+        ],
+        "p08c-client": [
+          "P08CTS01",
+          "P08CTS02",
+          "P08CTS16"
+        ],
+        "p08c-postgres-http": [
+          "P08CIT02"
+        ]
+      }
+    },
+    {
+      "id": "P08C-R02",
+      "sections": [
+        "9",
+        "13",
+        "15"
+      ],
+      "statement": "Only ADMIN can inspect the narrow reversal surface and submit a full otherwise-unadjusted settlement reversal with a mandatory reason.",
+      "tests": {
+        "p08c-browser": [
+          "P08CE2E04",
+          "P08CE2E07"
+        ],
+        "p08c-client": [
+          "P08CTS15",
+          "P08CTS18"
+        ],
+        "p08c-postgres-http": [
+          "P08CIT01",
+          "P08CIT02"
+        ]
+      }
+    },
+    {
+      "id": "P08C-R03",
+      "sections": [
+        "8",
+        "13",
+        "15"
+      ],
+      "statement": "Lost committed refund/reversal responses preserve the exact request/key across reload and reauthentication and return one adjustment effect on replay.",
+      "tests": {
+        "p08c-browser": [
+          "P08CE2E03",
+          "P08CE2E05"
+        ],
+        "p08c-client": [
+          "P08CTS04",
+          "P08CTS05",
+          "P08CTS06",
+          "P08CTS07",
+          "P08CTS08",
+          "P08CTS09",
+          "P08CTS10",
+          "P08CTS11",
+          "P08CTS12",
+          "P08CTS13",
+          "P08CTS14"
+        ],
+        "p08c-postgres-http": [
+          "P08CIT01"
+        ]
+      }
+    },
+    {
+      "id": "P08C-R04",
+      "sections": [
+        "13",
+        "14",
+        "15"
+      ],
+      "statement": "Owner-filtered context and nested receipts deny outsiders and ordinary payer refund authority; recipient balance/version is not disclosed to the payer.",
+      "tests": {
+        "p08c-browser": [
+          "P08CE2E06",
+          "P08CE2E10"
+        ],
+        "p08c-client": [
+          "P08CTS03",
+          "P08CTS13",
+          "P08CTS17"
+        ],
+        "p08c-postgres-http": [
+          "P08CIT01",
+          "P08CIT03"
+        ]
+      }
+    },
+    {
+      "id": "P08C-R05",
+      "sections": [
+        "7",
+        "9",
+        "16"
+      ],
+      "statement": "Competing/stale refunds, reversal-after-refund, refund-after-reversal and reversal/spending limits cannot overcompensate or manufacture funds; immutable entries independently reconcile.",
+      "tests": {
+        "p08c-browser": [
+          "P08CE2E04",
+          "P08CE2E07",
+          "P08CE2E08",
+          "P08CE2E09"
+        ],
+        "p08c-client": [
+          "P08CTS16",
+          "P08CTS18"
+        ],
+        "p08c-postgres-http": [
+          "P08CIT02"
+        ]
+      }
+    },
+    {
+      "id": "P08C-R06",
+      "sections": [
+        "9",
+        "14",
+        "15"
+      ],
+      "statement": "Receipts and paged history retain original and adjustment journals, separate base/adjustment states, and do not convert failed lookups into financial failure.",
+      "tests": {
+        "p08c-browser": [
+          "P08CE2E01",
+          "P08CE2E10"
+        ],
+        "p08c-client": [
+          "P08CTS02",
+          "P08CTS11"
+        ],
+        "p08c-postgres-http": [
+          "P08CIT02"
+        ]
+      }
+    },
+    {
+      "id": "P08C-R07",
+      "sections": [
+        "15",
+        "20",
+        "21"
+      ],
+      "statement": "Critical customer/admin forms, dialogs, receipts, validation and denial pages execute authenticated axe and keyboard/focus checks at desktop/tablet/mobile with no functional retries.",
+      "tests": {
+        "p08c-browser": [
+          "P08CE2E01",
+          "P08CE2E02",
+          "P08CE2E04",
+          "P08CE2E06",
+          "P08CE2E07",
+          "P08CE2E09",
+          "P08CE2E10"
+        ],
+        "p08c-client": [
+          "P08CTS14",
+          "P08CTS15"
+        ],
+        "p08c-postgres-http": [
+          "P08CIT03"
+        ]
+      }
+    },
+    {
+      "id": "P08C-R08",
+      "sections": [
+        "24",
+        "25",
+        "28"
+      ],
+      "statement": "Permanent exact-SHA P08C gate preserves P01-P08B and binds requirements to actually executed contracts, PostgreSQL/HTTP cases and real Compose browser journeys.",
+      "tests": {
+        "p08c-browser": [
+          "P08CE2E01",
+          "P08CE2E03",
+          "P08CE2E04",
+          "P08CE2E05"
+        ],
+        "p08c-client": [
+          "P08CTS03",
+          "P08CTS04",
+          "P08CTS05"
+        ],
+        "p08c-postgres-http": [
+          "P08CIT01",
+          "P08CIT02",
+          "P08CIT03"
+        ]
+      }
+    }
+  ]
+}

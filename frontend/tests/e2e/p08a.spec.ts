@@ -15,8 +15,7 @@ function runtimeEnvironment(): Record<string, string> {
 }
 
 const runtime = runtimeEnvironment();
-const demoPassword = runtime.LEDGER_DEMO_PASSWORD;
-if (!demoPassword) throw new Error('LEDGER_DEMO_PASSWORD is missing');
+const demoPassword: string = runtime.LEDGER_DEMO_PASSWORD ?? (() => { throw new Error('LEDGER_DEMO_PASSWORD is missing'); })();
 
 interface BrowserError {
   text: string;

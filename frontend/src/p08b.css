@@ -222,3 +222,8 @@
   .p08b-shell *::before,
   .p08b-shell *::after { scroll-behavior: auto !important; transition-duration: .01ms !important; animation-duration: .01ms !important; animation-iteration-count: 1 !important; }
 }
+
+/* Native modality supplies focus containment and makes the background inert. */
+dialog.dialog { color: var(--ink); background: var(--surface); border: 1px solid var(--line); width: min(40rem, calc(100vw - 2rem)); max-height: calc(100dvh - 2rem); overflow: auto; }
+dialog.dialog::backdrop { background: rgba(19, 35, 29, 0.52); }
+dialog.dialog:not([open]) { display: none; }

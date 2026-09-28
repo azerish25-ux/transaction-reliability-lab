@@ -85,7 +85,13 @@ export class IntentStore {
       return response;
     } catch (failure) {
       if (failure instanceof OutcomeUnknown) this.transition('UNCERTAIN');
-      else if (failure instanceof ApiError && failure.status < 500) this.transition('REJECTED');
+      else if (failure instanceof ApiError && failure.status < 500) {
+        const admissionFailure = failure.status === 401 || failure.status === 429
+          || failure.problem.code === 'CSRF_INVALID' || failure.problem.code === 'IDEMPOTENCY_CONFLICT';
+        const stillUncertain = this.current()?.state === 'UNCERTAIN';
+        const durableRejection = failure.status === 409 || failure.status === 422;
+        if (!admissionFailure && (!stillUncertain || durableRejection)) this.transition('REJECTED');
+      }
       throw failure;
     }
   }

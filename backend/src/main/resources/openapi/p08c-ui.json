@@ -1,0 +1,1069 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "LedgerGuard P08C adjustment interface",
+    "version": "0.8.3",
+    "description": "Synthetic money only. Scoped real customer refunds and ADMIN full reversals; preserves immutable settlement and exact-SHA verification boundary. NOT a production financial service. CAD/USD 2 decimals, JPY 0, KWD 3; no conversion."
+  },
+  "servers": [
+    {
+      "url": "/api/v1"
+    }
+  ],
+  "security": [
+    {
+      "SandboxSession": []
+    },
+    {
+      "SecureSession": []
+    }
+  ],
+  "paths": {
+    "/payments/{paymentId}/adjustment-context": {
+      "get": {
+        "operationId": "customerPaymentAdjustmentContext",
+        "description": "CUSTOMER participant only. Recipient may refund; payer may inspect without recipient balances or refund authority.",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/PaymentId"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Authoritative authorized review snapshot",
+            "headers": {
+              "Cache-Control": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Contains no-store; this contract does not require a particular directive ordering."
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdjustmentContext"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Malformed ID, amount, key, reason or pagination.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Session absent, expired or revoked. Retain any previously uncertain instruction.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Role/owner not authorized, invalid CSRF, or missing required administrative reason.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Missing payment/adjustment, unrelated owner, or mismatched parent resource.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Dependency unavailable; outcome may require same-key resolution.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/admin/payments/{paymentId}/adjustment-context": {
+      "get": {
+        "operationId": "adminPaymentAdjustmentContext",
+        "description": "ADMIN-only narrow payment review.",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/PaymentId"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Authoritative authorized review snapshot",
+            "headers": {
+              "Cache-Control": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Contains no-store; this contract does not require a particular directive ordering."
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdjustmentContext"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Malformed ID, amount, key, reason or pagination.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Session absent, expired or revoked. Retain any previously uncertain instruction.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Role/owner not authorized, invalid CSRF, or missing required administrative reason.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Missing payment/adjustment, unrelated owner, or mismatched parent resource.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Dependency unavailable; outcome may require same-key resolution.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/payments/{paymentId}/refunds": {
+      "post": {
+        "operationId": "refundPayment",
+        "description": "Original recipient owner or ADMIN. Partial/full refund; total cannot exceed settled amount; no refunds after reversal. Recipient availability is locked and rechecked.",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/PaymentId"
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          },
+          {
+            "$ref": "#/components/parameters/CsrfHeader"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Refund"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Committed immutable compensating posting or exact original replay. Base state remains SETTLED.",
+            "headers": {
+              "Cache-Control": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Contains no-store; this contract does not require a particular directive ordering."
+              },
+              "Idempotency-Replayed": {
+                "schema": {
+                  "type": "string",
+                  "enum": [
+                    "true",
+                    "false"
+                  ]
+                }
+              },
+              "Location": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "/api/v1/payments/{paymentId}/adjustments/{adjustmentId}"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdjustmentReceipt"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Malformed ID, amount, key, reason or pagination.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Session absent, expired or revoked. Retain any previously uncertain instruction.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Role/owner not authorized, invalid CSRF, or missing required administrative reason.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Missing payment/adjustment, unrelated owner, or mismatched parent resource.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflicting idempotency intent or forbidden adjustment transition. IDEMPOTENCY_CONFLICT does not resolve the original uncertain instruction.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "EXCESS_REFUND or INSUFFICIENT_FUNDS; no partial posting.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limited; retain original request/key.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Dependency unavailable; outcome may require same-key resolution.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/payments/{paymentId}/reversal": {
+      "post": {
+        "operationId": "reversePayment",
+        "description": "ADMIN only; mandatory reason; full amount; otherwise unadjusted SETTLED payment; reject after any refund/reversal. Recipient availability is locked and rechecked. No generic balance editing.",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/PaymentId"
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          },
+          {
+            "$ref": "#/components/parameters/CsrfHeader"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Reversal"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Committed immutable compensating posting or exact original replay. Base state remains SETTLED.",
+            "headers": {
+              "Cache-Control": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Contains no-store; this contract does not require a particular directive ordering."
+              },
+              "Idempotency-Replayed": {
+                "schema": {
+                  "type": "string",
+                  "enum": [
+                    "true",
+                    "false"
+                  ]
+                }
+              },
+              "Location": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "/api/v1/payments/{paymentId}/adjustments/{adjustmentId}"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdjustmentReceipt"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Malformed ID, amount, key, reason or pagination.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Session absent, expired or revoked. Retain any previously uncertain instruction.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Role/owner not authorized, invalid CSRF, or missing required administrative reason.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Missing payment/adjustment, unrelated owner, or mismatched parent resource.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflicting idempotency intent or forbidden adjustment transition. IDEMPOTENCY_CONFLICT does not resolve the original uncertain instruction.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "EXCESS_REFUND or INSUFFICIENT_FUNDS; no partial posting.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limited; retain original request/key.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Dependency unavailable; outcome may require same-key resolution.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/payments/{paymentId}/adjustments": {
+      "get": {
+        "operationId": "paymentAdjustments",
+        "description": "Participant owner or ADMIN; query-time authorization, deterministic created_at DESC / id DESC pagination. Do not calculate total refundable value by summing one page.",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/PaymentId"
+          },
+          {
+            "$ref": "#/components/parameters/Limit"
+          },
+          {
+            "$ref": "#/components/parameters/Offset"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Immutable adjustment page",
+            "headers": {
+              "Cache-Control": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Contains no-store; this contract does not require a particular directive ordering."
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdjustmentPage"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Malformed ID, amount, key, reason or pagination.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Session absent, expired or revoked. Retain any previously uncertain instruction.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Role/owner not authorized, invalid CSRF, or missing required administrative reason.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Missing payment/adjustment, unrelated owner, or mismatched parent resource.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Dependency unavailable; outcome may require same-key resolution.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/payments/{paymentId}/adjustments/{adjustmentId}": {
+      "get": {
+        "operationId": "paymentAdjustment",
+        "description": "Participant owner or ADMIN; parent/payment pairing must match.",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/PaymentId"
+          },
+          {
+            "$ref": "#/components/parameters/AdjustmentId"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Immutable receipt with journal, time and recorded reason",
+            "headers": {
+              "Cache-Control": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Contains no-store; this contract does not require a particular directive ordering."
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Adjustment"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Malformed ID, amount, key, reason or pagination.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Session absent, expired or revoked. Retain any previously uncertain instruction.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Role/owner not authorized, invalid CSRF, or missing required administrative reason.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Missing payment/adjustment, unrelated owner, or mismatched parent resource.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Dependency unavailable; outcome may require same-key resolution.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/auth/csrf": {
+      "get": {
+        "operationId": "adjustmentCsrfToken",
+        "security": [],
+        "responses": {
+          "200": {
+            "description": "CSRF headerName and token; authentication material must not enter intent storage.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "headerName",
+                    "token"
+                  ],
+                  "properties": {
+                    "headerName": {
+                      "type": "string",
+                      "const": "X-XSRF-TOKEN"
+                    },
+                    "token": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "SandboxSession": {
+        "type": "apiKey",
+        "in": "cookie",
+        "name": "LG-SESSION",
+        "description": "Local HTTP sandbox only."
+      },
+      "SecureSession": {
+        "type": "apiKey",
+        "in": "cookie",
+        "name": "__Host-LG-SESSION",
+        "description": "HTTPS HttpOnly Secure session; no authentication tokens in localStorage."
+      }
+    },
+    "parameters": {
+      "PaymentId": {
+        "name": "paymentId",
+        "in": "path",
+        "required": true,
+        "schema": {
+          "type": "string",
+          "format": "uuid"
+        }
+      },
+      "AdjustmentId": {
+        "name": "adjustmentId",
+        "in": "path",
+        "required": true,
+        "schema": {
+          "type": "string",
+          "format": "uuid"
+        }
+      },
+      "IdempotencyKey": {
+        "name": "Idempotency-Key",
+        "in": "header",
+        "required": true,
+        "schema": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{7,127}$"
+        },
+        "description": "Scope: authenticated actor, operation kind and parent payment. Retain original normalized request/key through timeout, reload and reauthentication. Same-key changed intent is 409; successful replay returns the original 201 body, not a new adjustment."
+      },
+      "CsrfHeader": {
+        "name": "X-XSRF-TOKEN",
+        "in": "header",
+        "required": true,
+        "schema": {
+          "type": "string"
+        },
+        "description": "Acquire with GET /auth/csrf using the current same-origin cookie session."
+      },
+      "Limit": {
+        "name": "limit",
+        "in": "query",
+        "schema": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 100,
+          "default": 50
+        }
+      },
+      "Offset": {
+        "name": "offset",
+        "in": "query",
+        "schema": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 10000,
+          "default": 0
+        }
+      }
+    },
+    "schemas": {
+      "AdjustmentContext": {
+        "type": "object",
+        "required": [
+          "paymentId",
+          "state",
+          "adjustmentState",
+          "amountMinor",
+          "refundedMinor",
+          "remainingRefundableMinor",
+          "currency",
+          "journalId",
+          "version",
+          "payerRef",
+          "recipientRef",
+          "recipientAvailableMinor",
+          "recipientBalanceVersion",
+          "canRefund",
+          "canReverse",
+          "refundDisabledReason",
+          "reversalDisabledReason"
+        ],
+        "properties": {
+          "paymentId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "state": {
+            "type": "string",
+            "enum": [
+              "PENDING",
+              "SETTLED",
+              "FAILED",
+              "CANCELLED"
+            ]
+          },
+          "adjustmentState": {
+            "type": "string",
+            "enum": [
+              "NONE",
+              "PARTIALLY_REFUNDED",
+              "FULLY_REFUNDED",
+              "REVERSED"
+            ]
+          },
+          "amountMinor": {
+            "type": "string",
+            "pattern": "^(0|[1-9][0-9]*)$",
+            "description": "Exact integer minor units, never a floating-point JSON number."
+          },
+          "refundedMinor": {
+            "type": "string",
+            "pattern": "^(0|[1-9][0-9]*)$",
+            "description": "Exact integer minor units, never a floating-point JSON number."
+          },
+          "remainingRefundableMinor": {
+            "type": "string",
+            "pattern": "^(0|[1-9][0-9]*)$",
+            "description": "Exact integer minor units, never a floating-point JSON number."
+          },
+          "currency": {
+            "type": "string",
+            "enum": [
+              "CAD",
+              "USD",
+              "JPY",
+              "KWD"
+            ]
+          },
+          "journalId": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "version": {
+            "type": "string",
+            "pattern": "^(0|[1-9][0-9]*)$",
+            "description": "Exact integer minor units, never a floating-point JSON number."
+          },
+          "payerRef": {
+            "type": "string"
+          },
+          "recipientRef": {
+            "type": "string"
+          },
+          "recipientAvailableMinor": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^(0|[1-9][0-9]*)$",
+                "description": "Exact integer minor units, never a floating-point JSON number."
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "recipientBalanceVersion": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^(0|[1-9][0-9]*)$",
+                "description": "Exact integer minor units, never a floating-point JSON number."
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "canRefund": {
+            "type": "boolean"
+          },
+          "canReverse": {
+            "type": "boolean"
+          },
+          "refundDisabledReason": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "reversalDisabledReason": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "description": "One authorized database statement reads the parent and recipient balance. Payers see null recipient balance/version. Eligibility is informational and is rechecked under the financial locks. Original base settlement state is not rewritten."
+      },
+      "AdjustmentReceipt": {
+        "type": "object",
+        "required": [
+          "id",
+          "paymentId",
+          "kind",
+          "amountMinor",
+          "currency",
+          "journalId"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "paymentId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "REFUND",
+              "REVERSAL"
+            ]
+          },
+          "amountMinor": {
+            "type": "string",
+            "pattern": "^(0|[1-9][0-9]*)$",
+            "description": "Exact integer minor units, never a floating-point JSON number."
+          },
+          "currency": {
+            "type": "string",
+            "enum": [
+              "CAD",
+              "USD",
+              "JPY",
+              "KWD"
+            ]
+          },
+          "journalId": {
+            "type": "string",
+            "format": "uuid"
+          }
+        }
+      },
+      "Adjustment": {
+        "type": "object",
+        "required": [
+          "id",
+          "paymentId",
+          "kind",
+          "amountMinor",
+          "currency",
+          "journalId",
+          "reason",
+          "createdAt"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "paymentId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "REFUND",
+              "REVERSAL"
+            ]
+          },
+          "amountMinor": {
+            "type": "string",
+            "pattern": "^(0|[1-9][0-9]*)$",
+            "description": "Exact integer minor units, never a floating-point JSON number."
+          },
+          "currency": {
+            "type": "string",
+            "enum": [
+              "CAD",
+              "USD",
+              "JPY",
+              "KWD"
+            ]
+          },
+          "journalId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "reason": {
+            "type": "string",
+            "maxLength": 500
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "AdjustmentPage": {
+        "type": "object",
+        "required": [
+          "items",
+          "limit",
+          "offset",
+          "hasMore"
+        ],
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Adjustment"
+            }
+          },
+          "limit": {
+            "type": "integer"
+          },
+          "offset": {
+            "type": "integer"
+          },
+          "hasMore": {
+            "type": "boolean"
+          }
+        }
+      },
+      "Refund": {
+        "type": "object",
+        "required": [
+          "amountMinor"
+        ],
+        "properties": {
+          "amountMinor": {
+            "type": "string",
+            "pattern": "^[1-9][0-9]*$",
+            "description": "Positive amount at most 1000000000000, no greater than unrefunded settlement or current recipient availability. Currency is inherited from the original payment."
+          },
+          "reason": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 500,
+            "description": "Trimmed before fingerprinting; no sensitive information."
+          }
+        }
+      },
+      "Reversal": {
+        "type": "object",
+        "required": [
+          "reason"
+        ],
+        "properties": {
+          "reason": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 500,
+            "description": "Trimmed before fingerprinting; no sensitive information."
+          }
+        }
+      },
+      "Problem": {
+        "type": "object",
+        "required": [
+          "code",
+          "message",
+          "correlationId"
+        ],
+        "properties": {
+          "code": {
+            "type": "string"
+          },
+          "message": {
+            "type": "string"
+          },
+          "correlationId": {
+            "type": "string"
+          },
+          "validation": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    }
+  }
+}

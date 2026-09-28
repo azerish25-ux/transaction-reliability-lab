@@ -200,4 +200,61 @@ class PaymentAdjustmentReliabilityIT {
         Response p06=anonymous.call("GET","/openapi/p06.json",null);status(200,p06);var spec=JSON.readTree(p06.asString());for(String path:List.of("/api/v1/payments/{id}/cancel","/api/v1/payments/{id}/refunds","/api/v1/payments/{id}/reversal","/api/v1/payments/{id}/adjustments","/api/v1/payments/{id}/adjustments/{adjustmentId}"))assertTrue(spec.path("paths").has(path),path);Response p05=anonymous.call("GET","/openapi/p05.json",null);assertFalse(JSON.readTree(p05.asString()).path("paths").has("/api/v1/payments/{id}/cancel"));assertEquals(8,scalar("SELECT count(*) FROM public.flyway_schema_history WHERE success"));
         try(Connection c=runtime();Statement s=c.createStatement()){assertEquals("42501",assertThrows(SQLException.class,()->s.execute("INSERT INTO ledger.adjustments(id,payment_id,actor_id,kind,amount_minor,journal_id,reason) VALUES(gen_random_uuid(),gen_random_uuid(),gen_random_uuid(),'REFUND',1,gen_random_uuid(),'forged')")).getSQLState());assertEquals("42501",assertThrows(SQLException.class,()->s.execute("SELECT ledger._post(gen_random_uuid(),'REFUND',gen_random_uuid(),gen_random_uuid(),1,'CAD')")).getSQLState());}
     }
+
+    @Test void P08CIT01_contextIsOwnerScopedAndDoesNotLeakRecipientBalance() throws Exception {
+        Fixture f=settled(2500); User outsider=user(),administrator=admin();
+        String path="/payments/"+f.paymentId+"/adjustment-context";
+        Response recipient=f.recipient.browser.call("GET",path,null); status(200,recipient);
+        assertEquals("2500",recipient.jsonPath().getString("remainingRefundableMinor"));
+        assertEquals("2500",recipient.jsonPath().getString("recipientAvailableMinor"));
+        assertTrue(recipient.jsonPath().getBoolean("canRefund"));
+        assertEquals("no-store",recipient.header("Cache-Control"));
+        Response payer=f.payer.browser.call("GET",path,null); status(200,payer);
+        assertNull(payer.jsonPath().get("recipientAvailableMinor"));
+        assertNull(payer.jsonPath().get("recipientBalanceVersion"));
+        assertFalse(payer.jsonPath().getBoolean("canRefund"));
+        status(404,outsider.browser.call("GET",path,null));
+        status(403,f.payer.browser.call("GET","/admin"+path,null));
+        status(403,administrator.browser.call("GET",path,null));
+        Response adminContext=administrator.browser.call("GET","/admin"+path,null); status(200,adminContext);
+        assertTrue(adminContext.jsonPath().getBoolean("canReverse"));
+        assertEquals(f.settlementJournal.toString(),adminContext.jsonPath().getString("journalId"));
+    }
+
+    @Test void P08CIT02_contextTracksPartialFullAndReversedWithoutEditingSettlement() throws Exception {
+        Fixture f=settled(2500); User administrator=admin();
+        status(201,refund(f.recipient.browser,f.paymentId,"p08c-partial-02",Map.of("amountMinor","1000")));
+        String path="/payments/"+f.paymentId+"/adjustment-context";
+        Response partial=f.recipient.browser.call("GET",path,null); status(200,partial);
+        assertEquals("PARTIALLY_REFUNDED",partial.jsonPath().getString("adjustmentState"));
+        assertEquals("1500",partial.jsonPath().getString("remainingRefundableMinor"));
+        assertEquals("PRIOR_REFUND",administrator.browser.call("GET","/admin"+path,null).jsonPath().getString("reversalDisabledReason"));
+        status(201,refund(f.recipient.browser,f.paymentId,"p08c-remainder-02",Map.of("amountMinor","1500")));
+        Response full=f.recipient.browser.call("GET",path,null); status(200,full);
+        assertEquals("SETTLED",full.jsonPath().getString("state"));
+        assertEquals("FULLY_REFUNDED",full.jsonPath().getString("adjustmentState"));
+        assertEquals("0",full.jsonPath().getString("remainingRefundableMinor"));
+        assertFalse(full.jsonPath().getBoolean("canRefund"));
+        assertEquals(f.settlementJournal.toString(),full.jsonPath().getString("journalId"));
+        Fixture reversed=settled(1000);
+        status(201,reversal(administrator.browser,reversed.paymentId,"p08c-reverse-02",Map.of("reason","P08C correction")));
+        Response r=administrator.browser.call("GET","/admin/payments/"+reversed.paymentId+"/adjustment-context",null); status(200,r);
+        assertEquals("REVERSED",r.jsonPath().getString("adjustmentState"));
+        assertEquals("0",r.jsonPath().getString("remainingRefundableMinor"));
+        assertFalse(r.jsonPath().getBoolean("canReverse"));
+        reconciled(f.source); reconciled(f.destination); reconciled(reversed.source); reconciled(reversed.destination);
+    }
+
+    @Test void P08CIT03_contextValidatesIdsAuthenticationAndScopedOpenApi() throws Exception {
+        Browser anonymous=new Browser(first.port);
+        status(401,anonymous.call("GET","/payments/00000000-0000-0000-0000-000000000001/adjustment-context",null));
+        status(401,anonymous.call("GET","/admin/payments/00000000-0000-0000-0000-000000000001/adjustment-context",null));
+        User recipient=user(); status(400,recipient.browser.call("GET","/payments/not-a-uuid/adjustment-context",null));
+        status(404,recipient.browser.call("GET","/payments/00000000-0000-0000-0000-000000000001/adjustment-context",null));
+        Response schema=anonymous.call("GET","/openapi/p08c-ui.json",null); status(200,schema);
+        var spec=JSON.readTree(schema.asString());
+        for(String path:List.of("/payments/{paymentId}/adjustment-context","/admin/payments/{paymentId}/adjustment-context",
+                "/payments/{paymentId}/refunds","/payments/{paymentId}/reversal","/payments/{paymentId}/adjustments"))
+            assertTrue(spec.path("paths").has(path),path);
+    }
 }

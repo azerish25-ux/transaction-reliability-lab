@@ -46,4 +46,8 @@ public class OpenApiController {
     public Resource p08bUserInterfaceSpecification() {
         return new ClassPathResource("openapi/p08b-ui.json");
     }
+    @GetMapping(value = "/api/v1/openapi/p08c-ui.json", produces = "application/json")
+    public Resource p08cAdjustmentInterfaceSpecification() {
+        return new ClassPathResource("openapi/p08c-ui.json");
+    }
 }

@@ -1,4 +1,7 @@
-# Execution checkpoint — P08B VERIFIED_PASS
+# Execution checkpoint — P08C IMPLEMENTED_UNVERIFIED
+
+P08C source now implements customer partial/full refunds, narrow ADMIN full reversal, authoritative owner-safe adjustment review, paged history/receipts, exact money validation, preserved response-loss/session-expiry recovery, client contracts and browser/HTTP tests. Do not claim VERIFIED_PASS until the permanent gate has run against the exact final SHA.
+
 
 Overall product status remains **INCOMPLETE / NO_GO**. P01–P08B now retain durable exact-SHA verification. Later P08 customer and administrator interfaces plus P09–P11 remain incomplete.
 
@@ -45,13 +48,6 @@ The exact-SHA workflow passed:
 
 ## Next executable action
 
-Implement the remaining customer adjustment interface before beginning P09:
+Run the permanent P08C gate on the final committed source and inspect responsive artifacts. It must preserve all earlier P01-P08B regressions, execute every new P08C client/browser/HTTP case without failures/errors/skips or functional retries, and independently reconcile adjustments and balances.
 
-1. Recipient-owner partial/full refund entry with exact minor-unit validation, remaining-refundable calculation and explicit confirmation.
-2. Administrator full reversal with mandatory reason and no generic balance-edit capability.
-3. Replay-safe preservation and same-key recovery for uncertain refund/reversal outcomes.
-4. Authoritative adjustment history/detail, immutable journal references and truthful `PARTIALLY_REFUNDED`, `FULLY_REFUNDED` or `REVERSED` presentation.
-5. Owner/admin authorization denial cases, concurrent-adjustment protection and independent post-adjustment reconciliation.
-6. Production-client contracts, responsive desktop/tablet/mobile Chromium journeys, authenticated axe/keyboard checks, scoped OpenAPI/requirements/ADR and a permanent exact-SHA gate.
-
-After that slice, complete customer schedule and webhook interfaces and the broader administrator interface. Do not begin P09 until the remaining P08 interfaces are implemented and exact-SHA verified.
+After verified P08C: complete customer schedule and webhook interfaces and the broader administrator interface. Do not begin P09 until the remaining P08 interfaces are implemented and exact-SHA verified.

@@ -68,7 +68,7 @@ function composeWorkers(action: 'stop' | 'start'): void {
   const common = ['compose', '--env-file', '../.ledgerguard/runtime.env', '-f', '../compose.yaml'];
   const args = action === 'stop'
     ? [...common, 'stop', 'payment-worker-a', 'payment-worker-b']
-    : [...common, 'up', '-d', '--wait', 'payment-worker-a', 'payment-worker-b'];
+    : [...common, 'up', '-d', '--no-deps', '--wait', 'payment-worker-a', 'payment-worker-b'];
   execFileSync('docker', args, { cwd: process.cwd(), stdio: 'pipe', timeout: 75_000 });
 }
 

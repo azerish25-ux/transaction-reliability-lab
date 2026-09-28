@@ -5,9 +5,19 @@
     "moduleResolution": "NodeNext",
     "strict": true,
     "noUncheckedIndexedAccess": false,
-    "lib": ["ES2022", "DOM"],
+    "lib": [
+      "ES2022",
+      "DOM"
+    ],
     "outDir": "../.evidence/ts",
     "skipLibCheck": false
   },
-  "include": ["src/money.ts", "src/api.ts", "src/intent-store.ts", "src/p08b-core.ts", "src/webhook-api.ts"]
+  "include": [
+    "src/money.ts",
+    "src/api.ts",
+    "src/intent-store.ts",
+    "src/p08b-core.ts",
+    "src/webhook-api.ts",
+    "src/p08c-core.ts"
+  ]
 }

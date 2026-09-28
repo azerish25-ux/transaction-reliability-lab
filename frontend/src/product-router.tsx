@@ -3,6 +3,8 @@ import { createPortal } from 'react-dom';
 import App from './App.js';
 import { isP08BPath, normalizeProductPath } from './p08b-core.js';
 import { P08BRoutes, type ProductNavigate } from './p08b-ui.js';
+import { adjustmentRoute } from './p08c-core.js';
+import { P08CRoutes } from './p08c-ui.js';
 import { useSession } from './session.js';
 
 function currentLocation(): string {
@@ -41,7 +43,7 @@ function NavigationBridge({ navigate }: { navigate: ProductNavigate }): JSX.Elem
   const session = useSession();
   const [mount, setMount] = useState<HTMLElement | null>(null);
   useEffect(() => {
-    if (session.status !== 'AUTHENTICATED' || session.user?.role !== 'CUSTOMER') {
+    if (session.status !== 'AUTHENTICATED') {
       setMount(null);
       return;
     }
@@ -70,14 +72,19 @@ function NavigationBridge({ navigate }: { navigate: ProductNavigate }): JSX.Elem
   }, [session.status, session.user?.role]);
   if (!mount) return null;
   return createPortal(<>
-    <ProductLink href="/transfers/new" navigate={navigate}>Transfer</ProductLink>
-    <ProductLink href="/payments" navigate={navigate}>Payments</ProductLink>
+    {session.user?.role === 'ADMIN' ? <ProductLink href="/admin/adjustments" navigate={navigate}>Adjustments</ProductLink> : <>
+      <ProductLink href="/transfers/new" navigate={navigate}>Transfer</ProductLink>
+      <ProductLink href="/payments" navigate={navigate}>Payments</ProductLink>
+    </>}
   </>, mount);
 }
 
 export default function ProductRouter(): JSX.Element {
   const session = useSession();
   const { location, path, navigate } = useProductLocation();
+  if (session.status === 'AUTHENTICATED' && (adjustmentRoute(path) || (path === '/' && session.user?.role === 'ADMIN'))) {
+    return <P08CRoutes path={path === '/' ? '/admin/adjustments' : path} navigate={navigate} />;
+  }
   const customRoute = isP08BPath(path);
   if (customRoute && session.status === 'AUTHENTICATED') {
     return <P08BRoutes path={path} location={location} navigate={navigate} />;

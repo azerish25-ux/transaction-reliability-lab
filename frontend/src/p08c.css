@@ -1,0 +1,24 @@
+.adjustment-section { margin-top: 2.5rem; padding: clamp(1.1rem, 3vw, 2rem); border: 1px solid var(--line); border-radius: var(--radius-lg); background: var(--surface); }
+.adjustment-heading { display: flex; align-items: flex-start; justify-content: space-between; gap: 1.25rem; }
+.adjustment-heading > div { max-width: 42rem; }
+.adjustment-heading p { color: var(--ink-soft); }
+.adjustment-heading > button { flex-shrink: 0; }
+.adjustment-status { display: inline-block; padding: .4rem .85rem; border-radius: 2rem; background: var(--green-soft); color: var(--green-strong); font-weight: 700; }
+.adjustment-totals { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1rem; padding: 1.25rem 0; margin: 0; border-block: 1px solid var(--line); }
+.adjustment-totals dt { color: var(--ink-soft); font-size: .875rem; }
+.adjustment-totals dd { font-size: clamp(1.15rem, 2vw, 1.7rem); font-weight: 700; margin: .4rem 0 0; overflow-wrap: anywhere; }
+.adjustment-form { display: grid; gap: 1.25rem; margin-block: 1.5rem 2rem; max-width: 42rem; }
+.adjustment-form .field > button { justify-self: start; margin-top: .5rem; }
+.adjustment-form textarea { width: 100%; padding: .8rem 1rem; color: var(--ink); font: inherit; background: var(--surface-strong); border: 1px solid var(--line-strong); border-radius: var(--radius-sm); resize: vertical; }
+.adjustment-form textarea:focus-visible { outline: 3px solid #dd9b3f; outline-offset: 3px; }
+.adjustment-form textarea[aria-invalid="true"] { border-color: var(--red); }
+.adjustment-restriction { margin-block: 1.25rem; padding: 1rem; border-left: 3px solid var(--line-strong); background: var(--paper); }
+.adjustment-history { border-top: 1px solid var(--line); padding-top: 1.5rem; margin-top: 1.5rem; }
+.adjustment-list { display: grid; gap: 1rem; list-style: none; padding: 0; }
+.adjustment-list > li { padding: 1.1rem; border: 1px solid var(--line); border-radius: var(--radius); }
+.adjustment-list-heading { display: flex; gap: 1rem; justify-content: space-between; margin-bottom: .75rem; }
+.adjustment-list p { margin-bottom: .6rem; color: var(--ink-soft); }
+.adjustment-reason { white-space: pre-wrap; overflow-wrap: anywhere; }
+.adjustment-lookup { display: grid; gap: 1.25rem; padding: 1.5rem; margin-bottom: 1.5rem; }
+.adjustment-section .uncertain-panel { margin-block: 1rem; }
+@media (max-width: 700px) { .adjustment-heading { flex-direction: column; } .adjustment-totals { grid-template-columns: 1fr; gap: 1.1rem; } .adjustment-heading > button, .adjustment-form > button { width: 100%; } }

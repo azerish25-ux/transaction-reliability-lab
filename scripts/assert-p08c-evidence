@@ -1,0 +1,76 @@
+#!/usr/bin/env python3
+"""Require P01-P08B plus actual P08C contracts, PostgreSQL/HTTP and responsive browser evidence."""
+import json
+import subprocess
+import xml.etree.ElementTree as ET
+from datetime import datetime, timezone
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parent.parent
+subprocess.run(['python3', 'scripts/assert-p08b-evidence'], cwd=ROOT, check=True)
+
+def suite(relative, minimum):
+    path = ROOT / relative
+    if not path.is_file(): raise SystemExit(f'Missing executed suite: {relative}')
+    root = ET.parse(path).getroot()
+    cases = list(root.iter('testcase'))
+    suites = [root] if root.tag == 'testsuite' else list(root.iter('testsuite'))
+    counts = {key: sum(int(s.get(key, '0')) for s in suites) for key in ('tests', 'failures', 'errors', 'skipped')}
+    if len(cases) < minimum or len(cases) != counts['tests'] or any(counts[k] for k in ('failures','errors','skipped')):
+        raise SystemExit(f'P08C suite must pass without missing/failed/skipped cases: {relative}: {counts}')
+    if any(any(c.find(tag) is not None for tag in ('failure','error','skipped')) for c in cases):
+        raise SystemExit(f'Nonpassing case in {relative}')
+    return counts, cases, suites
+
+client_counts, client, _ = suite('.evidence/client/p08c-results.xml', 18)
+browser_counts, browser, projects = suite('.evidence/playwright/junit.xml', 54)
+http_counts, http, _ = suite('backend/target/failsafe-reports/TEST-lab.ledgerguard.PaymentAdjustmentReliabilityIT.xml', 3)
+for index in range(1,19):
+    if sum(f'P08CTS{index:02}' in c.get('name','') for c in client) != 1: raise SystemExit(f'Missing or duplicate P08CTS{index:02}')
+for project in ('chromium-desktop', 'chromium-tablet', 'chromium-mobile'):
+    matching = [s for s in projects if s.get('hostname','') == project]
+    for index in range(1,11):
+        actual = [c for s in matching for c in s.findall('testcase') if f'P08CE2E{index:02}' in c.get('name','')]
+        if len(actual) != 1: raise SystemExit(f'Expected exactly one {project}/P08CE2E{index:02}, got {len(actual)}')
+for index in range(1,4):
+    if sum(f'P08CIT{index:02}' in c.get('name','') for c in http) != 1: raise SystemExit(f'Missing or duplicate P08CIT{index:02}')
+executed = {'p08c-client':[c.get('name','') for c in client], 'p08c-browser':[c.get('name','') for c in browser], 'p08c-postgres-http':[c.get('name','') for c in http]}
+manifest = json.loads((ROOT/'docs/implementation/P08C_REQUIREMENTS.json').read_text())
+if not (ROOT/manifest['sourceContract']).is_file(): raise SystemExit('Missing original source contract')
+traceability=[]; ids=set()
+for req in manifest['requirements']:
+    if req['id'] in ids: raise SystemExit('Duplicate requirement')
+    ids.add(req['id']); matches=[]
+    for kind, prefixes in req['tests'].items():
+        for prefix in prefixes:
+            found=[name for name in executed[kind] if prefix in name]
+            if not found: raise SystemExit(f"No executed oracle for {req['id']}: {prefix}")
+            matches.extend({'suite':kind,'test':name} for name in found)
+    traceability.append({**req,'status':'VERIFIED_PASS','executed':matches})
+config=(ROOT/'frontend/playwright.config.ts').read_text()
+if 'retries: 0' not in config: raise SystemExit('Functional browser retries must be zero')
+screens=[]
+for project in ('chromium-desktop','chromium-tablet','chromium-mobile'):
+    for journey in ('refund','reversal','adjustment-receipt'):
+        path=ROOT/f'.evidence/playwright/screenshots/{project}-{journey}.png'
+        if not path.is_file() or path.stat().st_size<1000: raise SystemExit(f'Missing responsive evidence: {path.name}')
+        screens.append(str(path.relative_to(ROOT)))
+spec=json.loads((ROOT/'backend/src/main/resources/openapi/p08c-ui.json').read_text())
+for path in ('/payments/{paymentId}/adjustment-context','/admin/payments/{paymentId}/adjustment-context','/payments/{paymentId}/refunds','/payments/{paymentId}/reversal','/payments/{paymentId}/adjustments','/payments/{paymentId}/adjustments/{adjustmentId}'):
+    if path not in spec['paths']: raise SystemExit(f'Missing scoped OpenAPI {path}')
+sha=subprocess.check_output(['git','rev-parse','HEAD'],cwd=ROOT,text=True).strip()
+dirty=bool(subprocess.check_output(['git','status','--porcelain','--untracked-files=no'],cwd=ROOT,text=True).strip())
+if dirty: raise SystemExit('P08C exact-SHA gate cannot pass a dirty tracked source tree')
+report={'phase':'P08C','status':'VERIFIED_PASS','fullProductStatus':'INCOMPLETE_NO_GO','sourceSha':sha,'trackedTreeDirty':False,'timestamp':datetime.now(timezone.utc).isoformat(),
+        'suites':{'p08c-client':client_counts,'all-browser':browser_counts,'payment-adjustment-postgres-http':http_counts},
+        'p08cBrowserCases':sum(c.get('name','').startswith('P08CE2E') for c in browser),
+        'p08cHttpCases':sum(c.get('name','').startswith('P08CIT') for c in http),
+        'screenshots':screens,'requirements':traceability,
+        'scope':'P01-P08B preserved; real customer refunds/admin reversal; independent journal oracles; no final release, broader admin/schedule/webhook UI or P09-P11 claim.'}
+out=ROOT/'.evidence/p08c';out.mkdir(parents=True,exist_ok=True)
+(out/'test-summary.json').write_text(json.dumps(report,indent=2)+'\n')
+lines=['# Executed P08C requirements','',f'Source: `{sha}`; tracked tree clean.','', '| Requirement | Executed cases | Status |','|---|---:|---|']
+lines.extend(f"| {req['id']} | {len(req['executed'])} | VERIFIED_PASS |" for req in traceability)
+(out/'requirements-matrix.md').write_text('\n'.join(lines)+'\n')
+print(json.dumps({k:v for k,v in report.items() if k!='requirements'},indent=2))
+print(f'Bound {len(traceability)} P08C requirements to actual executed evidence.')
