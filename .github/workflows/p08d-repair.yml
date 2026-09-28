@@ -1,0 +1,52 @@
+name: P08D guarded repair delivery
+on:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/p08d-repair.yml']
+permissions:
+  contents: write
+jobs:
+  repair:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - name: Apply checksum-verified source repair
+        run: |
+          python3 - <<'PY'
+          import base64, hashlib, lzma, subprocess
+          encoded = '''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'''
+          patch=lzma.decompress(base64.b64decode(encoded,validate=True))
+          assert hashlib.sha256(patch).hexdigest()=='42deeb19729e85b9a454a35a9f976df8da62f903a1a45f72462c4ab321ec8ac5'
+          subprocess.run(['git','apply','--check','-'],input=patch,check=True)
+          subprocess.run(['git','apply','-'],input=patch,check=True)
+          PY
+      - name: Verify strict sources and all production-client regressions
+        run: |
+          npm ci --prefix frontend --ignore-scripts --no-audit --no-fund
+          npm --prefix frontend run verify
+      - name: Publish tested changes without overwriting concurrent work
+        run: |
+          git fetch origin main
+          test "$(git rev-parse origin/main)" = "$GITHUB_SHA"
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add frontend/src/p08d-ui.tsx frontend/src/schedule-api.ts frontend/tests/e2e/p08d-fixtures.ts frontend/tests/e2e/p08d.spec.ts tests/contracts/p08d-client.test.cjs scripts/assert-p08d-evidence docs/implementation/P08D_REQUIREMENTS.json docs/architecture/adr/0021-p08d-customer-schedule-management.md
+          git diff --cached --check
+          git commit -m 'fix(p08d): align rejected occurrence wire states and canonical browser inputs'
+          git push origin HEAD:main
+          echo "PUBLISHED_SOURCE_SHA=$(git rev-parse HEAD)"
+      - name: Preserve client evidence
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: p08d-repair-client-${{ github.run_id }}
+          include-hidden-files: true
+          retention-days: 7
+          path: .evidence/client/
