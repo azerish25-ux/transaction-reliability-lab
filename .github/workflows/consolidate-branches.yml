@@ -24,10 +24,11 @@ jobs:
       - name: Merge audited histories, preserve verified files and atomically retire branch refs
         shell: python
         run: |
-          import collections, json, os, subprocess
+          import collections, json, os, re, subprocess
           from pathlib import Path
           BASE = 'e0a1f2a77b84e74e004ee2f093f563da9e1b0816'
           AUDIT_COMMIT = '1de11237756c0434022c7a54eb23b95fb22d26b5'
+          EXPECTED_PARENT = 'f9e4dbc70e02b84b99ccf6e087537fc91b65a7db'
           BRANCHES = {
               'p05-async-payments': '9c3faa8d9c2d54576f4f6cfafb3b3a7e9b764698',
               'p05-staging': 'a9e1db246e7933566cb133d9b3ac47dee804a3c1',
@@ -51,7 +52,8 @@ jobs:
           git('fetch','--no-tags','origin','+refs/heads/*:refs/remotes/origin/*')
           assert remote_heads() == expected, 'Remote heads moved or an unreviewed branch appeared'
           assert git('rev-parse','HEAD') == head
-          assert git('rev-parse','HEAD^') == AUDIT_COMMIT, 'Unexpected approval parent'
+          assert git('rev-parse','HEAD^') == EXPECTED_PARENT, 'Unexpected approval parent'
+          git('merge-base','--is-ancestor',AUDIT_COMMIT,head)
           source_unchanged(head)
           audit = json.loads(Path('docs/evidence/branch-consolidation-audit.json').read_text())
           assert audit['reviewed_main'] == BASE
@@ -69,19 +71,26 @@ jobs:
           for row in audit['branches'][1:]:
               assert not row['files'], 'Unreviewed source delta outside a transport payload'
               assert all(any(path.startswith(prefix) for prefix in transport_rules[row['branch']]) for path in row['changed_paths'])
-          # The export-only branch's migration compatibility fix is already in main.
+          # The export draft adjusted a test to tolerate later migrations. The delivered
+          # topology instead isolates those migrations in opt-in locations. Preserve its
+          # accurate eight-base-migration assertion; do not claim the draft patch was applied.
           migration_test = git('show',BASE+':backend/src/test/java/lab/ledgerguard/PaymentAdjustmentReliabilityIT.java')
-          assert 'WHERE success AND version::integer BETWEEN 1 AND 8' in migration_test
-          assert "WHERE success AND version='8'" in migration_test
+          assert 'assertEquals(8,scalar("SELECT count(*) FROM public.flyway_schema_history WHERE success"))' in migration_test
+          assert '.locations("classpath:db/migration").load().migrate()' in migration_test
+          migration_files = git('ls-tree','--name-only',BASE+':backend/src/main/resources/db/migration').splitlines()
+          migration_versions = sorted(int(re.fullmatch(r'V(\d+)__.+\.sql', name).group(1)) for name in migration_files)
+          assert migration_versions == list(range(1,9)), 'Base migration scope changed'
+          overlay = git('show',BASE+':compose.p07.yaml')
+          assert 'LEDGER_FLYWAY_LOCATIONS: classpath:db/migration,classpath:db/p07,classpath:db/p07b' in overlay
           git('cat-file','-e',BASE+':backend/src/main/resources/db/migration/V7__p05_async_payment_reliability.sql')
-          # Do not execute or install alternate transport archives. In particular the
-          # staging draft contains a second V7 migration and P08C's old digest mismatches.
-          # The complete draft blobs remain reachable through the merge parents.
+          print('PASS: source isolation, exact branch tips, 39 P05 content matches and scoped base/opt-in migrations')
+          # Preserve complete alternate draft blobs through the merge parents, not by
+          # executing transport archives or reinstalling incompatible earlier code.
           resolutions = {
               'p05-async-payments':'All 39 changed files already match current main or an exact earlier main blob; retain the newer verified versions.',
               'p05-staging':'Retain transport archive and patch in history only. Its alternate messaging implementation and conflicting V7 migration must not replace the delivered P05-P08E system.',
               'p06-payment-adjustments':'Retain transport archive in history only. Keep the subsequently delivered and verified P06 adjustment API, accounting rules, tests and later fixes.',
-              'p07a-source-export':'Retain the obsolete source-export workflow in history only. Its forward-compatible V8 migration assertions are already present in main.',
+              'p07a-source-export':'Retain the obsolete source-export workflow in history only. Its proposed migration-count relaxation is unnecessary in the delivered topology: the P06 fixture loads only the eight base migrations, while later schemas use separate opt-in db/p07 and db/p07b locations. The current exact count is intentionally preserved.',
               'p08c-materialize':'Retain the old materializer and unverified transport archive in history only; its historical expected archive checksum differs. Keep the delivered P08C-P08E UI, scoped auth fixtures and secret-safe evidence rules.',
           }
           compact = []
@@ -104,7 +113,8 @@ jobs:
               'application_source_changed':False,
               'conflict_policy':'Retain verified main contents; preserve already-integrated source and superseded transport candidates through merge ancestry, not by restoring obsolete files.',
               'deletion_policy':'Atomic push; explicit expected-tip leases for each removed branch; main must fast-forward. Abort on any concurrent ref or unexpected source change.',
-              'verification_scope':'Git source/blob comparison, transport archive inspection, current migration assertion check, all-parent ancestry and remote-ref checks; not a new claim of a full application test campaign.',
+              'migration_scope':{'base_versions':migration_versions,'additional_opt_in_locations':['db/p07','db/p07b'],'p06_count_assertion_preserved':True},
+              'verification_scope':'Git source/blob comparison, transport archive inspection, base/opt-in migration scope, all-parent ancestry and remote-ref checks; not a new claim of a full application test campaign.',
               'run_url':'https://github.com/'+os.environ['GITHUB_REPOSITORY']+'/actions/runs/'+os.environ['GITHUB_RUN_ID'],
               'branches':compact,
           }
@@ -123,7 +133,7 @@ jobs:
               lines += ['### '+row['branch'], '', 'Tip: `'+row['tip']+'`.', '', row['resolution'], '',
                         'Compared contents: '+json.dumps(row['content_comparison_counts'])+'.', '']
           lines += ['## Verification and safety', '',
-                    'Before publication: exact remote-tip checks, unchanged application files, transport-path allowlist, 39 exact P05 source matches, existing migration-compatibility assertions, every branch tip as an ancestor of the merge, and a dry-run atomic push.',
+                    'Before publication: exact remote-tip checks, unchanged application files, transport-path allowlist, 39 exact P05 source matches, eight base migrations and separate opt-in schema locations, every branch tip as an ancestor of the merge, and a dry-run atomic push.',
                     'Publication uses explicit expected-tip leases for deleted refs and a non-rewriting fast-forward update of main. A stale branch fails the entire transaction.',
                     'After publication, the workflow checks that the remote has exactly one branch, main, at the merge commit.',
                     'The complete application suite is not claimed to have been rerun on this history-only merge; existing P08E verification retains its original source-SHA attribution.', '',
@@ -139,6 +149,7 @@ jobs:
           message = ('merge: consolidate all five reviewed branch histories into main [skip ci]\n\n'
                      'Retain the verified P08E application tree. The 39 P05 branch source files are already in main history. '
                      'Retain obsolete staging/export/materializer candidates in ancestry without reintroducing conflicting migrations or earlier implementations. '
+                     'Preserve the correct P06 base-migration test and separate opt-in P07 schemas. '
                      'See docs/evidence/branch-consolidation-audit.md for the per-branch source audit and resolutions.\n')
           merge = git('commit-tree',tree,*parents,data=message.encode())
           source_unchanged(merge)
