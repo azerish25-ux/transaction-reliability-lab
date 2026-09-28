@@ -1,18 +1,22 @@
-# P08E customer webhook interface — IMPLEMENTED_UNVERIFIED
+# P08E customer webhook interface — VERIFIED_PASS
 
-Overall product remains **INCOMPLETE / NO_GO**. This is an implementation candidate, not a verified completion claim. P01–P08D retain their historical exact-source verification; the P08E permanent workflow must pass against its own final source SHA.
+Overall product remains **INCOMPLETE / NO_GO**. P01–P08E retain exact-source verification; broader administrator interfaces and P09–P11 remain incomplete.
 
-## Current candidate
+## Exact-source checkpoint
 
-Customer Webhooks navigation, approved subscriptions, enable/disable and secret rotation, owner-scoped delivery and immutable attempt inspection, bounded refresh, and audited retry are implemented. A new protected command-receipt contract prevents response-loss recovery from rotating again or starting another retry cycle. Receipts never redisclose signing secrets. Owner-scoped non-secret metadata survives reload and reauthentication; secret display remains transient.
+Implementation `026dca3ec4c3c68696e87f8192872a4d2e45e157` passed permanent **LedgerGuard P08E verification** run `36485630387`, including **Required P08E gate**. Tracked source was clean, required failures/errors/skips were zero, and functional browser retries were zero.
 
-V11 is additive in the existing P07B opt-in migration location. Start the documented P07 overlay to expose the capability. Legacy P07B contracts, payment workers, settlement and accounting paths remain intact.
+Executed totals: 147 JUnit unit, 127 PostgreSQL/HTTP integration, 162 TypeScript client, 114 Browser. Seven P08E requirements and twelve responsive screenshots passed. Durable evidence: [report](../evidence/p08e-026dca3.md), [provenance](../evidence/p08e-026dca3.json).
 
-See `P08E_REQUIREMENTS.json`, `../architecture/adr/0022-p08e-customer-webhooks.md`, and `/api/v1/openapi/p08e-ui.json`. The permanent workflow adds production-client, JUnit and real responsive browser/database checks while invoking the complete P01–P08D gate unchanged.
+## Delivered P08E scope
+
+Approved customer subscriptions, version-aware enable/disable and rotation, transient one-time secret disclosure, owner-scoped delivery/attempt history, bounded polling and audited retry. Atomic command receipts prevent lost-response recovery from rotating again or opening another retry cycle. Original non-secret command metadata survives reload and reauthentication. Real responsive browser/SQL oracles verify ownership, concurrency, receipt immutability and financial isolation. Legacy P07B and the full earlier campaign remain preserved.
+
+The documented P07 overlay activates V11 and the signed receiver/dispatchers. See `P08E_REQUIREMENTS.json`, ADR 0022 and `/api/v1/openapi/p08e-ui.json`.
 
 ## Next executable action
 
-Execute the permanent P08E workflow, inspect every failing check and artifact, fix root causes without weakening assertions, and retain successful exact-SHA evidence. Until that passes, do not relabel this candidate VERIFIED_PASS. After verified P08E, complete the broader administrator transaction, ledger, audit and reconciliation interfaces. Do not start P09 before remaining P08 interfaces are exact-SHA verified.
+Complete broader administrator transaction search, ledger detail, audit history and reconciliation interfaces. Preserve P01–P08E, execute real authorization and responsive browser journeys, and retain a successful permanent gate against the exact final source SHA. Do not begin P09 until the remaining P08 interfaces are verified. No individual milestone completes the whole product.
 
 ## Preserved P08D checkpoint
 

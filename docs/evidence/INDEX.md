@@ -1,5 +1,10 @@
 # P08D verified checkpoint
 
+## Latest verified milestone: P08E
+
+Implementation `026dca3ec4c3c68696e87f8192872a4d2e45e157`, successful permanent run `36485630387`. [Report](p08e-026dca3.md), [JSON provenance](p08e-026dca3.json), [requirements](p08e-026dca3/requirements-matrix.md). Overall product remains INCOMPLETE / NO_GO. Earlier entries retain their historical scope.
+
+
 The customer schedule milestone passed at `13bdd62c924a3230825b6d9304f449f887c8e7fe`. See [report and screenshots](p08d-13bdd62.md), [JSON provenance](p08d-13bdd62.json) and [executed requirement matrix](p08d-13bdd62/requirements-matrix.md). Overall product remains **INCOMPLETE / NO_GO**. Entries below retain their original historical scope.
 
 ## Historical evidence index — P08C checkpoint

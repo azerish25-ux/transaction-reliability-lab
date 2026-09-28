@@ -70,3 +70,8 @@ The next delivery unit is the customer webhook subscription/delivery interface a
 ## Preserved prior delivery
 
 P08A source `d675db096b8f023469e253737ade80a2b8b3b0fa` passed run `36345292129`. P07B source `cc6b3ca81d2368c188aa7a79cec2d37b2dd8b975` passed run `36330862462`. P07A source `9478663f97f9dc65d0c85117f244e1b8b80c37cb` passed run `36319414655`. P06 source `bb1eeb1167b71fb92fb28f82c110fc489f60f03b` passed run `36306335283`. P05 source `bbca6dd7478e33320aa134f6cd59c9652f4b60db` passed run `36285547632`. Their durable reports retain original scope and timestamps.
+
+
+## P08E exact-source delivery
+
+Implementation `026dca3ec4c3c68696e87f8192872a4d2e45e157` passed permanent run `36485630387` and Required P08E gate. Later evidence-documentation commits are separate from the tested source. See [report](../evidence/p08e-026dca3.md) and [provenance](../evidence/p08e-026dca3.json). Full product remains INCOMPLETE / NO_GO. Broader administrator interfaces are next.

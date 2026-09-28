@@ -1,7 +1,7 @@
 # LedgerGuard
 ## Financial Transaction Reliability Laboratory
 
-**Synthetic money only. P01–P08D are exact-SHA verified development milestones. P08C adds recipient refunds, administrator full reversal, adjustment history/receipts and safe uncertainty recovery. P08D adds verified customer schedule management, server temporal previews and replay-safe lifecycle recovery. Customer webhook and broader administrator interfaces, the complete fault laboratory, later test lanes and final release evidence remain incomplete. Overall status: INCOMPLETE / NO_GO.**
+**Synthetic money only. P01–P08E are exact-SHA verified development milestones. P08E adds customer webhook management, protected one-time secret handling, delivery/attempt inspection and replay-safe command recovery. Broader administrator interfaces, the complete fault laboratory, later test lanes and final release evidence remain incomplete. Overall status: INCOMPLETE / NO_GO.**
 
 LedgerGuard is a compact transaction system built to expose and test duplicate intent, ambiguous outcomes, concurrent spending, accounting invariants, asynchronous delivery, crash recovery, compensating financial adjustments, time-dependent execution and unreliable external notification. It is not a bank, payment processor, compliance product or production-ready financial service.
 
@@ -36,7 +36,7 @@ The verified P08B slice adds:
 - Explicit cancellation of eligible outgoing pending payments, with a separate replay-safe idempotency key and truthful settlement-race handling.
 - Four additional Chromium scenarios repeated at 1440×900, 768×1024 and 390×844, authenticated axe WCAG A/AA checks and six responsive transfer/payment screenshots.
 
-The verified P08C slice adds recipient partial/full refunds, administrator full reversal, authoritative adjustment context, paged history and immutable receipts, plus preserved same-key uncertainty recovery through reload and reauthentication. P08D adds the schedule interface below. Customer webhook and broader administrator interfaces remain later P08 slices.
+The verified P08C slice adds recipient partial/full refunds, administrator full reversal, authoritative adjustment context, paged history and immutable receipts, plus preserved same-key uncertainty recovery through reload and reauthentication. P08D adds the schedule interface below. Customer webhook interfaces are verified in P08E below; broader administrator interfaces remain later P08 work.
 
 ## Activate the verified P07 topology
 
@@ -85,7 +85,15 @@ Schedule commands use the existing protected backend and owner-scoped intent sto
 
 The P08D gate preserves P01-P08C, requires the production-client cases, server temporal-preview tests, real browser/SQL oracles at desktop/tablet/mobile widths, keyboard/axe checks and responsive screenshots. See `docs/implementation/P08D_REQUIREMENTS.json` and `docs/architecture/adr/0021-p08d-customer-schedule-management.md`. The permanent exact-SHA gate passed for `13bdd62c924a3230825b6d9304f449f887c8e7fe` in run `36464316280`. See [the P08D evidence report](docs/evidence/p08d-13bdd62.md).
 
-## Current verification status
+## P08E customer webhooks — VERIFIED_PASS
+
+With the documented P07 overlay active, use **Webhooks** in customer navigation. Manage the approved sandbox subscription, enable/disable it, deliberately rotate its signing secret, inspect deliveries and attempts, and request eligible audited retries. Notification failure never changes settled payment results.
+
+Lost responses retain the original owner-scoped command ID and reviewed version/cycle. Check the outcome or explicitly retry the same command. A first-only secret response is not recoverable through replay: resolve the original command before deliberately rotating again. Secrets are not placed in browser persistence or ordinary reads.
+
+Implementation `026dca3ec4c3c68696e87f8192872a4d2e45e157` passed permanent run `36485630387`, including **Required P08E gate**. Executed totals: 147 JUnit unit, 127 PostgreSQL/HTTP integration, 162 TypeScript client, 114 Browser; zero required failures/errors/skips and zero functional browser retries. Seven new requirements and twelve screenshots passed with P01–P08D preserved. See [evidence](docs/evidence/p08e-026dca3.md), [provenance](docs/evidence/p08e-026dca3.json), `docs/implementation/P08E_REQUIREMENTS.json`, and `/api/v1/openapi/p08e-ui.json`.
+
+## Historical P08D verification status
 
 P08D implementation `13bdd62c924a3230825b6d9304f449f887c8e7fe` passed permanent workflow [run 36464316280](https://github.com/azerish25-ux/transaction-reliability-lab/actions/runs/36464316280) on September 28, 2026, including **Required P08D gate**. Executed totals: 139 JUnit unit, 127 PostgreSQL/HTTP integration, 134 TypeScript client and 84 browser cases. Required failures/errors/skips and functional browser retries were zero. Eight P08D requirements, twelve new responsive screenshots and the preserved P01-P08C campaign passed, including final reconciliation. The [durable report](docs/evidence/p08d-13bdd62.md) and [JSON provenance](docs/evidence/p08d-13bdd62.json) retain exact artifact metadata and scope limitations.
 
@@ -99,7 +107,7 @@ Durable provenance is in [the P08C report](docs/evidence/p08c-3b87e3a.md) and [J
 
 Historical P08B source `5d6d883444845bc5de3364d0c682c3df26005d8e` passed run `36355379901` on September 27, 2026; its [original evidence](docs/evidence/p08b-5d6d883.md) and [JSON provenance](docs/evidence/p08b-5d6d883.json) retain their original counts and scope.
 
-Next: customer webhook subscription/delivery interfaces, then broader administrator interfaces. These remain P08 work before P09.
+Next: broader administrator transaction/ledger/audit/reconciliation interfaces. These remain P08 work before P09.
 
 Useful commands:
 
