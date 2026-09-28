@@ -69,9 +69,14 @@ test('P08CE2E03 lost committed refund survives reload and expired authentication
   await expect(page.getByRole('button', { name: 'Retry same refund', exact: true })).toBeVisible();
   // Revoke the real browser session without erasing its preserved economic intent.
   const logout = await command(page.request, '/auth/logout', {}); expect(logout.status()).toBe(204);
-  const denied = page.waitForResponse(r => r.request().method() === 'POST' && r.url().endsWith(`/payments/${f.payment.id}/refunds`) && r.status() === 401, { timeout: 15_000 });
+  // Logout also invalidates CSRF: the stale protected POST is rejected at the CSRF
+  // boundary first; the subsequent authoritative read proves session invalidation.
+  const denied = page.waitForResponse(r => r.request().method() === 'POST' && r.url().endsWith(`/payments/${f.payment.id}/refunds`), { timeout: 15_000 });
+  const expiredRead = page.waitForResponse(r => r.request().method() === 'GET' && r.url().endsWith(`/payments/${f.payment.id}/adjustment-context`) && r.status() === 401, { timeout: 15_000 });
   await page.getByRole('button', { name: 'Retry same refund' }).click({ timeout: 10_000 });
-  expect((await denied).status()).toBe(401);
+  const admission = await denied;
+  expect(admission.status()).toBe(403); expect((await admission.json()).code).toBe('CSRF_INVALID');
+  expect((await expiredRead).status()).toBe(401);
   await expect(page.getByRole('dialog', { name: 'Your session ended' })).toBeVisible();
   await page.getByRole('button', { name: 'Continue to sign in' }).click();
   await signIn(page, f.recipient); await page.getByRole('link', { name: 'Resolve safely' }).first().click();
