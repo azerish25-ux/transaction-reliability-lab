@@ -153,6 +153,13 @@ test('P08DE2E07 server preview explains Halifax gap overlap and UTC without muta
     await expect(dialog.getByText(sample.instant, { exact: true })).toBeVisible(); await expect(dialog.getByText(new RegExp(sample.policy))).toBeVisible();
     await expect(dialog.getByRole('button', { name: 'Go back' })).toBeFocused(); await accessible(page);
     await page.keyboard.press('Escape'); await expect(dialog).not.toBeVisible(); await expect(page.getByRole('button', { name: 'Review schedule', exact: true })).toBeFocused();
+    // Reopen through the keyboard and verify the visible dismissal restores the same trigger.
+    await page.keyboard.press('Enter');
+    await expect(dialog).toBeVisible();
+    await expect(dialog.getByRole('button', { name: 'Go back' })).toBeFocused();
+    await dialog.getByRole('button', { name: 'Go back' }).click();
+    await expect(dialog).not.toBeVisible();
+    await expect(page.getByRole('button', { name: 'Review schedule', exact: true })).toBeFocused();
   }
   await screenshot(page, info, 'p08d-form');
   expect((await read<ApiPage<ScheduleRecord>>(f.owner.api, '/schedules')).items).toEqual([]);

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useId, useMemo, useRef, useState, type MouseEvent, type PropsWithChildren, type ReactNode } from 'react';
+import { useCallback, useEffect, useId, useMemo, useRef, useState, type MouseEvent, type PropsWithChildren, type ReactNode, type RefObject } from 'react';
 import { ApiError, OutcomeUnknown, type PaymentRecord, type Problem } from './api.js';
 import { IntentStore, type StoredIntent } from './intent-store.js';
 import { intentKindLabel, intentRecoveryPath, paymentStateLabel, paymentStateTone } from './p08b-core.js';
@@ -202,9 +202,10 @@ export function StatusBadge({ state }: { state: PaymentRecord['state'] }): JSX.E
   return <span className={`status-badge p08b-status ${paymentStateTone(state)}`}><span aria-hidden="true">{state === 'SETTLED' ? '✓' : state === 'FAILED' ? '!' : state === 'CANCELLED' ? '—' : '●'}</span><span>{paymentStateLabel(state)}</span></span>;
 }
 
-export function ConfirmDialog({ open, title, description, confirmLabel, busy, onCancel, onConfirm, children, initialFocus = 'confirm' }: PropsWithChildren<{
+export function ConfirmDialog({ open, title, description, confirmLabel, busy, onCancel, onConfirm, children, initialFocus = 'confirm', returnFocus }: PropsWithChildren<{
   open: boolean; title: string; description: string; confirmLabel: string; busy: boolean;
   onCancel: () => void; onConfirm: () => void; initialFocus?: 'cancel' | 'confirm';
+  returnFocus?: RefObject<HTMLElement>;
 }>): JSX.Element {
   const titleId = useId();
   const descriptionId = useId();
@@ -217,8 +218,14 @@ export function ConfirmDialog({ open, title, description, confirmLabel, busy, on
     const previous = document.activeElement instanceof HTMLElement ? document.activeElement : null;
     element.showModal();
     (initialFocus === 'cancel' ? cancel : confirm).current?.focus();
-    return () => { element.close(); if (previous?.isConnected) previous.focus(); };
-  }, [open, initialFocus]);
+    return () => {
+      element.close();
+      // Async review can disable and blur its trigger before the dialog opens.
+      // Prefer the explicit trigger, retaining automatic restoration for other callers.
+      const target = returnFocus?.current ?? previous;
+      if (target?.isConnected) target.focus();
+    };
+  }, [open, initialFocus, returnFocus]);
   return <dialog ref={dialog} className="dialog p08b-dialog" aria-labelledby={titleId} aria-describedby={descriptionId}
     onCancel={event => { event.preventDefault(); if (!busy) onCancel(); }}>
     <p className="eyebrow">Explicit confirmation</p><h2 id={titleId}>{title}</h2>

@@ -167,6 +167,7 @@ function ScheduleForm({ initial, navigate }: { initial?: ScheduleRecord; navigat
   const [recurrence, setRecurrence] = useState<Recurrence>(initial?.recurrence ?? 'ONCE');
   const [reviewing, setReviewing] = useState(false);
   const reviewLock = useRef(false);
+  const reviewButton = useRef<HTMLButtonElement>(null);
   const [review, setReview] = useState<{ command: ScheduleCommand; definition: ScheduleDefinition; preview: SchedulePreview }>();
   const [failure, setFailure] = useState<unknown>();
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -234,12 +235,12 @@ function ScheduleForm({ initial, navigate }: { initial?: ScheduleRecord; navigat
             <div className="field"><label htmlFor="schedule-recurrence">Recurrence</label><select id="schedule-recurrence" value={recurrence} onChange={event => setRecurrence(event.target.value as Recurrence)}><option value="ONCE">One-time</option><option value="DAILY">Daily</option><option value="WEEKLY">Weekly</option></select><p className="field-hint">Weekly schedules keep the weekday selected in the intended local date.</p></div>
             <div className="field"><label htmlFor="schedule-local">Intended local date and time</label><input id="schedule-local" type="datetime-local" step="1" value={local} onChange={event => setLocal(event.target.value)} aria-invalid={Boolean(errors.local)} aria-describedby={described('local')} />{fieldError('local')}</div>
             <div className="field"><label htmlFor="schedule-zone">IANA time zone</label><input id="schedule-zone" list="schedule-zones" value={zone} onChange={event => setZone(event.target.value)} spellCheck={false} autoComplete="off" aria-invalid={Boolean(errors.zone)} aria-describedby={described('zone')} /><datalist id="schedule-zones"><option value="America/Halifax" /><option value="UTC" /></datalist>{fieldError('zone')}</div>
-            <button className="button button-primary" type="submit">{reviewing ? 'Checking schedule…' : 'Review schedule'}</button>
+            <button ref={reviewButton} className="button button-primary" type="submit">{reviewing ? 'Checking schedule…' : 'Review schedule'}</button>
           </fieldset>
         </form>
       </section><Policy />
     </div>}
-    <ConfirmDialog open={Boolean(review)} title={initial ? 'Confirm schedule edit' : 'Confirm schedule'} description="Review the exact instruction and the server-resolved time. Confirmation saves a schedule; it does not mean a transfer has executed." confirmLabel={initial ? 'Save schedule edit' : 'Create schedule'} busy={mutation.busy} onCancel={() => setReview(undefined)} onConfirm={() => void confirm()} initialFocus="cancel">
+    <ConfirmDialog open={Boolean(review)} title={initial ? 'Confirm schedule edit' : 'Confirm schedule'} description="Review the exact instruction and the server-resolved time. Confirmation saves a schedule; it does not mean a transfer has executed." confirmLabel={initial ? 'Save schedule edit' : 'Create schedule'} busy={mutation.busy} onCancel={() => setReview(undefined)} onConfirm={() => void confirm()} initialFocus="cancel" returnFocus={reviewButton}>
       {review && <><DefinitionSummary definition={review.definition} /><TimePreview value={review.preview} />{initial && <p>Expected definition version: {initial.version}. A stale version will be rejected, not overwritten.</p>}</>}
     </ConfirmDialog>
   </>;
