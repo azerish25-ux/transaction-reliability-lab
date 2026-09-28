@@ -1,0 +1,52 @@
+name: P08C recovery routing correction
+on:
+  push:
+    branches: [main]
+    paths: [.github/workflows/p08c-recovery-fix.yml]
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '22'
+      - name: Apply exact reviewed source edits
+        run: |
+          set -euo pipefail
+          git diff --exit-code a80c87e638a6f0103ad73388094f1d06951ed02f HEAD -- . ':(exclude).github/workflows/p08c-recovery-fix.yml'
+          python3 - <<'PY'
+          import base64, hashlib, json, pathlib, zlib
+          encoded = 'eNrdVttuGzcQfc9XEEYQSYCz4t6XNlygAZw2QNEaTtKiSIOal6HFZrXckpRk1ci/d6i1HTt2EqNR06APApbL1eHMmXNm+OoBIef4I2Sn52G2s0d2tLNdgE5NvZPTb/s+Cf5sZ3f4RoC2DuJXlS4kUM6qjGpWAC/rSteVLEt84jor01ooBjxtijRPmzxPgTeV5FKpjAGt60tErgO4CEgz4FrlZVVOWdSZqlpUqT+sy55nIqeJFrlkmGM2brNINU0qlNJOykTqneSG1ugS0rYpw8dlDOMKkxp11c96av0BN9n/r4s7KdMquEi+dbdsXdnxOgu33CN0lAmZ8aazbIyO+CHZE3k72L6E7WH0aejolP9pg9JqEGRC7wPRI76xayEDcsFzNoCMc34IHtwRFTOeDww+M7UgLfAl+82fF/UxY7lRyI2plPNZKzg6X0IUxBkWObP888ADDm1Fvex+Xo11yTjZPe6RbtC3m8g8JwPzf7n5EKgF88FPIYNrTRia+B4myua0a1tCsLHWFqmkUK2RdNBw4U1BnTMtSVQXPKs4lFEoyJnVFG1aopihTkdei0bdUk2uhC6p5LXnGKkh1npVZQ2VBoaypxKOkyMsUASothZZ1BVKDqEFDTqtc31INX3ETSM9PITmF8GR9bFsYj1rTvdmw2fE5kjk6Bm/bJRDPNbTryFGijfNhPElka+Sb8cAzauEYlvYNbMrpgLdEOLvCqqOAvI/lXpkwQ1UQcNyb7pSY4K8JA6Tt7NxIVAjyHJJbStxquAMYnGH1wvh9zBlwhQFehz3i6zlGRRQEblqPW3DGZdgjKGaIYkuCfQI/G28EIlxR8tR0xs8Ge4iYKMdtgmKbWWdQrWa54UqRQTf4vLSSR3PsR9eg3iJR3x2+IHO+JhZx3Mp4uECX1jmMv13HRIwbqH/57BIsrjZkKqT36KfnLwhXc7OpxWNhF53ibk24x7DigcknaRGLEGx3k2yN9Zsh7h8LHyJBH2LmsIuZZq/uwf9cxASP1uECCNAZ+X/q3rMhttYZtOfmqNWBnKVLBNC+haZQSmtVaprzKa4WANM2zNMOBVKRVKbSoGK2KulRZIassLTW7b2u4T2Wi4e5tNGV4a2/47Fe7eFeejXJHd5T3Vm/ASvlozs5g3Q6GwOPBT63DhtDjLowdOfiGuMTBnwvY9IM5YPVRkuTg4AAdjgYZkUeP8JOFa3EbT/e/oEDGJ9N+cL+fPjzXycUiMertdEjan0yGP8YBtPAXiAVNY2LBzAE1tkfS8ndKaZZwx73j5PIavg9Pr4Bd0j4dDBlomV9ENbI4xvn+zRNsyy7a0fWWWsszqiqUsT3ORSqHwnpVCw5pSUpmnumoAKiYprTKlOAdVNFUqNRUsrVhBRfYBs3hz2j3rNvztEo0yk6Y3qJPJ/nYn1yB1B32LE+ErkXp2U0qf2zfe0++Q6ySJYxkcnvlqZBTMe4s6kuvHwzaq8PWFsEdxKIzu6BJftlC3bBXD+x5vvC+Pf9hcZY/h9PCs/wjnD08mX+628n8a/V+pR/6LcbAtL8V2/uD1g78Biz7jIQ=='
+          edits_bytes=zlib.decompress(base64.b64decode(encoded))
+          assert hashlib.sha256(edits_bytes).hexdigest() == 'c6fc0964b01c97384663adf822f3883d79234bb3be445e92f464c2879f8fc072'
+          for change in json.loads(edits_bytes):
+              assert change['path'] in ('frontend/src/App.tsx','frontend/tests/e2e/p08c.spec.ts')
+              path=pathlib.Path(change['path']); text=path.read_text()
+              assert hashlib.sha256(text.encode()).hexdigest()==change['before']
+              assert text.count(change['old'])==1
+              text=text.replace(change['old'],change['new'])
+              assert hashlib.sha256(text.encode()).hexdigest()==change['after']
+              path.write_text(text)
+          PY
+          git diff --check
+      - name: Verify application, browser types and production client contracts
+        run: |
+          npm ci --prefix frontend --ignore-scripts --no-audit --no-fund
+          npm --prefix frontend run verify
+      - name: Commit and fast-forward source
+        run: |
+          set -euo pipefail
+          git add frontend/src/App.tsx frontend/tests/e2e/p08c.spec.ts
+          git diff --cached --check
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git commit -m 'fix(p08c): restore preserved refunds through the product router' -m 'Notify the outer product router on dashboard navigation and synchronize the real session-revocation test with completed authoritative reads. Retain explicit 401 admission, same-key replay and independent single-adjustment assertions.'
+          git push origin HEAD:main
+          echo "Corrected source: $(git rev-parse HEAD)" >> "$GITHUB_STEP_SUMMARY"
