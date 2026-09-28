@@ -6,9 +6,10 @@ import {
   normalizeIntent, normalizePaymentCancellationIntent, normalizePaymentIntent,
   normalizePaymentRefundIntent, normalizePaymentReversalIntent, normalizeTransferIntent
 } from './api.js';
+import { normalizeScheduleCommand, type ScheduleCommand, type ScheduleReceipt } from './schedule-api.js';
 export type IntentState = 'PREPARED' | 'UNCERTAIN' | 'CONFIRMED' | 'REJECTED';
-export type IntentKind = 'transfers' | 'payments' | 'payment-cancellations' | 'payment-refunds' | 'payment-reversals';
-export type EconomicIntent = Intent | PaymentCancellationIntent | PaymentRefundIntent | PaymentReversalIntent;
+export type IntentKind = 'transfers' | 'payments' | 'payment-cancellations' | 'payment-refunds' | 'payment-reversals' | 'schedules';
+export type EconomicIntent = Intent | PaymentCancellationIntent | PaymentRefundIntent | PaymentReversalIntent | ScheduleCommand;
 export interface StoredIntent { ownerId: string; key: string; kind: IntentKind; intent: EconomicIntent; state: IntentState; createdAt: string; }
 /** Stores only economic intent. Authentication/CSRF/JWT material must never enter this store. */
 export class IntentStore {
@@ -22,7 +23,7 @@ export class IntentStore {
     if (text.length > 4096) throw new TypeError('Stored intent too large');
     const record = JSON.parse(text) as StoredIntent;
     if (record.ownerId !== this.ownerId || !/^[A-Za-z0-9][A-Za-z0-9._:-]{7,127}$/.test(record.key)
-      || !['transfers','payments','payment-cancellations','payment-refunds','payment-reversals'].includes(record.kind)
+      || !['transfers','payments','payment-cancellations','payment-refunds','payment-reversals','schedules'].includes(record.kind)
       || !['PREPARED','UNCERTAIN','CONFIRMED','REJECTED'].includes(record.state)
       || !Number.isFinite(Date.parse(record.createdAt))) throw new TypeError('Invalid stored intent');
     record.intent = normalizeStored(record.kind, record.intent);
@@ -72,6 +73,15 @@ export class IntentStore {
   }
   async retryReversal(api: ApiClient): Promise<CommandResponse<AdjustmentReceipt>> {
     return this.sendPreparedReversal(api, this.unresolved('payment-reversals'));
+  }
+  async executeSchedule(api: ApiClient, input: ScheduleCommand, newKey: () => string = () => crypto.randomUUID()): Promise<CommandResponse<ScheduleReceipt>> {
+    return this.sendPreparedSchedule(api, this.prepare('schedules', input, newKey));
+  }
+  async retrySchedule(api: ApiClient): Promise<CommandResponse<ScheduleReceipt>> {
+    return this.sendPreparedSchedule(api, this.unresolved('schedules'));
+  }
+  private sendPreparedSchedule(api: ApiClient, record: StoredIntent): Promise<CommandResponse<ScheduleReceipt>> {
+    return this.resolve(() => api.scheduleCommand(record.intent as ScheduleCommand, record.key));
   }
   private unresolved(kind: IntentKind): StoredIntent {
     const current = this.current();
@@ -128,5 +138,6 @@ function normalizeStored(kind: IntentKind, input: EconomicIntent): EconomicInten
     case 'payment-cancellations': return normalizePaymentCancellationIntent(input as PaymentCancellationIntent);
     case 'payment-refunds': return normalizePaymentRefundIntent(input as PaymentRefundIntent);
     case 'payment-reversals': return normalizePaymentReversalIntent(input as PaymentReversalIntent);
+    case 'schedules': return normalizeScheduleCommand(input as ScheduleCommand);
   }
 }

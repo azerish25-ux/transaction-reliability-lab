@@ -53,6 +53,7 @@ export function paymentPollDelay(attempt: number): number {
 
 export function intentRecoveryPath(record: Pick<StoredIntent, 'kind' | 'intent'>): string {
   switch (record.kind) {
+    case 'schedules': return '/schedules/recovery';
     case 'transfers': return '/transfers/new';
     case 'payments': return '/payments/new';
     case 'payment-refunds':
@@ -69,6 +70,7 @@ export function intentRecoveryPath(record: Pick<StoredIntent, 'kind' | 'intent'>
 
 export function intentKindLabel(kind: IntentKind): string {
   switch (kind) {
+    case 'schedules': return 'schedule instruction';
     case 'transfers': return 'transfer';
     case 'payments': return 'payment';
     case 'payment-cancellations': return 'payment cancellation';

@@ -1,4 +1,5 @@
 import { currency, minor, MAX_TRANSACTION, type Currency } from './money.js';
+import { normalizeScheduleCommand, normalizeScheduleDefinition, scheduleId, scheduleRequest, validateScheduleReceipt, validateScheduleRecord, validateSchedulePage, validateOccurrence, validatePreview, type ScheduleCommand, type ScheduleDefinition, type ScheduleReceipt, type ScheduleRecord, type ScheduleOccurrence, type SchedulePreview } from './schedule-api.js';
 
 export interface Problem {
   code: string;
@@ -202,11 +203,40 @@ export class ApiClient {
   paymentAdjustmentContext(id: string, administrator = false): Promise<PaymentAdjustmentContext> {
     return this.get<PaymentAdjustmentContext>(`${administrator ? '/admin' : ''}/payments/${identity(id, 'payment')}/adjustment-context`);
   }
-  async command<T>(path: string, body: unknown, key?: string): Promise<CommandResponse<T>> {
-    if (!this.csrf) await this.csrfToken();
-    return this.request<T>(path, 'POST', body, key);
+  schedules(limit = 20, offset = 0): Promise<Page<ScheduleRecord>> {
+    pagination(limit, offset);
+    return this.get<Page<ScheduleRecord>>(`/schedules?limit=${limit}&offset=${offset}`).then(page => validateSchedulePage(page, validateScheduleRecord));
   }
-  private async request<T>(path: string, method: 'GET' | 'POST', body?: unknown, key?: string): Promise<CommandResponse<T>> {
+  scheduleById(id: string): Promise<ScheduleRecord> {
+    return this.get<ScheduleRecord>(`/schedules/${scheduleId(id)}`).then(value => {
+      validateScheduleRecord(value);
+      if (value.id !== scheduleId(id)) throw new TypeError('Mismatched schedule identity');
+      return value;
+    });
+  }
+  scheduleOccurrences(id: string, limit = 20, offset = 0): Promise<Page<ScheduleOccurrence>> {
+    const normalized = scheduleId(id); pagination(limit, offset);
+    return this.get<Page<ScheduleOccurrence>>(`/schedules/${normalized}/occurrences?limit=${limit}&offset=${offset}`)
+      .then(page => validateSchedulePage(page, value => validateOccurrence(value, normalized)));
+  }
+  previewSchedule(input: ScheduleDefinition): Promise<SchedulePreview> {
+    const definition = normalizeScheduleDefinition(input);
+    return this.command<SchedulePreview>('/schedules/preview', { intendedLocal: definition.intendedLocal, zoneId: definition.zoneId, recurrence: definition.recurrence })
+      .then(response => validatePreview(response.body, definition));
+  }
+  scheduleCommand(input: ScheduleCommand, key: string): Promise<CommandResponse<ScheduleReceipt>> {
+    const normalized = normalizeScheduleCommand(input);
+    const request = scheduleRequest(normalized);
+    return this.command<ScheduleReceipt>(request.path, request.body, key, request.method).then(response => {
+      try { return validateScheduleReceipt(response, normalized); }
+      catch { throw new OutcomeUnknown(); }
+    });
+  }
+  async command<T>(path: string, body: unknown, key?: string, method: 'POST' | 'PUT' = 'POST'): Promise<CommandResponse<T>> {
+    if (!this.csrf) await this.csrfToken();
+    return this.request<T>(path, method, body, key);
+  }
+  private async request<T>(path: string, method: 'GET' | 'POST' | 'PUT', body?: unknown, key?: string): Promise<CommandResponse<T>> {
     if (!path.startsWith('/') || path.startsWith('//') || /[\r\n]/.test(path)) throw new TypeError('Invalid API path');
     const headers = new Headers({ Accept: 'application/json' });
     if (method !== 'GET') {
@@ -229,11 +259,11 @@ export class ApiClient {
         signal: AbortSignal.timeout(15_000)
       });
     } catch (cause) {
-      if (method === 'POST' && key) throw new OutcomeUnknown();
+      if (method !== 'GET' && key) throw new OutcomeUnknown();
       if (method === 'GET') throw new Error('Authoritative data could not be loaded. Refresh to retry; no financial outcome has been inferred.', { cause });
       throw cause;
     }
-    if (method === 'POST' && key && (response.status >= 500 || response.status === 408)) throw new OutcomeUnknown();
+    if (method !== 'GET' && key && (response.status >= 500 || response.status === 408)) throw new OutcomeUnknown();
     if (response.status === 401) this.clearSession();
     if (response.ok && (path === '/auth/login' || path === '/auth/logout')) this.clearSession();
     let result: unknown;
@@ -243,7 +273,7 @@ export class ApiClient {
       try {
         result = await response.json();
       } catch {
-        if (method === 'POST' && key) throw new OutcomeUnknown();
+        if (method !== 'GET' && key) throw new OutcomeUnknown();
         throw new TypeError('Invalid API response');
       }
     }
