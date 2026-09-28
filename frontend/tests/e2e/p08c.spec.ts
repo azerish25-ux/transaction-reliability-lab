@@ -60,14 +60,25 @@ test('P08CE2E03 lost committed refund survives reload and expired authentication
   await page.reload(); await expect(page.getByRole('button', { name: 'Retry same refund' })).toBeVisible();
   await page.goto('/transfers/new'); await expect(page.getByRole('link', { name: 'Resolve safely' }).first()).toBeVisible();
   await page.getByRole('link', { name: 'Resolve safely' }).first().click();
+  await expect(page.getByRole('heading', { name: 'Payment details', exact: true })).toBeVisible();
+  // Finish the observable authoritative read before revocation; a pending GET may otherwise
+  // correctly expire the UI before the intended POST admission-boundary assertion.
+  await expect(page.getByRole('button', { name: 'Refresh adjustments', exact: true })).toBeEnabled();
+  await expect(page.getByRole('button', { name: 'Retry same refund', exact: true })).toBeVisible();
   // Revoke the real browser session without erasing its preserved economic intent.
   const logout = await command(page.request, '/auth/logout', {}); expect(logout.status()).toBe(204);
-  await page.getByRole('button', { name: 'Retry same refund' }).click();
+  const denied = page.waitForResponse(r => r.request().method() === 'POST' && r.url().endsWith(`/payments/${f.payment.id}/refunds`) && r.status() === 401, { timeout: 15_000 });
+  await page.getByRole('button', { name: 'Retry same refund' }).click({ timeout: 10_000 });
+  expect((await denied).status()).toBe(401);
   await expect(page.getByRole('dialog', { name: 'Your session ended' })).toBeVisible();
   await page.getByRole('button', { name: 'Continue to sign in' }).click();
   await signIn(page, f.recipient); await page.getByRole('link', { name: 'Resolve safely' }).first().click();
-  const replay = page.waitForResponse(r => r.request().method() === 'POST' && r.url().endsWith(`/payments/${f.payment.id}/refunds`) && r.status() === 201);
-  await page.getByRole('button', { name: 'Retry same refund' }).click(); expect((await replay).headers()['idempotency-replayed']).toBe('true');
+  await expect(page).toHaveURL(new RegExp(`/payments/${f.payment.id}$`));
+  await expect(page.getByRole('heading', { name: 'Payment details', exact: true })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Refresh adjustments', exact: true })).toBeEnabled();
+  await expect(page.getByRole('button', { name: 'Retry same refund', exact: true })).toBeVisible();
+  const replay = page.waitForResponse(r => r.request().method() === 'POST' && r.url().endsWith(`/payments/${f.payment.id}/refunds`) && r.status() === 201, { timeout: 15_000 });
+  await page.getByRole('button', { name: 'Retry same refund' }).click({ timeout: 10_000 }); expect((await replay).headers()['idempotency-replayed']).toBe('true');
   await expect(page.getByText('Recovered by safe replay.')).toBeVisible();
   expect(keys.length).toBeGreaterThanOrEqual(3); expect(new Set(keys).size).toBe(1); ledgerOracle(f, '1000', 1);
 });

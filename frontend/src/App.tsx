@@ -45,6 +45,8 @@ function useRouter(): { path: string; navigate: Navigate } {
     if (replace) window.history.replaceState(null, '', normalized);
     else window.history.pushState(null, '', normalized);
     setPath(normalized);
+    // Notify the outer product router when a preserved instruction leaves the dashboard.
+    window.dispatchEvent(new PopStateEvent('popstate', { state: null }));
     window.scrollTo({ top: 0, behavior: 'auto' });
   }, []);
   return { path, navigate };
