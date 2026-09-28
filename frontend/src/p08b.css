@@ -197,10 +197,10 @@
   .payment-meta { grid-template-columns: repeat(3, 1fr); }
 }
 
-@media (max-width: 640px) {
-  .p08b-shell .site-header { position: static; display: grid; }
-  .p08b-shell .site-header nav { justify-content: flex-start; gap: .25rem; }
-  .p08b-shell .nav-link { padding: .6rem; }
+@media (max-width: 650px) {
+  .site-header { position: static; display: grid; gap: .75rem; }
+  .site-header nav { margin-left: 0; flex-wrap: wrap; justify-content: flex-start; gap: .25rem; }
+  .site-header .nav-link { display: inline-flex; padding: .6rem; }
   .intent-banner,
   .uncertain-panel,
   .receipt-hero,

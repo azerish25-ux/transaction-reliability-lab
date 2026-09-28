@@ -14,6 +14,8 @@ test.afterEach(async ({ page }) => { expect(pageErrors.get(page) ?? []).toEqual(
 test('P08CE2E01 recipient partial then remaining refund preserves settlement and accessible receipts', async ({ page, lab }, info) => {
   const f = await lab.settled(); await signIn(page, f.recipient); await page.goto(`/payments/${f.payment.id}`);
   await expect(page.getByRole('heading', { name: 'Refunds and adjustments' })).toBeVisible();
+  const navigation = page.getByRole('navigation', { name: 'Primary navigation' });
+  for (const name of ['Dashboard', 'Transfer', 'Payments']) await expect(navigation.getByRole('link', { name, exact: true })).toBeVisible();
   await reviewRefund(page, '10.00'); const dialog = page.getByRole('dialog', { name: 'Confirm refund', exact: true });
   await expect(dialog.getByRole('button', { name: 'Go back' })).toBeFocused();
   await page.keyboard.press('Tab'); await expect(dialog.getByRole('button', { name: 'Confirm refund', exact: true })).toBeFocused();
@@ -85,10 +87,12 @@ test('P08CE2E03 lost committed refund survives reload and expired authentication
 
 test('P08CE2E04 administrator full reversal requires reason and blocks later adjustments', async ({ page, lab }, info) => {
   const f = await lab.settled(), admin = await lab.actor(true); await signIn(page, admin);
+  await expect(page.getByRole('navigation', { name: 'Primary navigation' }).getByRole('link', { name: 'Adjustments', exact: true })).toBeVisible();
   await page.getByLabel('Payment ID', { exact: true }).fill(f.payment.id); await page.getByRole('button', { name: 'Inspect payment' }).click();
   await page.getByRole('button', { name: 'Review full reversal' }).click();
   await expect(page.getByLabel('Reversal reason (required)')).toHaveAttribute('aria-invalid', 'true'); await accessible(page);
   await page.getByLabel('Reversal reason (required)').fill('  Authorized duplicate-payment correction  ');
+  await expect(page.getByLabel('Reversal reason (required)')).toHaveAttribute('aria-invalid', 'false');
   await screenshot(page, info, 'reversal'); await page.getByRole('button', { name: 'Review full reversal' }).click();
   const dialog = page.getByRole('dialog', { name: 'Confirm full reversal', exact: true }); await accessible(page);
   await dialog.getByRole('button', { name: 'Confirm full reversal', exact: true }).click();

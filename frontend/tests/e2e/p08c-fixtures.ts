@@ -88,7 +88,10 @@ export async function accessible(page: Page): Promise<void> {
 }
 export async function screenshot(page: Page, info: TestInfo, name: string): Promise<void> {
   const folder = path.resolve('../.evidence/playwright/screenshots'); fs.mkdirSync(folder, { recursive: true });
-  await page.screenshot({ path: path.join(folder, `${info.project.name}-${name}.png`), fullPage: true });
+  // Start at the real document top so full-page capture cannot stitch offscreen fixed controls into view.
+  await page.evaluate(() => window.scrollTo({ top: 0, behavior: 'instant' }));
+  await expect.poll(() => page.evaluate(() => window.scrollY)).toBe(0);
+  await page.screenshot({ path: path.join(folder, `${info.project.name}-${name}.png`), fullPage: true, animations: 'disabled' });
 }
 export async function reviewRefund(page: Page, amount: string): Promise<void> {
   await page.getByLabel(/^Refund amount/).fill(amount); await page.getByRole('button', { name: 'Review refund', exact: true }).click();

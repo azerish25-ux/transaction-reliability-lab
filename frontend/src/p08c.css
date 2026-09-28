@@ -1,3 +1,6 @@
+.adjustment-page-heading { display: block; }
+.adjustment-page-heading > p:last-child { max-width: 42rem; }
+.adjustment-page-heading code { overflow-wrap: anywhere; }
 .adjustment-section { margin-top: 2.5rem; padding: clamp(1.1rem, 3vw, 2rem); border: 1px solid var(--line); border-radius: var(--radius-lg); background: var(--surface); }
 .adjustment-heading { display: flex; align-items: flex-start; justify-content: space-between; gap: 1.25rem; }
 .adjustment-heading > div { max-width: 42rem; }

@@ -123,14 +123,14 @@ export function PaymentAdjustmentsPanel({ paymentId, administrator = false, navi
       {enabled && !ownUnresolved && !blocked && <form className="adjustment-form" onSubmit={prepare} noValidate>
         {Object.keys(errors).length > 0 && <div className="field-error" role="alert">Review the highlighted {label} details before continuing.</div>}
         {!administrator && <div className="field"><label htmlFor={`${formId}-amount`}>Refund amount ({context.currency})</label>
-          <input ref={amountRef} id={`${formId}-amount`} value={amount} onChange={event => setAmount(event.target.value)} inputMode="decimal" autoComplete="off" aria-invalid={Boolean(errors.amount)} aria-describedby={`${formId}-amount-help${errors.amount ? ` ${formId}-amount-error` : ''}`} />
+          <input ref={amountRef} id={`${formId}-amount`} value={amount} onChange={event => { setAmount(event.target.value); setErrors(previous => { const next = { ...previous }; delete next.amount; return next; }); }} inputMode="decimal" autoComplete="off" aria-invalid={Boolean(errors.amount)} aria-describedby={`${formId}-amount-help${errors.amount ? ` ${formId}-amount-error` : ''}`} />
           <span className="field-hint" id={`${formId}-amount-help`}>Enter a partial amount or use the remaining refundable amount. No rounding is performed.</span>
           {errors.amount && <span className="field-error" id={`${formId}-amount-error`}>{errors.amount}</span>}
           <button type="button" className="button button-secondary" disabled={!canUseRemaining || busy} onClick={() => { setAmount(remainingInput(context)); setErrors({}); amountRef.current?.focus(); }}>Refund remaining amount</button>
           {!canUseRemaining && <span className="field-hint">A full refund is unavailable because recipient availability is below the remaining refundable amount.</span>}
         </div>}
         <div className="field"><label htmlFor={`${formId}-reason`}>{administrator ? 'Reversal reason (required)' : 'Refund reason (optional)'}</label>
-          <textarea ref={reasonRef} id={`${formId}-reason`} value={reason} onChange={event => setReason(event.target.value)} rows={3} maxLength={500} required={administrator} aria-invalid={Boolean(errors.reason)} aria-describedby={`${formId}-reason-help${errors.reason ? ` ${formId}-reason-error` : ''}`} />
+          <textarea ref={reasonRef} id={`${formId}-reason`} value={reason} onChange={event => { setReason(event.target.value); setErrors(previous => { const next = { ...previous }; delete next.reason; return next; }); }} rows={3} maxLength={500} required={administrator} aria-invalid={Boolean(errors.reason)} aria-describedby={`${formId}-reason-help${errors.reason ? ` ${formId}-reason-error` : ''}`} />
           <span className="field-hint" id={`${formId}-reason-help`}>At most 500 characters. The reason becomes part of the immutable adjustment history. Do not enter secrets.</span>
           {errors.reason && <span className="field-error" id={`${formId}-reason-error`}>{errors.reason}</span>}
         </div>
@@ -169,7 +169,7 @@ function AdminLookup({ navigate }: { navigate: ProductNavigate }): JSX.Element {
   const [paymentId, setPaymentId] = useState('');
   const [error, setError] = useState('');
   return <ProductShell navigate={navigate}><div className="page page-narrow">
-    <header className="page-heading"><p className="eyebrow">Administrator · synthetic money only</p><h1>Payment adjustments</h1><p>Inspect a payment before making an authorized full reversal. There is no generic balance editor.</p></header>
+    <header className="page-heading adjustment-page-heading"><p className="eyebrow">Administrator · synthetic money only</p><h1>Payment adjustments</h1><p>Inspect a payment before making an authorized full reversal. There is no generic balance editor.</p></header>
     <form className="command-card adjustment-lookup" noValidate onSubmit={event => { event.preventDefault(); const id = paymentId.trim().toLowerCase(); if (!PAYMENT_ID.test(id)) { setError('Enter a valid payment ID.'); return; } navigate(`/admin/payments/${id}/reversal`); }}>
       <div className="field"><label htmlFor="admin-payment-id">Payment ID</label><input id="admin-payment-id" value={paymentId} onChange={event => setPaymentId(event.target.value)} autoComplete="off" spellCheck={false} aria-invalid={Boolean(error)} aria-describedby={error ? 'admin-payment-error' : undefined} />
         {error && <span className="field-error" id="admin-payment-error" role="alert">{error}</span>}</div>
@@ -183,7 +183,7 @@ function AdminReversal({ paymentId, navigate }: { paymentId: string; navigate: P
   usePageTitle('Review payment reversal');
   return <ProductShell navigate={navigate}><div className="page page-detail">
     <Link href="/admin/adjustments" navigate={navigate} className="back-link">← Find another payment</Link>
-    <header className="page-heading"><p className="eyebrow">Restricted administrative operation</p><h1>Review payment reversal</h1><p>Payment <code>{paymentId}</code></p><p>Only a settled payment with no previous refund or reversal is eligible. The original recipient must have sufficient available funds.</p></header>
+    <header className="page-heading adjustment-page-heading"><p className="eyebrow">Restricted administrative operation</p><h1>Review payment reversal</h1><p>Payment <code>{paymentId}</code></p><p>Only a settled payment with no previous refund or reversal is eligible. The original recipient must have sufficient available funds.</p></header>
     <PaymentAdjustmentsPanel key={paymentId} paymentId={paymentId} administrator navigate={navigate} />
   </div></ProductShell>;
 }
