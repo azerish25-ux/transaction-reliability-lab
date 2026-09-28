@@ -1,11 +1,11 @@
 # LedgerGuard
 ## Financial Transaction Reliability Laboratory
 
-**Synthetic money only. P08C refund/reversal interfaces are IMPLEMENTED_UNVERIFIED pending the permanent exact-SHA gate. P01–P08B are exact-SHA verified development milestones. The verified P08B boundary includes replay-safe customer transfers, asynchronous-payment creation/history/status and pending cancellation. The remaining customer adjustment, schedule, webhook and administrator interfaces, the complete fault laboratory, later test lanes and final release evidence remain incomplete. Overall status: INCOMPLETE / NO_GO.**
+**Synthetic money only. P01–P08C are exact-SHA verified development milestones. P08C adds recipient refunds, administrator full reversal, adjustment history/receipts and safe uncertainty recovery. Customer schedule/webhook and broader administrator interfaces, the complete fault laboratory, later test lanes and final release evidence remain incomplete. Overall status: INCOMPLETE / NO_GO.**
 
 LedgerGuard is a compact transaction system built to expose and test duplicate intent, ambiguous outcomes, concurrent spending, accounting invariants, asynchronous delivery, crash recovery, compensating financial adjustments, time-dependent execution and unreliable external notification. It is not a bank, payment processor, compliance product or production-ready financial service.
 
-## Run the verified P08B topology
+## Run the verified P08C topology
 
 From a clean clone with Docker Engine and Docker Compose:
 
@@ -36,7 +36,7 @@ The verified P08B slice adds:
 - Explicit cancellation of eligible outgoing pending payments, with a separate replay-safe idempotency key and truthful settlement-race handling.
 - Four additional Chromium scenarios repeated at 1440×900, 768×1024 and 390×844, authenticated axe WCAG A/AA checks and six responsive transfer/payment screenshots.
 
-The P08C candidate adds recipient refunds, administrator full reversal, adjustment context/history/receipts and preserved uncertainty recovery. Schedule, webhook and broader administrator interfaces remain later P08 slices.
+The verified P08C slice adds recipient partial/full refunds, administrator full reversal, authoritative adjustment context, paged history and immutable receipts, plus preserved same-key uncertainty recovery through reload and reauthentication. Schedule, webhook and broader administrator interfaces remain later P08 slices.
 
 ## Activate the verified P07 topology
 
@@ -69,22 +69,25 @@ Scoped contracts:
 - `/api/v1/openapi/p07b-webhooks.json` — verified P07B webhook contract.
 - `/api/v1/openapi/p08a-ui.json` — verified P08A customer-interface contract.
 - `/api/v1/openapi/p08b-ui.json` — verified P08B customer money-movement contract.
+- `/api/v1/openapi/p08c-ui.json` — verified P08C adjustment-interface contract.
 
-## P08C source candidate
+## P08C adjustment interface
 
-The candidate adds a narrow administrator payment lookup/reversal surface, not a generic balance editor. Review totals are read in one authorized SQL statement; current balances and parent adjustment rules are rechecked by the existing protected financial command. Payer read access does not expose recipient balances or grant refund authority.
+The interface adds a narrow administrator payment lookup/reversal surface, not a generic balance editor. Review totals are read in one authorized SQL statement; current balances and parent adjustment rules are rechecked by the existing protected financial command. Payer read access does not expose recipient balances or grant refund authority.
 
-See `docs/implementation/P08C_REQUIREMENTS.json` and `docs/architecture/adr/0020-p08c-adjustment-interface.md`. The candidate contract is `/api/v1/openapi/p08c-ui.json`. Browser fixtures use the explicitly test-only `compose.p08c-test.yaml`; the default application is unchanged.
+See `docs/implementation/P08C_REQUIREMENTS.json` and `docs/architecture/adr/0020-p08c-adjustment-interface.md`. Browser fixtures use the explicitly test-only `compose.p08c-test.yaml`; the default application is unchanged by that fixture overlay.
 
 ## Current verification status
 
-P08B implementation source `5d6d883444845bc5de3364d0c682c3df26005d8e` passed permanent workflow run `36355379901` on September 27, 2026. Verification job `108721959438` and required gate `108723219635` both succeeded.
+P08C implementation source `3b87e3a078d7b9270b56964ed1c50dc299958379` passed permanent workflow run `36436424432` on September 28, 2026. Verification job `108975429770` and required gate `108980532491` both succeeded.
 
-The exact-SHA gate preserved the complete P01–P08A campaign and passed 133 core/security JUnit cases, 124 real PostgreSQL/HTTP integration cases, 91 TypeScript client/contract cases including eight P08B cases, 24 real Chromium journeys across three viewport projects, authenticated accessibility analysis, committed-response-loss replay with one transfer effect, real RabbitMQ payment settlement, cancellation while both payment workers were deliberately stopped, nine responsive screenshots, repeatable reconciliation and a 316-file tracked-source literal-secret scan with zero findings. All required suites reported zero failures, errors and skips.
+The full gate preserved P01–P08B and passed the new production-client, real PostgreSQL/HTTP and desktop/tablet/mobile browser/accessibility evidence, secret scan, repeatable reconciliation and requirement assertions. It requires at least 18 P08C client cases, at least 54 combined browser cases, ten named P08C scenarios in each of three viewport projects, three named P08C PostgreSQL/HTTP cases and nine P08C screenshots. Required suites must have zero failures/errors/skips, zero functional browser retries and a clean tracked source tree. These are gate-enforced minimums; actual generated suite totals remain in the run artifact.
 
-Durable provenance is in `docs/evidence/p08b-5d6d883.md` and `docs/evidence/p08b-5d6d883.json`. The full product remains **INCOMPLETE / NO_GO**.
+Durable provenance is in [the P08C report](docs/evidence/p08c-3b87e3a.md) and [JSON record](docs/evidence/p08c-3b87e3a.json). The GitHub-reported artifact digest, retention limits and tested source SHA are recorded there. The full product remains **INCOMPLETE / NO_GO**.
 
-The P08C candidate implements the customer adjustment interface: recipient-owner partial/full refunds plus administrator full reversal, including replay-safe uncertainty recovery, adjustment receipts/history, authorization proofs, responsive browser coverage and exact-SHA verification. Schedule, webhook and broader administrator interfaces follow after P08C exact-SHA verification and before P09.
+Historical P08B source `5d6d883444845bc5de3364d0c682c3df26005d8e` passed run `36355379901` on September 27, 2026; its [original evidence](docs/evidence/p08b-5d6d883.md) and [JSON provenance](docs/evidence/p08b-5d6d883.json) retain their original counts and scope.
+
+The next product slice is the customer schedule interface. Customer webhook and broader administrator interfaces follow before P09.
 
 Useful commands:
 
@@ -105,6 +108,10 @@ Useful commands:
 ## Inspection paths
 
 - [Progress and next executable action](docs/implementation/PROGRESS.md)
+- [P08C durable evidence](docs/evidence/p08c-3b87e3a.md)
+- [P08C machine-readable provenance](docs/evidence/p08c-3b87e3a.json)
+- [P08C scoped requirements](docs/implementation/P08C_REQUIREMENTS.json)
+- [P08C architecture decision](docs/architecture/adr/0020-p08c-adjustment-interface.md)
 - [P08B durable evidence](docs/evidence/p08b-5d6d883.md)
 - [P08B machine-readable provenance](docs/evidence/p08b-5d6d883.json)
 - [P08B scoped requirements](docs/implementation/P08B_REQUIREMENTS.json)

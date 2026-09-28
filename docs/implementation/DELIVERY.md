@@ -1,29 +1,41 @@
-# P08C source candidate — exact-SHA verification pending
-
-P08C refund/reversal UI source is implemented with scoped server review and regression coverage. Existing durable P08B evidence below remains historical, not evidence for P08C. The final product remains INCOMPLETE / NO_GO.
-
-# Delivery record — P08B verified
+# Delivery record — P08C verified
 
 Repository: `azerish25-ux/transaction-reliability-lab`
 Branch: `main`
-Verified P08B implementation source: `5d6d883444845bc5de3364d0c682c3df26005d8e`
-P08B result: `VERIFIED_PASS`
+Verified P08C implementation source: `3b87e3a078d7b9270b56964ed1c50dc299958379`
+P08C result: `VERIFIED_PASS`
 Full-product result: `INCOMPLETE / NO_GO`
 
-## P08B GitHub delivery
+## P08C GitHub delivery
 
-Permanent `LedgerGuard P08B verification` push workflow run `36355379901` checked out the exact implementation SHA and completed successfully on September 27, 2026.
+Permanent `LedgerGuard P08C verification` run `36436424432`, attempt 1, checked out the exact implementation SHA and passed on September 28, 2026. Verification job `108975429770` and required gate `108980532491` both succeeded.
+
+The full run preserved P01-P08B and executed the P08C production-client, PostgreSQL/HTTP and responsive browser/accessibility evidence, with successful reconciliation, secret scan, requirements gate, teardown and artifact publication. The gate enforces zero failed/errored/skipped required cases, zero functional browser retries and a clean tracked source tree.
+
+Artifact `10977005382`: `ledgerguard-p08c-evidence-3b87e3a078d7b9270b56964ed1c50dc299958379`, 3,521,926 bytes, GitHub-reported SHA-256 `7bf691dab89de39fd74912ba73d18377d06bc9fcb2f499ed29df7614aeba08e0`. Scheduled expiry: October 12, 2026 at 14:41:46 UTC. The archive was not independently rehashed for this documentation update.
+
+See the [durable P08C report](../evidence/p08c-3b87e3a.md) and [machine-readable provenance](../evidence/p08c-3b87e3a.json). They distinguish the verified source SHA from the separate evidence-documentation commit and gate-enforced minima from exact generated counts.
+
+## Delivered P08C boundary
+
+Recipient-owner partial/full refunds; administrator payment lookup and full reversal with a mandatory reason; exact-money authoritative adjustment review; owner-safe paged history and immutable journal receipts; preserved same-key recovery after uncertain outcomes; and separate settlement/adjustment states. The administrator surface does not provide arbitrary balance editing or general customer spending permissions.
+
+## Preserved P08B GitHub delivery
+
+Verified P08B source: `5d6d883444845bc5de3364d0c682c3df26005d8e`.
+
+Permanent `LedgerGuard P08B verification` push workflow run `36355379901` completed successfully on September 27, 2026.
 
 - Verification job `108721959438`: SUCCESS.
 - Required gate `108723219635`: SUCCESS.
 - Every mandatory frontend build, Java/TypeScript test, PostgreSQL integration, Compose validation, secret scan, P05–P07B regression, P08A/P08B browser/accessibility, reconciliation, evidence and teardown step succeeded.
 - Artifact `10944390774`, `ledgerguard-p08b-evidence-5d6d883444845bc5de3364d0c682c3df26005d8e`, 1,732,590 bytes, SHA-256 `7fadf64bfff5689eea5ab0e4a933bc4b8bc3862f310bfdf8cefd0af6a6251d7f`.
 
-Executed results included 133 core/security JUnit cases, 124 PostgreSQL/real-HTTP integration cases, 91 TypeScript client/contract cases, 42 P05 Compose checks, 32 P06 Compose checks, 15 P07A Compose checks, 26 P07B Compose checks and 24 Chromium journeys. All required suites reported zero failures/errors/skips. Seven scoped P08B requirements were bound to executed evidence, 316 tracked files produced zero high-signal literal-secret findings and reconciliation reported zero discrepancies.
+Historical P08B results included 133 core/security JUnit cases, 124 PostgreSQL/real-HTTP integration cases, 91 TypeScript client/contract cases, 42 P05 Compose checks, 32 P06 Compose checks, 15 P07A Compose checks, 26 P07B Compose checks and 24 Chromium journeys. All required suites reported zero failures/errors/skips. Seven scoped P08B requirements were bound to executed evidence, 316 tracked files produced zero high-signal literal-secret findings and reconciliation reported zero discrepancies.
 
 See the [durable P08B report](../evidence/p08b-5d6d883.md) and [machine-readable provenance](../evidence/p08b-5d6d883.json).
 
-## Delivered P08B boundary
+### Preserved P08B boundary
 
 - Locked React/TypeScript/Vite product build.
 - Non-root nginx frontend with loopback binding, health check and same-origin API proxy.
@@ -39,9 +51,9 @@ See the [durable P08B report](../evidence/p08b-5d6d883.md) and [machine-readable
 
 ## Remaining delivery
 
-The original application remains **INCOMPLETE / NO_GO**. The remaining customer adjustment, schedule, webhook and administrator interfaces remain open, followed by P09 complete fault/defect laboratory, P10 contracts/scanners/performance/backup-restore/nightly/release lanes and P11 final evidence/video. There is no public deployment or release tag.
+The original application remains **INCOMPLETE / NO_GO**. Customer schedule and webhook interfaces and the broader administrator interface remain open, followed by P09 complete fault/defect laboratory, P10 contracts/scanners/performance/backup-restore/nightly/release lanes and P11 final evidence/video. This delivery record does not claim a public deployment or release tag.
 
-The next delivery unit is the customer adjustment interface: recipient-owner partial/full refund plus ADMIN full reversal, with replay-safe uncertainty handling, adjustment receipts/history, authorization/concurrency proofs, responsive accessibility coverage and a permanent exact-SHA gate.
+The next delivery unit is the customer schedule interface against the existing P07A API, with create/edit/pause/resume/cancel, zone/DST/catch-up explanations, occurrence results and exact-SHA browser/client/accessibility verification.
 
 ## Preserved prior delivery
 

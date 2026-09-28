@@ -1,0 +1,85 @@
+{
+  "phase": "P08C",
+  "status": "VERIFIED_PASS",
+  "fullProductStatus": "INCOMPLETE_NO_GO",
+  "sourceSha": "3b87e3a078d7b9270b56964ed1c50dc299958379",
+  "sourceTreeSha": "8c8b1f6ee687b01808bc91237f32795e9c088db6",
+  "repository": "azerish25-ux/transaction-reliability-lab",
+  "branch": "main",
+  "workflow": {
+    "name": "LedgerGuard P08C verification",
+    "runId": 36436424432,
+    "runAttempt": 1,
+    "url": "https://github.com/azerish25-ux/transaction-reliability-lab/actions/runs/36436424432",
+    "jobs": [
+      {
+        "id": 108975429770,
+        "name": "Build, refunds and reversals, browser accessibility, signed webhooks and financial invariants",
+        "conclusion": "success",
+        "completedAt": "2026-09-28T14:41:51Z"
+      },
+      {
+        "id": 108980532491,
+        "name": "Required P08C gate",
+        "conclusion": "success",
+        "completedAt": "2026-09-28T14:41:56Z"
+      }
+    ]
+  },
+  "artifact": {
+    "id": 10977005382,
+    "name": "ledgerguard-p08c-evidence-3b87e3a078d7b9270b56964ed1c50dc299958379",
+    "sizeBytes": 3521926,
+    "sha256": "7bf691dab89de39fd74912ba73d18377d06bc9fcb2f499ed29df7614aeba08e0",
+    "digestSource": "GitHub Actions artifact API; not an independently recomputed download digest",
+    "createdAt": "2026-09-28T14:41:47Z",
+    "expiresAt": "2026-10-12T14:41:46Z",
+    "summaryPath": ".evidence/p08c/test-summary.json",
+    "requirementsMatrixPath": ".evidence/p08c/requirements-matrix.md"
+  },
+  "gateEvidence": {
+    "source": "scripts/assert-p08c-evidence at the verified source SHA and successful required workflow steps",
+    "preserves": "P01-P08B",
+    "minimumExecutedCases": {
+      "p08cClient": 18,
+      "allBrowser": 54,
+      "paymentAdjustmentPostgresHttp": 3
+    },
+    "requiredNamedCases": {
+      "p08cClient": "P08CTS01-P08CTS18, each exactly once",
+      "p08cBrowser": "P08CE2E01-P08CE2E10, each exactly once in each of three viewport projects",
+      "p08cPostgresHttp": "P08CIT01-P08CIT03, each exactly once"
+    },
+    "viewportProjects": ["chromium-desktop", "chromium-tablet", "chromium-mobile"],
+    "requiredP08cScreenshots": 9,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "functionalBrowserRetries": 0,
+    "trackedTreeDirty": false,
+    "reconciliationStep": "success",
+    "countsNote": "Minimums and required named cases are enforced by the successful gate, not substituted for uninspected exact suite totals. The run artifact contains the generated actual counts."
+  },
+  "verifiedBoundary": [
+    "recipient-owner partial and full refunds using exact minor units",
+    "narrow administrator payment lookup and full reversal with mandatory reason",
+    "owner-safe authoritative adjustment context and paged history",
+    "immutable adjustment and journal receipt references",
+    "same-key preserved refund/reversal uncertainty recovery",
+    "separate base settlement and adjustment states",
+    "authorization, forbidden adjustment combinations and insufficient-funds checks",
+    "real PostgreSQL and HTTP adjustment verification",
+    "desktop, tablet and mobile browser journeys with authenticated accessibility checks",
+    "preserved financial regressions and independent reconciliation"
+  ],
+  "limitations": [
+    "Evidence applies to the source SHA above, not a later documentation commit.",
+    "Artifact digest and metadata are GitHub-reported; the archive was not independently rehashed for this report.",
+    "Browser screenshots are required by CI; this record does not assert a new manual inspection of the final archive.",
+    "Automated accessibility checks do not establish whole-product WCAG conformance.",
+    "Test-only fixture admission configuration is not a production security or capacity measurement.",
+    "Synthetic money only; no production banking, deployment or release-readiness claim."
+  ],
+  "next": "Customer schedule interface, followed by webhook and broader administrator interfaces before P09",
+  "remaining": ["remaining P08 schedule/webhook/administrator interfaces", "P09", "P10", "P11"]
+}
