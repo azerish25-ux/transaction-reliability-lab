@@ -1,10 +1,33 @@
-# P08D customer schedule management — IMPLEMENTED_UNVERIFIED
+# P08D customer schedule management — VERIFIED_PASS
 
-P08D implementation adds real customer schedule routes, pure server temporal preview, replay-safe PUT and existing-store recovery, explicit lifecycle commands and paged immutable occurrence results. Production-client and Java unit checks are not a substitute for the real browser/Compose gate. Do not mark P08D VERIFIED_PASS until the permanent full campaign succeeds at the exact implementation SHA.
+Overall product remains **INCOMPLETE / NO_GO**. Customer webhook and broader administrator interfaces plus P09-P11 remain incomplete.
 
-Next executable action: execute the complete permanent P08D campaign, inspect its responsive images/results, repair any failed assertions and record exact-SHA provenance. Customer webhook and broader administrator interfaces follow. Overall status remains **INCOMPLETE / NO_GO**.
+## Exact-source checkpoint
 
-The following P08C checkpoint is retained as historical provenance; its old next action is superseded by the P08D checkpoint above.
+Implementation `13bdd62c924a3230825b6d9304f449f887c8e7fe` passed permanent **LedgerGuard P08D verification** run `36464316280`. Both the verification job and **Required P08D gate** succeeded. The source tree was clean, required suites had zero failures/errors/skips, and functional browser retries were zero.
+
+Executed totals: 139 JUnit unit, 127 PostgreSQL/HTTP integration, 134 TypeScript client and 84 browser cases. P08D includes 25 client cases, 6 preview cases and 30 browser cases across three viewports. Eight scoped requirements and twelve P08D screenshots were verified by the gate.
+
+Exact artifact metadata, the focus regression and durable screenshots are in [the P08D report](../evidence/p08d-13bdd62.md) and [JSON record](../evidence/p08d-13bdd62.json). Evidence is attributed to the tested implementation SHA separately from this documentation commit.
+
+## Delivered P08D scope
+
+- Owner-scoped schedule creation/detail, versioned editing, pause/resume/cancel and paged immutable occurrences.
+- Exact money/recipient validation, execution-time funds semantics and server-authoritative local-time/zone/DST previews.
+- Original-key/body/version POST/PUT recovery through response loss, reload and reauthentication.
+- Explicit stale-state conflict handling and preservation of historical local occurrences after a zone edit.
+- Real browser/SQL financial and ownership oracles, authenticated accessibility and responsive UI evidence.
+- Explicit focus restoration after asynchronous review, including Escape and Go back. P01-P08C checks remain intact.
+
+## Next executable action
+
+Implement the customer webhook subscription/delivery interface against the existing P07B backend: approved endpoint management, protected one-time secret handling, owner-scoped delivery/attempt history, truthful retry/terminal states and authorized manual retry. Preserve P01-P08D and verify real responsive browser/authorization/recovery journeys at the exact source SHA.
+
+Then complete the broader administrator transaction/ledger/audit/reconciliation interfaces. Do not begin P09 until all remaining P08 interfaces have exact-SHA verification. Do not relabel the full product complete based on P08D alone.
+
+## Historical checkpoints
+
+The following P08C/P08B records preserve their original implementation SHAs and counts. Their former next action is superseded by the current P08D checkpoint above.
 
 # Execution checkpoint — P08C VERIFIED_PASS
 

@@ -1,0 +1,202 @@
+{
+  "phase": "P08D",
+  "status": "VERIFIED_PASS",
+  "fullProductStatus": "INCOMPLETE_NO_GO",
+  "sourceSha": "13bdd62c924a3230825b6d9304f449f887c8e7fe",
+  "trackedTreeDirty": false,
+  "verifiedAt": "2026-09-28T18:35:09.097340+00:00",
+  "workflow": {
+    "id": 36464316280,
+    "url": "https://github.com/azerish25-ux/transaction-reliability-lab/actions/runs/36464316280",
+    "path": ".github/workflows/pr.yml",
+    "attempt": 1,
+    "conclusion": "success",
+    "completedAt": "2026-09-28T18:35:25Z",
+    "jobs": [
+      {
+        "id": 109070422456,
+        "name": "Build, customer schedules, browser accessibility, signed webhooks and financial invariants",
+        "conclusion": "success"
+      },
+      {
+        "id": 109076906134,
+        "name": "Required P08D gate",
+        "conclusion": "success"
+      }
+    ]
+  },
+  "artifact": {
+    "id": 10989063634,
+    "name": "ledgerguard-p08d-evidence-13bdd62c924a3230825b6d9304f449f887c8e7fe",
+    "size_in_bytes": 6434488,
+    "digest": "sha256:7a4f2458e4e81e238332137aecc0e07452f5a3616b2c4cfb865602e94d4b672a",
+    "created_at": "2026-09-28T18:35:13Z",
+    "expires_at": "2026-10-12T18:35:12Z",
+    "expired": false
+  },
+  "downloadedArtifactSha256": "7a4f2458e4e81e238332137aecc0e07452f5a3616b2c4cfb865602e94d4b672a",
+  "executedTotals": {
+    "junitUnit": {
+      "tests": 139,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    "postgresHttpIntegration": {
+      "tests": 127,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    "typescriptClient": {
+      "tests": 134,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    "browser": {
+      "tests": 84,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    }
+  },
+  "p08dSuites": {
+    "p08d-client": {
+      "tests": 25,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    "p08d-preview-unit": {
+      "tests": 6,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    "all-browser": {
+      "tests": 84,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    }
+  },
+  "p08dBrowserCases": 30,
+  "requirements": [
+    {
+      "id": "P08D-R01",
+      "statement": "Customers create one-time/daily/weekly schedules and inspect authoritative records and immutable execution references.",
+      "status": "VERIFIED_PASS"
+    },
+    {
+      "id": "P08D-R02",
+      "statement": "Schedule edits use PUT, CSRF, original normalized bodies and definition versions. Lifecycle events do not silently change definition versions.",
+      "status": "VERIFIED_PASS"
+    },
+    {
+      "id": "P08D-R03",
+      "statement": "Committed creation and PUT response loss preserve the original owner-scoped key/body/version through reload and reauthentication; no automatic replacement.",
+      "status": "VERIFIED_PASS"
+    },
+    {
+      "id": "P08D-R04",
+      "statement": "Server-authoritative preview uses the existing Halifax/UTC wall-time DST policy without creating schedules or reserving money.",
+      "status": "VERIFIED_PASS"
+    },
+    {
+      "id": "P08D-R05",
+      "statement": "Customer/administrator authorization, non-disclosure and CSRF remain enforced at the real HTTP boundary.",
+      "status": "VERIFIED_PASS"
+    },
+    {
+      "id": "P08D-R06",
+      "statement": "Exact currencies and recipient validation reject rounding, same-wallet and cross-currency errors; current funds do not prevent scheduling.",
+      "status": "VERIFIED_PASS"
+    },
+    {
+      "id": "P08D-R07",
+      "statement": "Real competing schedulers record SUCCEEDED/REJECTED/SKIPPED_LATE wire outcomes and paged history; later zone edits never reinterpret historical local times.",
+      "status": "VERIFIED_PASS"
+    },
+    {
+      "id": "P08D-R08",
+      "statement": "Desktop/tablet/mobile workflows use semantic labels, keyboard confirmation/focus, truthful loading/permission/uncertainty states and authenticated axe checks.",
+      "status": "VERIFIED_PASS"
+    }
+  ],
+  "screenshots": [
+    {
+      "path": ".evidence/playwright/screenshots/chromium-desktop-p08d-form.png",
+      "sha256": "57a053cc2a7eac1d14ed226f3d9dcf665e5d58da39596e1f1a041461930f8471"
+    },
+    {
+      "path": ".evidence/playwright/screenshots/chromium-desktop-p08d-controls.png",
+      "sha256": "c0fa6413ea6f69afca2d1548c457f8ffa4a251f9dd55552f7a19db830ccd7283"
+    },
+    {
+      "path": ".evidence/playwright/screenshots/chromium-desktop-p08d-recovery.png",
+      "sha256": "2b93350c7bb33354702f63468c99e8106d10154fa63eb829689de3df55daa377"
+    },
+    {
+      "path": ".evidence/playwright/screenshots/chromium-desktop-p08d-result.png",
+      "sha256": "cda51cb86d365605a32683d2d894d98bb6959673d5083442037a48a21d3e5538"
+    },
+    {
+      "path": ".evidence/playwright/screenshots/chromium-tablet-p08d-form.png",
+      "sha256": "dfe10899cb1e9a4753be84dbe7b74b895c77bdfc4783bbd7eb6b6190af1bf20c"
+    },
+    {
+      "path": ".evidence/playwright/screenshots/chromium-tablet-p08d-controls.png",
+      "sha256": "c3833a96663ee4b958cf7d08c823e1e94ba940e4176edabff7aa3e5ef11bcf27"
+    },
+    {
+      "path": ".evidence/playwright/screenshots/chromium-tablet-p08d-recovery.png",
+      "sha256": "3cb68023776258ed710f5974ec87490856dc13ae960fef8792f2fad166deb973"
+    },
+    {
+      "path": ".evidence/playwright/screenshots/chromium-tablet-p08d-result.png",
+      "sha256": "d279a79aee0d1d5c72a920f1133b733390a134c0792cbcf1889cb4e793b4709b"
+    },
+    {
+      "path": ".evidence/playwright/screenshots/chromium-mobile-p08d-form.png",
+      "sha256": "d040bcef20ceaefa3a12fcbc6a56b2cdca08c1f6fb1084530c0966cf67cfcbef"
+    },
+    {
+      "path": ".evidence/playwright/screenshots/chromium-mobile-p08d-controls.png",
+      "sha256": "4e43fbb03b52bee23736e3cfa2453a5af57e5ae38a69e20fa50f0c35875debf6"
+    },
+    {
+      "path": ".evidence/playwright/screenshots/chromium-mobile-p08d-recovery.png",
+      "sha256": "b518d16bebadf82d8c8cfa790e9ca122093676c13130eb9763202a4e06edf928"
+    },
+    {
+      "path": ".evidence/playwright/screenshots/chromium-mobile-p08d-result.png",
+      "sha256": "c20fd7808107763e77ce0ab2930334ae8e158147a687d35c1ab797d444088c02"
+    }
+  ],
+  "durableScreenshots": [
+    {
+      "path": "docs/evidence/p08d-13bdd62/chromium-desktop-p08d-form.png",
+      "sha256": "57a053cc2a7eac1d14ed226f3d9dcf665e5d58da39596e1f1a041461930f8471"
+    },
+    {
+      "path": "docs/evidence/p08d-13bdd62/chromium-desktop-p08d-result.png",
+      "sha256": "cda51cb86d365605a32683d2d894d98bb6959673d5083442037a48a21d3e5538"
+    },
+    {
+      "path": "docs/evidence/p08d-13bdd62/chromium-tablet-p08d-controls.png",
+      "sha256": "c3833a96663ee4b958cf7d08c823e1e94ba940e4176edabff7aa3e5ef11bcf27"
+    },
+    {
+      "path": "docs/evidence/p08d-13bdd62/chromium-mobile-p08d-recovery.png",
+      "sha256": "b518d16bebadf82d8c8cfa790e9ca122093676c13130eb9763202a4e06edf928"
+    }
+  ],
+  "scope": "P01-P08C preserved; customer schedule lifecycle, server temporal preview, uncertainty recovery, real scheduler/ledger/authorization oracles and accessible responsive UI. Webhook/admin UI, P09-P11 and final release remain incomplete.",
+  "limitations": [
+    "Historical source-bound evidence, not live financial state.",
+    "The Actions artifact has finite retention; the compact report and four attested screenshots remain in git.",
+    "The documentation commit is separate from the tested implementation SHA.",
+    "Passing the secret scan is not a clean dependency audit or completion of all release/security gates."
+  ]
+}

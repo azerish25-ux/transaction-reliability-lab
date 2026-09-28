@@ -1,4 +1,16 @@
-# Delivery record — P08C verified
+# Delivery record — P08D verified
+
+Repository: `azerish25-ux/transaction-reliability-lab`. Branch: `main`.
+Verified implementation: `13bdd62c924a3230825b6d9304f449f887c8e7fe`.
+P08D: `VERIFIED_PASS`. Full product: **INCOMPLETE / NO_GO**.
+
+Permanent run `36464316280` and both required jobs passed. Artifact `10989063634` was downloaded and rehashed against GitHub's `sha256:7a4f2458e4e81e238332137aecc0e07452f5a3616b2c4cfb865602e94d4b672a`. The [report](../evidence/p08d-13bdd62.md), [JSON provenance](../evidence/p08d-13bdd62.json) and four attested screenshots retain the verified source and artifact expiry separately from this documentation commit.
+
+Delivered: owner-scoped schedule management, version-aware lifecycle, immutable occurrences, pure temporal preview, preserved POST/PUT uncertainty recovery and responsive/accessible browser verification. Async-review focus restoration was repaired without weakening the earlier financial or browser gate. Customer webhook/admin interfaces and P09-P11 remain incomplete. No public deployment or release tag is claimed.
+
+The following records retain their historical P08C/P08B implementation SHAs and counts.
+
+## Preserved P08C delivery record
 
 Repository: `azerish25-ux/transaction-reliability-lab`
 Branch: `main`
@@ -51,9 +63,9 @@ See the [durable P08B report](../evidence/p08b-5d6d883.md) and [machine-readable
 
 ## Remaining delivery
 
-The original application remains **INCOMPLETE / NO_GO**. Customer schedule and webhook interfaces and the broader administrator interface remain open, followed by P09 complete fault/defect laboratory, P10 contracts/scanners/performance/backup-restore/nightly/release lanes and P11 final evidence/video. This delivery record does not claim a public deployment or release tag.
+The original application remains **INCOMPLETE / NO_GO**. Customer webhook interfaces and the broader administrator interface remain open, followed by P09 complete fault/defect laboratory, P10 contracts/scanners/performance/backup-restore/nightly/release lanes and P11 final evidence/video. This delivery record does not claim a public deployment or release tag.
 
-The next delivery unit is the customer schedule interface against the existing P07A API, with create/edit/pause/resume/cancel, zone/DST/catch-up explanations, occurrence results and exact-SHA browser/client/accessibility verification.
+The next delivery unit is the customer webhook subscription/delivery interface against the existing P07B API. Preserve P01-P08D and verify integrated browser, authorization and recovery paths before the broader administrator interface and P09.
 
 ## Preserved prior delivery
 

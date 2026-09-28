@@ -1,6 +1,10 @@
-# Evidence index — P08C verified, full product NO_GO
+# P08D verified checkpoint
 
-## Current verified P08C evidence
+The customer schedule milestone passed at `13bdd62c924a3230825b6d9304f449f887c8e7fe`. See [report and screenshots](p08d-13bdd62.md), [JSON provenance](p08d-13bdd62.json) and [executed requirement matrix](p08d-13bdd62/requirements-matrix.md). Overall product remains **INCOMPLETE / NO_GO**. Entries below retain their original historical scope.
+
+## Historical evidence index — P08C checkpoint
+
+## Preserved verified P08C evidence
 
 Implementation `3b87e3a078d7b9270b56964ed1c50dc299958379` passed permanent `LedgerGuard P08C verification` run `36436424432`, attempt 1, on September 28, 2026. Verification job `108975429770` and required gate `108980532491` both succeeded.
 
@@ -48,7 +52,7 @@ Historical component records remain available under `component/` and `unit-probe
 
 ## Honest failure history
 
-Earlier P08C candidate failures remain historical failures. Only the full permanent run against `3b87e3a078d7b9270b56964ed1c50dc299958379` establishes the current verified milestone. The final run included isolated browser-fixture IP admission configuration with normal identity limits retained; no production admission or capacity claim is made.
+Earlier P08C candidate failures remain historical failures. Only the full permanent run against `3b87e3a078d7b9270b56964ed1c50dc299958379` establishes that historical P08C milestone. The final run included isolated browser-fixture IP admission configuration with normal identity limits retained; no production admission or capacity claim is made.
 
 P08B's permanent final run passed after the candidate's status-label accessibility repair was incorporated and the temporary repair workflow was retired. The exact final source was then exercised by the complete gate, not only by a narrow browser retry.
 
@@ -56,6 +60,6 @@ P08A's initial browser run had exposed a native-fetch receiver defect. The next 
 
 ## Remaining evidence
 
-Customer schedule/webhook interfaces, the broader administrator interface, P09 complete F01–F08 and D01–D24 campaigns, P10 Pact/ZAP/k6/backup-restore/nightly/release lanes, and P11 final exploratory package/video remain incomplete.
+Customer webhook interfaces, the broader administrator interface, P09 complete F01–F08 and D01–D24 campaigns, P10 Pact/ZAP/k6/backup-restore/nightly/release lanes, and P11 final exploratory package/video remain incomplete.
 
 This milestone is not a public-deployment, release-tag, security-certification, whole-product-accessibility or measured-performance claim. GitHub Actions results remain the authority for the executed Docker/PostgreSQL/RabbitMQ/Compose/browser campaign.
