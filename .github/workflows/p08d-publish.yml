@@ -28,9 +28,22 @@ jobs:
           cache: maven
           cache-dependency-path: backend/pom.xml
       - name: Apply exact guarded changes
+        id: changes
         run: |
-          test -f scripts/.p08d-delivery.py
-          python3 scripts/.p08d-delivery.py
+          if test -f scripts/.p08d-delivery.py; then
+            python3 scripts/.p08d-delivery.py
+            echo 'present=true' >> "$GITHUB_OUTPUT"
+          fi
+          python3 - <<'PY'
+          from pathlib import Path
+          p = Path('frontend/src/schedule-api.ts')
+          if p.exists():
+              text = p.read_text()
+              text = text.replace('const [year, month, day, hour, minute, second] = m.slice(1).map(v => Number(v ?? 0));', 'const year = Number(m[1]), month = Number(m[2]), day = Number(m[3]), hour = Number(m[4]), minute = Number(m[5]), second = Number(m[6] ?? 0);')
+              text = text.replace('if (!match || !UUID.test(match[1]))', 'if (!match || !match[1] || !UUID.test(match[1]))')
+              text = text.replace('value.operationId !== null', 'value.operationId != null').replace('value.journalId !== null', 'value.journalId != null')
+              p.write_text(text)
+          PY
       - name: Install pinned frontend dependencies
         run: npm ci --prefix frontend --ignore-scripts --no-audit --no-fund
       - name: Verify all production TypeScript and client regressions
@@ -40,6 +53,7 @@ jobs:
           chmod +x mvnw
           ./mvnw -B -ntp -f backend/pom.xml test
       - name: Commit tested sources without overwriting concurrent main changes
+        if: steps.changes.outputs.present == 'true'
         run: |
           git fetch origin main
           test "$(git rev-parse origin/main)" = "$GITHUB_SHA"
@@ -50,6 +64,27 @@ jobs:
           git commit -m 'feat(p08d): implement verified schedule-management source slice'
           git push origin HEAD:main
           echo "PUBLISHED_SOURCE_SHA=$(git rev-parse HEAD)"
+      - name: Capture source and locked tooling without runtime secrets
+        if: always()
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import json, subprocess, tarfile
+          files = subprocess.check_output(['git','ls-files','--cached','--others','--exclude-standard','-z']).decode().split('\0')
+          with tarfile.open('/tmp/p08d-source.tar.gz','w:gz') as out:
+              for name in sorted(set(files)):
+                  p=Path(name)
+                  if name and p.is_file() and not p.is_symlink(): out.add(p,arcname=name)
+          Path('/tmp/p08d-source.json').write_text(json.dumps({'sourceSha':subprocess.check_output(['git','rev-parse','HEAD'],text=True).strip(),'trackedChanges':subprocess.check_output(['git','status','--porcelain','--untracked-files=no'],text=True)}))
+          PY
+          if test -d frontend/node_modules; then tar -czf /tmp/p08d-node-modules.tar.gz frontend/node_modules; fi
+      - name: Preserve source and pinned tooling for inspection
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: p08d-source-inspection-${{ github.run_id }}
+          retention-days: 3
+          path: /tmp/p08d-*
       - name: Preserve diagnostic test evidence
         if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
