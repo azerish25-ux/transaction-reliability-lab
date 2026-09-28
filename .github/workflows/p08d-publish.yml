@@ -1,0 +1,62 @@
+name: P08D guarded source delivery
+on:
+  push:
+    branches: [main]
+    paths: ['scripts/.p08d-delivery.py', '.github/workflows/p08d-publish.yml']
+  workflow_dispatch:
+permissions:
+  contents: write
+concurrency:
+  group: p08d-guarded-delivery
+  cancel-in-progress: false
+jobs:
+  publish:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - uses: actions/setup-java@b6effb05e454b25005698d916606bdc6ffcbf961
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: maven
+          cache-dependency-path: backend/pom.xml
+      - name: Apply exact guarded changes
+        run: |
+          test -f scripts/.p08d-delivery.py
+          python3 scripts/.p08d-delivery.py
+      - name: Install pinned frontend dependencies
+        run: npm ci --prefix frontend --ignore-scripts --no-audit --no-fund
+      - name: Verify all production TypeScript and client regressions
+        run: npm --prefix frontend run verify
+      - name: Execute backend unit tests and compile integration tests
+        run: |
+          chmod +x mvnw
+          ./mvnw -B -ntp -f backend/pom.xml test
+      - name: Commit tested sources without overwriting concurrent main changes
+        run: |
+          git fetch origin main
+          test "$(git rev-parse origin/main)" = "$GITHUB_SHA"
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -A -- frontend backend/src tests/contracts scripts docs
+          git diff --cached --check
+          git commit -m 'feat(p08d): implement verified schedule-management source slice'
+          git push origin HEAD:main
+          echo "PUBLISHED_SOURCE_SHA=$(git rev-parse HEAD)"
+      - name: Preserve diagnostic test evidence
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: p08d-delivery-checks-${{ github.run_id }}
+          include-hidden-files: true
+          retention-days: 7
+          path: |
+            .evidence/client/
+            backend/target/surefire-reports/
