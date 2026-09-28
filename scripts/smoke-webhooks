@@ -141,7 +141,9 @@ running=set(compose("ps","--status","running","--services",capture=True).stdout.
 required={"api","receiver","webhook-dispatcher-a","webhook-dispatcher-b"}
 check("p07b-two-dispatchers-running",required.issubset(running),running)
 check("p07b-dispatcher-isolated-processes",{"webhook-dispatcher-a","webhook-dispatcher-b"}.issubset(running))
-check("p07b-ten-migrations",sql("SELECT count(*) FROM public.flyway_schema_history WHERE success")=="10")
+check("p07b-ten-migrations",sql("SELECT count(*) FROM public.flyway_schema_history WHERE success AND version::integer BETWEEN 1 AND 10")=="10")
+check("p08e-additive-command-migration",sql("SELECT count(*) FROM public.flyway_schema_history WHERE success AND version='11'")=="1"
+      and sql("SELECT count(*) FROM public.flyway_schema_history WHERE success")=="11")
 
 payer=Browser();payer_identity=payer.register_login("P07B payer")
 recipient=Browser();recipient.register_login("P07B recipient")
