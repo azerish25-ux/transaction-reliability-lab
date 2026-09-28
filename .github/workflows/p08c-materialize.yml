@@ -1,0 +1,108 @@
+name: Materialize P08C candidate
+
+on:
+  push:
+    branches: [p08c-materialize]
+    paths:
+      - .github/workflows/p08c-materialize.yml
+      - .github/p08c-payload.part-*
+
+permissions:
+  contents: write
+  actions: write
+
+concurrency:
+  group: ledgerguard-p08c-materialize
+  cancel-in-progress: false
+
+jobs:
+  materialize:
+    name: Build and publish clean P08C commit
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      EXPECTED_MAIN_SHA: 5d6d883444845bc5de3364d0c682c3df26005d8e
+      PAYLOAD_SHA256: c4e5635e788cdab162565067ded064bd01fba8e18d4b0dd8cf280b0a2a741467
+    steps:
+      - name: Check out isolated materializer branch
+        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+        with:
+          fetch-depth: 0
+
+      - name: Verify base and reconstruct reviewed payload
+        run: |
+          set -euo pipefail
+          git merge-base --is-ancestor "$EXPECTED_MAIN_SHA" HEAD
+          test "$(git merge-base "$EXPECTED_MAIN_SHA" HEAD)" = "$EXPECTED_MAIN_SHA"
+          cat .github/p08c-payload.part-* | base64 --decode > /tmp/p08c-source.tar.gz
+          echo "$PAYLOAD_SHA256  /tmp/p08c-source.tar.gz" | sha256sum --check --strict
+          mkdir -p /tmp/p08c-source
+          tar -xzf /tmp/p08c-source.tar.gz -C /tmp/p08c-source
+          test -f /tmp/p08c-source/frontend/src/p08c-ui.tsx
+          test -f /tmp/p08c-source/backend/src/main/java/lab/ledgerguard/payments/PaymentAdjustmentSummaryController.java
+
+      - name: Apply candidate to exact current main
+        run: |
+          set -euo pipefail
+          git fetch origin main
+          test "$(git rev-parse origin/main)" = "$EXPECTED_MAIN_SHA"
+          git checkout --detach origin/main
+          tar -xzf /tmp/p08c-source.tar.gz -C .
+          chmod +x mvnw scripts/lab scripts/test-core scripts/test-client scripts/assert-p04-evidence scripts/assert-p05-evidence scripts/assert-p06-evidence scripts/assert-p07a-evidence scripts/assert-p07b-evidence scripts/assert-p08a-evidence scripts/assert-p08b-evidence scripts/assert-p08c-evidence scripts/smoke-auth scripts/smoke-adjustments scripts/smoke-schedules scripts/smoke-webhooks scripts/unit-probes scripts/validate-evidence scripts/scan-secrets infra/docker/postgres/00-roles.sh
+          git diff --check
+
+      - name: Install locked frontend dependencies
+        run: npm ci --prefix frontend --ignore-scripts --no-audit --no-fund
+
+      - name: Verify frontend, contracts and production build
+        run: npm --prefix frontend run verify
+
+      - name: Compile the Java application
+        run: ./mvnw -B -ntp -f backend/pom.xml -DskipTests package
+
+      - name: Validate Compose and tracked-source safety
+        run: |
+          set -euo pipefail
+          docker compose --env-file .env.example -f compose.yaml config --quiet
+          docker compose --env-file .env.example -f compose.yaml -f compose.p07.yaml config --quiet
+          ./scripts/scan-secrets
+          git diff --check
+
+      - name: Commit candidate from the original main parent
+        id: commit
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          test -n "$(git diff --cached --name-only)"
+          git diff --cached --check
+          if git diff --cached --name-only | grep -E '^\.github/(p08c-payload|workflows/p08c-materialize\.yml)'; then
+            echo 'Temporary materializer content leaked into candidate' >&2
+            exit 1
+          fi
+          git commit -m "feat(p08c): add replay-safe payment adjustments" -m "Add recipient partial/full refunds, administrator full reversal, exact adjustment summaries, uncertainty-safe replay, immutable receipts, responsive browser coverage, contracts, scoped OpenAPI and exact-SHA evidence gating."
+          echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+
+      - name: Publish non-force to main
+        run: |
+          set -euo pipefail
+          git fetch origin main
+          test "$(git rev-parse origin/main)" = "$EXPECTED_MAIN_SHA"
+          git push origin HEAD:main
+
+      - name: Dispatch permanent P08C verification
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          curl --fail-with-body --location --request POST \
+            --header "Accept: application/vnd.github+json" \
+            --header "Authorization: Bearer $GH_TOKEN" \
+            --header "X-GitHub-Api-Version: 2022-11-28" \
+            "https://api.github.com/repos/${GITHUB_REPOSITORY}/actions/workflows/pr.yml/dispatches" \
+            --data '{"ref":"main"}'
+
+      - name: Retire isolated materializer branch
+        if: success()
+        run: git push origin --delete p08c-materialize
