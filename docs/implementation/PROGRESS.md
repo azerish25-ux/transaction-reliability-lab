@@ -1,3 +1,11 @@
+# P08D customer schedule management — IMPLEMENTED_UNVERIFIED
+
+P08D implementation adds real customer schedule routes, pure server temporal preview, replay-safe PUT and existing-store recovery, explicit lifecycle commands and paged immutable occurrence results. Production-client and Java unit checks are not a substitute for the real browser/Compose gate. Do not mark P08D VERIFIED_PASS until the permanent full campaign succeeds at the exact implementation SHA.
+
+Next executable action: execute the complete permanent P08D campaign, inspect its responsive images/results, repair any failed assertions and record exact-SHA provenance. Customer webhook and broader administrator interfaces follow. Overall status remains **INCOMPLETE / NO_GO**.
+
+The following P08C checkpoint is retained as historical provenance; its old next action is superseded by the P08D checkpoint above.
+
 # Execution checkpoint — P08C VERIFIED_PASS
 
 Overall product status remains **INCOMPLETE / NO_GO**. P01–P08C retain exact-SHA verification. The remaining P08 schedule, webhook and broader administrator interfaces plus P09–P11 remain incomplete.

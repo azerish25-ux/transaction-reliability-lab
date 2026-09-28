@@ -5,6 +5,7 @@ import { isP08BPath, normalizeProductPath } from './p08b-core.js';
 import { P08BRoutes, type ProductNavigate } from './p08b-ui.js';
 import { adjustmentRoute } from './p08c-core.js';
 import { P08CRoutes } from './p08c-ui.js';
+import { P08DRoutes } from './p08d-ui.js';
 import { useSession } from './session.js';
 
 function currentLocation(): string {
@@ -75,6 +76,7 @@ function NavigationBridge({ navigate }: { navigate: ProductNavigate }): JSX.Elem
     {session.user?.role === 'ADMIN' ? <ProductLink href="/admin/adjustments" navigate={navigate}>Adjustments</ProductLink> : <>
       <ProductLink href="/transfers/new" navigate={navigate}>Transfer</ProductLink>
       <ProductLink href="/payments" navigate={navigate}>Payments</ProductLink>
+      <ProductLink href="/schedules" navigate={navigate}>Schedules</ProductLink>
     </>}
   </>, mount);
 }
@@ -84,6 +86,9 @@ export default function ProductRouter(): JSX.Element {
   const { location, path, navigate } = useProductLocation();
   if (session.status === 'AUTHENTICATED' && (adjustmentRoute(path) || (path === '/' && session.user?.role === 'ADMIN'))) {
     return <P08CRoutes path={path === '/' ? '/admin/adjustments' : path} navigate={navigate} />;
+  }
+  if (session.status === 'AUTHENTICATED' && (path === '/schedules' || path.startsWith('/schedules/'))) {
+    return <P08DRoutes path={path} navigate={navigate} />;
   }
   const customRoute = isP08BPath(path);
   if (customRoute && session.status === 'AUTHENTICATED') {

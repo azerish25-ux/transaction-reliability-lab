@@ -184,6 +184,7 @@ export function ProductShell({ navigate, children }: PropsWithChildren<{ navigat
           <Link href="/" navigate={navigate} className="nav-link">Dashboard</Link>
           {customer && <Link href="/transfers/new" navigate={navigate} className="nav-link">Transfer</Link>}
           {customer && <Link href="/payments" navigate={navigate} className="nav-link">Payments</Link>}
+          {customer && <Link href="/schedules" navigate={navigate} className="nav-link">Schedules</Link>}
           {!customer && <Link href="/admin/adjustments" navigate={navigate} className="nav-link">Adjustments</Link>}
           <button className="button button-quiet" type="button" onClick={() => void logout()} disabled={loggingOut}>{loggingOut ? 'Signing out…' : 'Sign out'}</button>
         </nav>
@@ -192,7 +193,7 @@ export function ProductShell({ navigate, children }: PropsWithChildren<{ navigat
       {intentFailure !== undefined && <div className="shell-problem"><ProblemPanel failure={new Error("Saved instruction cannot be read. Financial actions are blocked; do not clear browser storage while an outcome is unresolved.")} /></div>}
       {showGlobalIntent && current && <div className="intent-banner-wrap"><UnresolvedBanner record={current} navigate={navigate} /></div>}
       <main id="main-content" tabIndex={-1}>{children}</main>
-      <footer className="site-footer"><span>P08C payment-adjustment interface</span><span>Receipts and states come from PostgreSQL through the protected API.</span></footer>
+      <footer className="site-footer"><span>Customer financial workflows</span><span>Receipts and states come from PostgreSQL through the protected API.</span></footer>
     </div>
   );
 }

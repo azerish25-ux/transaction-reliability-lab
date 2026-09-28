@@ -1,0 +1,204 @@
+{
+  "phase": "P08D",
+  "sourceContract": "docs/implementation/MASTER_SPEC.md",
+  "scope": "Customer schedule management on the verified P07A backend. All P01-P08C gates remain mandatory. No full-product completion claim.",
+  "requirements": [
+    {
+      "id": "P08D-R01",
+      "sections": [
+        "12",
+        "13",
+        "14",
+        "15",
+        "28"
+      ],
+      "statement": "Customers create one-time/daily/weekly schedules and inspect authoritative records and immutable execution references.",
+      "tests": {
+        "p08d-browser": [
+          "P08DE2E01",
+          "P08DE2E02",
+          "P08DE2E10"
+        ],
+        "p08d-client": [
+          "P08DTS05",
+          "P08DTS20"
+        ]
+      }
+    },
+    {
+      "id": "P08D-R02",
+      "sections": [
+        "12",
+        "13",
+        "14",
+        "15",
+        "28"
+      ],
+      "statement": "Schedule edits use PUT, CSRF, original normalized bodies and definition versions. Lifecycle events do not silently change definition versions.",
+      "tests": {
+        "p08d-browser": [
+          "P08DE2E02",
+          "P08DE2E05"
+        ],
+        "p08d-client": [
+          "P08DTS06",
+          "P08DTS14",
+          "P08DTS18",
+          "P08DTS22"
+        ]
+      }
+    },
+    {
+      "id": "P08D-R03",
+      "sections": [
+        "12",
+        "13",
+        "14",
+        "15",
+        "28"
+      ],
+      "statement": "Committed creation and PUT response loss preserve the original owner-scoped key/body/version through reload and reauthentication; no automatic replacement.",
+      "tests": {
+        "p08d-browser": [
+          "P08DE2E03",
+          "P08DE2E04"
+        ],
+        "p08d-client": [
+          "P08DTS07",
+          "P08DTS08",
+          "P08DTS09",
+          "P08DTS10",
+          "P08DTS11",
+          "P08DTS12",
+          "P08DTS13",
+          "P08DTS15",
+          "P08DTS16",
+          "P08DTS17",
+          "P08DTS19",
+          "P08DTS23"
+        ]
+      }
+    },
+    {
+      "id": "P08D-R04",
+      "sections": [
+        "12",
+        "13",
+        "14",
+        "15",
+        "28"
+      ],
+      "statement": "Server-authoritative preview uses the existing Halifax/UTC wall-time DST policy without creating schedules or reserving money.",
+      "tests": {
+        "p08d-browser": [
+          "P08DE2E07"
+        ],
+        "p08d-client": [
+          "P08DTS01",
+          "P08DTS03",
+          "P08DTS21"
+        ],
+        "p08d-unit": [
+          "P08DUT01",
+          "P08DUT02",
+          "P08DUT03",
+          "P08DUT04",
+          "P08DUT05",
+          "P08DUT06"
+        ]
+      }
+    },
+    {
+      "id": "P08D-R05",
+      "sections": [
+        "12",
+        "13",
+        "14",
+        "15",
+        "28"
+      ],
+      "statement": "Customer/administrator authorization, non-disclosure and CSRF remain enforced at the real HTTP boundary.",
+      "tests": {
+        "p08d-browser": [
+          "P08DE2E06",
+          "P08DE2E07"
+        ],
+        "p08d-client": [
+          "P08DTS04",
+          "P08DTS17",
+          "P08DTS23"
+        ]
+      }
+    },
+    {
+      "id": "P08D-R06",
+      "sections": [
+        "12",
+        "13",
+        "14",
+        "15",
+        "28"
+      ],
+      "statement": "Exact currencies and recipient validation reject rounding, same-wallet and cross-currency errors; current funds do not prevent scheduling.",
+      "tests": {
+        "p08d-browser": [
+          "P08DE2E08",
+          "P08DE2E09"
+        ],
+        "p08d-client": [
+          "P08DTS02",
+          "P08DTS24"
+        ]
+      }
+    },
+    {
+      "id": "P08D-R07",
+      "sections": [
+        "12",
+        "13",
+        "14",
+        "15",
+        "28"
+      ],
+      "statement": "Real competing schedulers record successful/failed/skipped-late outcomes and paged history; later zone edits never reinterpret historical local times.",
+      "tests": {
+        "p08d-browser": [
+          "P08DE2E01",
+          "P08DE2E08",
+          "P08DE2E10"
+        ],
+        "p08d-client": [
+          "P08DTS20"
+        ]
+      }
+    },
+    {
+      "id": "P08D-R08",
+      "sections": [
+        "12",
+        "13",
+        "14",
+        "15",
+        "28"
+      ],
+      "statement": "Desktop/tablet/mobile workflows use semantic labels, keyboard confirmation/focus, truthful loading/permission/uncertainty states and authenticated axe checks.",
+      "tests": {
+        "p08d-browser": [
+          "P08DE2E01",
+          "P08DE2E02",
+          "P08DE2E03",
+          "P08DE2E05",
+          "P08DE2E06",
+          "P08DE2E07",
+          "P08DE2E08",
+          "P08DE2E09",
+          "P08DE2E10"
+        ],
+        "p08d-client": [
+          "P08DTS19",
+          "P08DTS22"
+        ]
+      }
+    }
+  ]
+}

@@ -1,7 +1,7 @@
 # LedgerGuard
 ## Financial Transaction Reliability Laboratory
 
-**Synthetic money only. P01–P08C are exact-SHA verified development milestones. P08C adds recipient refunds, administrator full reversal, adjustment history/receipts and safe uncertainty recovery. Customer schedule/webhook and broader administrator interfaces, the complete fault laboratory, later test lanes and final release evidence remain incomplete. Overall status: INCOMPLETE / NO_GO.**
+**Synthetic money only. P01–P08C are exact-SHA verified development milestones. P08C adds recipient refunds, administrator full reversal, adjustment history/receipts and safe uncertainty recovery. P08D customer schedule management is implemented and awaiting its exact-SHA verification gate. Customer webhook and broader administrator interfaces, the complete fault laboratory, later test lanes and final release evidence remain incomplete. Overall status: INCOMPLETE / NO_GO.**
 
 LedgerGuard is a compact transaction system built to expose and test duplicate intent, ambiguous outcomes, concurrent spending, accounting invariants, asynchronous delivery, crash recovery, compensating financial adjustments, time-dependent execution and unreliable external notification. It is not a bank, payment processor, compliance product or production-ready financial service.
 
@@ -77,6 +77,14 @@ The interface adds a narrow administrator payment lookup/reversal surface, not a
 
 See `docs/implementation/P08C_REQUIREMENTS.json` and `docs/architecture/adr/0020-p08c-adjustment-interface.md`. Browser fixtures use the explicitly test-only `compose.p08c-test.yaml`; the default application is unchanged by that fixture overlay.
 
+## P08D customer schedule management — IMPLEMENTED_UNVERIFIED
+
+With the documented P07 overlay active, customers can use **Schedules** in the product navigation to create one-time/daily/weekly instructions, review a server-resolved local time/zone/UTC preview, edit versioned definitions, pause/resume/cancel, and inspect paged occurrence results and actual transfer/journal references.
+
+Schedule commands use the existing protected backend and owner-scoped intent store. Lost creation or PUT edit responses retain their original key, body and expected version across reload and reauthentication. Recovery is explicit; stale versions are never silently replaced. Creating a schedule does not reserve funds or prove a transfer executed. Historical local occurrences are not reinterpreted after a zone edit.
+
+The P08D gate preserves P01-P08C, requires the production-client cases, server temporal-preview tests, real browser/SQL oracles at desktop/tablet/mobile widths, keyboard/axe checks and responsive screenshots. See `docs/implementation/P08D_REQUIREMENTS.json` and `docs/architecture/adr/0021-p08d-customer-schedule-management.md`. This section does not claim an executed gate until an exact-SHA evidence record is published.
+
 ## Current verification status
 
 P08C implementation source `3b87e3a078d7b9270b56964ed1c50dc299958379` passed permanent workflow run `36436424432` on September 28, 2026. Verification job `108975429770` and required gate `108980532491` both succeeded.
@@ -87,7 +95,7 @@ Durable provenance is in [the P08C report](docs/evidence/p08c-3b87e3a.md) and [J
 
 Historical P08B source `5d6d883444845bc5de3364d0c682c3df26005d8e` passed run `36355379901` on September 27, 2026; its [original evidence](docs/evidence/p08b-5d6d883.md) and [JSON provenance](docs/evidence/p08b-5d6d883.json) retain their original counts and scope.
 
-The next product slice is the customer schedule interface. Customer webhook and broader administrator interfaces follow before P09.
+Complete the P08D exact-SHA verification before proceeding to customer webhook and broader administrator interfaces. These remain P08 work before P09.
 
 Useful commands:
 

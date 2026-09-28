@@ -1,0 +1,71 @@
+#!/usr/bin/env python3
+"""Require the intact P01-P08C campaign plus executed P08D schedule evidence."""
+import hashlib
+import json
+import subprocess
+import xml.etree.ElementTree as ET
+from datetime import datetime, timezone
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parent.parent
+subprocess.run(['python3', 'scripts/assert-p08c-evidence'], cwd=ROOT, check=True)
+
+def suite(relative, minimum):
+    path = ROOT / relative
+    if not path.is_file(): raise SystemExit(f'Missing executed suite: {relative}')
+    root = ET.parse(path).getroot()
+    cases = list(root.iter('testcase'))
+    suites = [root] if root.tag == 'testsuite' else list(root.iter('testsuite'))
+    counts = {key: sum(int(s.get(key, '0')) for s in suites) for key in ('tests','failures','errors','skipped')}
+    if len(cases) < minimum or len(cases) != counts['tests'] or any(counts[k] for k in ('failures','errors','skipped')):
+        raise SystemExit(f'Required suite missing/failed/skipped: {relative}: {counts}')
+    if any(any(c.find(tag) is not None for tag in ('failure','error','skipped')) for c in cases):
+        raise SystemExit(f'Nonpassing testcase: {relative}')
+    return counts, cases, suites
+
+client_counts, client, _ = suite('.evidence/client/p08d-results.xml', 24)
+unit_counts, unit, _ = suite('backend/target/surefire-reports/TEST-lab.ledgerguard.SchedulePreviewTest.xml', 6)
+browser_counts, browser, projects = suite('.evidence/playwright/junit.xml', 84)
+for prefix, count, cases in [('P08DTS',24,client), ('P08DUT',6,unit)]:
+    for index in range(1,count+1):
+        if sum(f'{prefix}{index:02}' in c.get('name','') for c in cases) != 1:
+            raise SystemExit(f'Missing/duplicate {prefix}{index:02}')
+for project in ('chromium-desktop','chromium-tablet','chromium-mobile'):
+    matching = [s for s in projects if s.get('hostname','') == project]
+    for index in range(1,11):
+        if sum(f'P08DE2E{index:02}' in c.get('name','') for s in matching for c in s.findall('testcase')) != 1:
+            raise SystemExit(f'Missing/duplicate {project}/P08DE2E{index:02}')
+executed = {'p08d-client':[c.get('name','') for c in client], 'p08d-browser':[c.get('name','') for c in browser], 'p08d-unit':[c.get('name','') for c in unit]}
+manifest = json.loads((ROOT/'docs/implementation/P08D_REQUIREMENTS.json').read_text())
+if not (ROOT/manifest['sourceContract']).is_file(): raise SystemExit('Missing authoritative master specification')
+requirements=[]; seen=set()
+for req in manifest['requirements']:
+    if req['id'] in seen: raise SystemExit('Duplicate requirement')
+    seen.add(req['id']); matches=[]
+    for kind,prefixes in req['tests'].items():
+        for prefix in prefixes:
+            found=[name for name in executed[kind] if prefix in name]
+            if not found: raise SystemExit(f"No executed evidence for {req['id']}: {prefix}")
+            matches.extend({'suite':kind,'test':name} for name in found)
+    requirements.append({**req,'status':'VERIFIED_PASS','executed':matches})
+screens=[]
+for project in ('chromium-desktop','chromium-tablet','chromium-mobile'):
+    for journey in ('p08d-form','p08d-controls','p08d-recovery','p08d-result'):
+        path=ROOT/f'.evidence/playwright/screenshots/{project}-{journey}.png'
+        if not path.is_file() or path.stat().st_size < 1000: raise SystemExit(f'Missing screenshot: {path.name}')
+        screens.append({'path':str(path.relative_to(ROOT)),'sha256':hashlib.sha256(path.read_bytes()).hexdigest()})
+if 'retries: 0' not in (ROOT/'frontend/playwright.config.ts').read_text(): raise SystemExit('Functional retries must remain zero')
+contract=json.loads((ROOT/'backend/src/main/resources/openapi/p08d-ui.json').read_text())
+for path in ('/api/v1/schedules','/api/v1/schedules/{id}','/api/v1/schedules/{id}/pause','/api/v1/schedules/{id}/resume','/api/v1/schedules/{id}/cancel','/api/v1/schedules/{id}/occurrences','/api/v1/schedules/preview'):
+    if path not in contract['paths']: raise SystemExit(f'Missing actual schedule contract: {path}')
+sha=subprocess.check_output(['git','rev-parse','HEAD'],cwd=ROOT,text=True).strip()
+if subprocess.check_output(['git','status','--porcelain','--untracked-files=no'],cwd=ROOT,text=True).strip(): raise SystemExit('Exact-SHA gate requires clean tracked sources')
+report={'phase':'P08D','status':'VERIFIED_PASS','fullProductStatus':'INCOMPLETE_NO_GO','sourceSha':sha,'trackedTreeDirty':False,
+    'timestamp':datetime.now(timezone.utc).isoformat(),'suites':{'p08d-client':client_counts,'p08d-preview-unit':unit_counts,'all-browser':browser_counts},
+    'p08dBrowserCases':sum(c.get('name','').startswith('P08DE2E') for c in browser),'screenshots':screens,'requirements':requirements,
+    'scope':'P01-P08C preserved; customer schedule lifecycle, server temporal preview, uncertainty recovery, real scheduler/ledger/authorization oracles and accessible responsive UI. Webhook/admin UI, P09-P11 and final release remain incomplete.'}
+out=ROOT/'.evidence/p08d';out.mkdir(parents=True,exist_ok=True)
+(out/'test-summary.json').write_text(json.dumps(report,indent=2)+'\n')
+(out/'requirements-matrix.md').write_text('# Executed P08D requirements\n\nSource: `'+sha+'`; tracked tree clean.\n\n| Requirement | Executed cases | Status |\n|---|---:|---|\n'+'\n'.join(f"| {r['id']} | {len(r['executed'])} | VERIFIED_PASS |" for r in requirements)+'\n')
+print(json.dumps({k:v for k,v in report.items() if k!='requirements'},indent=2))
+print(f'Bound {len(requirements)} P08D requirements to executed evidence.')
