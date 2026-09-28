@@ -1,11 +1,11 @@
 # LedgerGuard
 ## Financial Transaction Reliability Laboratory
 
-**Synthetic money only. P01–P08A are exact-SHA verified development milestones. P08B—the replay-safe customer transfer and asynchronous-payment journey—is implemented as a source candidate and must not be called verified until its permanent exact-SHA gate succeeds. Later customer adjustment, schedule, webhook and administrator interfaces, the complete fault laboratory, later test lanes and final release evidence remain incomplete. Overall status: INCOMPLETE / NO_GO.**
+**Synthetic money only. P01–P08B are exact-SHA verified development milestones. The verified P08B boundary includes replay-safe customer transfers, asynchronous-payment creation/history/status and pending cancellation. The remaining customer adjustment, schedule, webhook and administrator interfaces, the complete fault laboratory, later test lanes and final release evidence remain incomplete. Overall status: INCOMPLETE / NO_GO.**
 
 LedgerGuard is a compact transaction system built to expose and test duplicate intent, ambiguous outcomes, concurrent spending, accounting invariants, asynchronous delivery, crash recovery, compensating financial adjustments, time-dependent execution and unreliable external notification. It is not a bank, payment processor, compliance product or production-ready financial service.
 
-## Run the P08B candidate topology
+## Run the verified P08B topology
 
 From a clean clone with Docker Engine and Docker Compose:
 
@@ -24,17 +24,17 @@ The default topology contains the non-root frontend proxy, one API process, one 
 
 The verified P08A baseline provides registration/login/logout/session-expiry recovery, real balances, zero-balance wallet creation, deterministic account history and owner-safe transaction detail.
 
-The P08B source candidate adds:
+The verified P08B slice adds:
 
 - Real owner-authorized immediate transfer creation with exact currency parsing and explicit confirmation.
 - Authoritative settled transfer receipts with stable transfer and journal references.
 - Owner-scoped preservation of normalized economic intent and the original idempotency key when a response is lost or uncertain.
-- Safe same-key replay that returns the original operation and blocks conflicting replacement commands while an outcome is unresolved.
+- Safe same-key replay that returns the original operation, proves one economic effect and blocks conflicting replacement commands while an outcome is unresolved.
 - Durable asynchronous payment creation that displays `PENDING` honestly rather than optimistically claiming settlement.
 - Owner-visible payment history and detail with direction, counterparty reference, version, lifecycle state, timestamps, adjustment state, projection and journal/failure information when present.
 - Bounded live polling of the authoritative payment resource until `SETTLED`, `FAILED` or `CANCELLED`.
 - Explicit cancellation of eligible outgoing pending payments, with a separate replay-safe idempotency key and truthful settlement-race handling.
-- Four additional Chromium journeys across 1440×900, 768×1024 and 390×844, plus authenticated axe WCAG A/AA checks and responsive transfer/payment screenshots.
+- Four additional Chromium scenarios repeated at 1440×900, 768×1024 and 390×844, authenticated axe WCAG A/AA checks and six responsive transfer/payment screenshots.
 
 Refund/reversal, schedule, webhook and administrator interfaces remain later P08 slices; no inert or fabricated versions of those interfaces are shown.
 
@@ -68,13 +68,17 @@ Scoped contracts:
 - `/api/v1/openapi/p07a-schedules.json` — verified P07A schedule contract.
 - `/api/v1/openapi/p07b-webhooks.json` — verified P07B webhook contract.
 - `/api/v1/openapi/p08a-ui.json` — verified P08A customer-interface contract.
-- `/api/v1/openapi/p08b-ui.json` — P08B candidate customer money-movement contract.
+- `/api/v1/openapi/p08b-ui.json` — verified P08B customer money-movement contract.
 
 ## Current verification status
 
-P08A implementation source `d675db096b8f023469e253737ade80a2b8b3b0fa` passed permanent workflow run `36345292129`. Verification job `108693127471` and required gate `108694570086` both succeeded. Durable provenance is in `docs/evidence/p08a-d675db0.md` and `docs/evidence/p08a-d675db0.json`.
+P08B implementation source `5d6d883444845bc5de3364d0c682c3df26005d8e` passed permanent workflow run `36355379901` on September 27, 2026. Verification job `108721959438` and required gate `108723219635` both succeeded.
 
-P08B source is implemented but remains `IMPLEMENTED_UNVERIFIED` until GitHub Actions verifies the exact final locked SHA. Its candidate gate preserves the complete P01–P08A campaign and additionally requires eight P08B production-client cases, 24 real Chromium journeys across three viewport projects, authenticated accessibility analysis, an actual committed-response-loss replay with one transfer effect, real RabbitMQ payment settlement, cancellation while both payment workers are deliberately stopped, six responsive screenshots, repeatable reconciliation and the tracked-source literal-secret scan.
+The exact-SHA gate preserved the complete P01–P08A campaign and passed 133 core/security JUnit cases, 124 real PostgreSQL/HTTP integration cases, 91 TypeScript client/contract cases including eight P08B cases, 24 real Chromium journeys across three viewport projects, authenticated accessibility analysis, committed-response-loss replay with one transfer effect, real RabbitMQ payment settlement, cancellation while both payment workers were deliberately stopped, nine responsive screenshots, repeatable reconciliation and a 316-file tracked-source literal-secret scan with zero findings. All required suites reported zero failures, errors and skips.
+
+Durable provenance is in `docs/evidence/p08b-5d6d883.md` and `docs/evidence/p08b-5d6d883.json`. The full product remains **INCOMPLETE / NO_GO**.
+
+The next product slice is the remaining customer adjustment interface: recipient-owner partial/full refunds plus administrator full reversal, including replay-safe uncertainty recovery, adjustment receipts/history, authorization proofs, responsive browser coverage and exact-SHA verification. Schedule, webhook and broader administrator interfaces follow before P09.
 
 Useful commands:
 
@@ -95,11 +99,11 @@ Useful commands:
 ## Inspection paths
 
 - [Progress and next executable action](docs/implementation/PROGRESS.md)
+- [P08B durable evidence](docs/evidence/p08b-5d6d883.md)
+- [P08B machine-readable provenance](docs/evidence/p08b-5d6d883.json)
 - [P08B scoped requirements](docs/implementation/P08B_REQUIREMENTS.json)
 - [P08B architecture decision](docs/architecture/adr/0019-p08b-replay-safe-customer-money-movement.md)
 - [P08A durable evidence](docs/evidence/p08a-d675db0.md)
-- [P08A scoped requirements](docs/implementation/P08A_REQUIREMENTS.json)
-- [P08A architecture decision](docs/architecture/adr/0018-p08a-same-origin-customer-interface.md)
 - [P07B durable evidence](docs/evidence/p07b-cc6b3ca.md)
 - [Delivery provenance](docs/implementation/DELIVERY.md)
 - [Financial boundary](docs/architecture/FINANCIAL_BOUNDARY.md)

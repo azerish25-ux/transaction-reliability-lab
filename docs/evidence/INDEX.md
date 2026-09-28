@@ -1,20 +1,25 @@
-# Evidence index — P08A verified, full product NO_GO
+# Evidence index — P08B verified, full product NO_GO
 
-## Current verified P08A evidence
+## Current verified P08B evidence
 
-Implementation `d675db096b8f023469e253737ade80a2b8b3b0fa` passed permanent `LedgerGuard P08A verification` push workflow run `36345292129` for the exact `main` source SHA.
+Implementation `5d6d883444845bc5de3364d0c682c3df26005d8e` passed permanent `LedgerGuard P08B verification` push workflow run `36355379901` for the exact `main` source SHA.
+
+- [Durable human-readable P08B report](p08b-5d6d883.md)
+- [Machine-readable P08B provenance](p08b-5d6d883.json)
+- [Scoped P08B requirements/test-ID source](../implementation/P08B_REQUIREMENTS.json)
+- [Replay-safe customer money-movement architecture](../architecture/adr/0019-p08b-replay-safe-customer-money-movement.md)
+- [Verified P08B UI OpenAPI](../../backend/src/main/resources/openapi/p08b-ui.json)
+
+The exact-SHA run completed 133 core/security JUnit cases, 124 real PostgreSQL/HTTP integration cases, 91 TypeScript client/contract cases, 42 live P05 checks, 32 live P06 checks, 15 live P07A checks, 26 live P07B checks and 24 Chromium journeys. All required suites had zero failures, errors and skips. Seven scoped P08B requirements were bound to named executed evidence, 316 tracked files produced zero high-signal literal-secret findings and reconciliation reported zero discrepancies.
+
+P08B proofs cover explicit transfer confirmation and settled receipts, owner-scoped intent/key persistence, safe same-key replay after a committed response loss with one economic effect, durable `PENDING` payment acceptance, real RabbitMQ settlement, authoritative payment history/status, pending cancellation while both workers are stopped, responsive desktop/tablet/mobile rendering and authenticated axe checks.
+
+## Preserved P08A and earlier evidence
+
+P08A implementation `d675db096b8f023469e253737ade80a2b8b3b0fa` passed run `36345292129`.
 
 - [Durable human-readable P08A report](p08a-d675db0.md)
 - [Machine-readable P08A provenance](p08a-d675db0.json)
-- [Scoped P08A requirements/test-ID source](../implementation/P08A_REQUIREMENTS.json)
-- [Same-origin customer-interface architecture](../architecture/adr/0018-p08a-same-origin-customer-interface.md)
-- [Verified P08A UI OpenAPI](../../backend/src/main/resources/openapi/p08a-ui.json)
-
-The exact-SHA run completed 133 core/security JUnit cases, 124 real PostgreSQL/HTTP integration cases, 83 TypeScript client/contract cases, 42 live P05 checks, 32 live P06 checks, 15 live P07A checks, 26 live P07B checks and 12 P08A browser journeys. All required suites had zero failures, errors and skips. Seven scoped P08A requirements were bound to named executed evidence, 305 tracked files produced zero high-signal literal-secret findings and reconciliation reported zero discrepancies.
-
-P08A proofs cover the locked React production build, non-root loopback same-origin delivery, registration/session behavior, real balances, zero-balance wallet creation, deterministic history, customer-safe detail, explicit outage/expiry states, responsive desktop/tablet/mobile rendering and authenticated axe checks.
-
-## Preserved P07B and earlier evidence
 
 P07B implementation `cc6b3ca81d2368c188aa7a79cec2d37b2dd8b975` passed run `36330862462`.
 
@@ -29,10 +34,12 @@ Historical component records remain available under `component/` and `unit-probe
 
 ## Honest failure history
 
-P08A's initial browser run exposed a native-fetch receiver defect. The next exact-SHA run exposed a stale balance fixture assumption, a real WCAG contrast issue and fixture-authentication throttling. Each root cause was repaired, and the entire gate—not only the failed browser step—was rerun successfully on `d675db096b8f023469e253737ade80a2b8b3b0fa`.
+P08B's permanent final run passed after the candidate's status-label accessibility repair was incorporated and the temporary repair workflow was retired. The exact final source was then exercised by the complete gate, not only by a narrow browser retry.
+
+P08A's initial browser run had exposed a native-fetch receiver defect. The next exact-SHA run exposed a stale balance fixture assumption, a real WCAG contrast issue and fixture-authentication throttling. Each root cause was repaired, and the entire gate—not only the failed browser step—was rerun successfully.
 
 ## Remaining evidence
 
-P08B and later customer/admin interfaces, P09 complete F01–F08 and D01–D24 campaigns, P10 Pact/ZAP/k6/backup-restore/nightly/release lanes, and P11 final exploratory package/video remain incomplete.
+The customer adjustment interface, customer schedule/webhook interfaces, broader administrator interface, P09 complete F01–F08 and D01–D24 campaigns, P10 Pact/ZAP/k6/backup-restore/nightly/release lanes, and P11 final exploratory package/video remain incomplete.
 
 No public application, release tag, security certification, whole-product accessibility conformance or measured performance claim exists. GitHub Actions results are the authority for Docker/PostgreSQL/RabbitMQ/Compose/browser execution.

@@ -1,0 +1,71 @@
+{
+  "phase": "P08B",
+  "status": "VERIFIED_PASS",
+  "fullProductStatus": "INCOMPLETE_NO_GO",
+  "sourceSha": "5d6d883444845bc5de3364d0c682c3df26005d8e",
+  "workflow": {
+    "name": "LedgerGuard P08B verification",
+    "runId": 36355379901,
+    "completedAt": "2026-09-27T22:35:40Z",
+    "jobs": [
+      {
+        "id": 108721959438,
+        "name": "Build, customer money movement, browser accessibility, signed webhooks and financial invariants",
+        "conclusion": "success"
+      },
+      {
+        "id": 108723219635,
+        "name": "Required P08B gate",
+        "conclusion": "success"
+      }
+    ]
+  },
+  "artifact": {
+    "id": 10944390774,
+    "name": "ledgerguard-p08b-evidence-5d6d883444845bc5de3364d0c682c3df26005d8e",
+    "sizeBytes": 1732590,
+    "sha256": "7fadf64bfff5689eea5ab0e4a933bc4b8bc3862f310bfdf8cefd0af6a6251d7f",
+    "expiresAt": "2026-10-11T22:35:30Z"
+  },
+  "executed": {
+    "coreSecurityJUnit": 133,
+    "postgresHttpIntegration": 124,
+    "typescriptContracts": 91,
+    "p08bTypeScriptContracts": 8,
+    "chromiumJourneys": 24,
+    "p08bChromiumJourneys": 12,
+    "viewportProjects": 3,
+    "p05ComposeChecks": 42,
+    "p06ComposeChecks": 32,
+    "p07aComposeChecks": 15,
+    "p07bComposeChecks": 26,
+    "p08bRequirements": 7,
+    "responsiveScreenshots": 9,
+    "p08bResponsiveScreenshots": 6,
+    "filesSecretScanned": 316,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "trackedTreeDirty": false,
+    "reconciliationDiscrepancies": 0
+  },
+  "verifiedBoundary": [
+    "explicit owner-authorized immediate-transfer confirmation and settled receipt",
+    "same-key uncertain-response recovery with one transfer effect",
+    "durable PENDING payment acceptance and real RabbitMQ settlement",
+    "owner-scoped payment history and authoritative lifecycle detail",
+    "pending-payment cancellation while workers are stopped",
+    "exact minor-unit money handling",
+    "keyboard and semantic accessibility behavior",
+    "authenticated axe WCAG A/AA checks",
+    "desktop, tablet and mobile Chromium journeys"
+  ],
+  "remaining": [
+    "remaining P08 adjustment interface",
+    "schedule/webhook interfaces",
+    "administrator interface",
+    "P09",
+    "P10",
+    "P11"
+  ]
+}
