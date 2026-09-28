@@ -96,7 +96,10 @@ def command(browser,path,body,command_key,method="POST"):
 checks=[]
 running=set(compose("ps","--status","running","--services",capture=True).stdout.split())
 check("p07a-two-schedulers-running",{"scheduler-a","scheduler-b","api"}.issubset(running))
-check("p07a-ten-migrations-with-p07b",sql("SELECT count(*) FROM public.flyway_schema_history WHERE success")=="10")
+# Keep the historical P07A/P07B schema proof; explicitly verify the additive P08E layer.
+check("p07a-ten-migrations-with-p07b",sql("SELECT count(*) FROM public.flyway_schema_history WHERE success AND version::integer BETWEEN 1 AND 10")=="10")
+check("p08e-additive-command-migration",sql("SELECT count(*) FROM public.flyway_schema_history WHERE success AND version='11'")=="1"
+      and sql("SELECT count(*) FROM public.flyway_schema_history WHERE success")=="11")
 
 payer=Browser();payer_identity=payer.register_login("P07A payer")
 recipient=Browser();recipient_identity=recipient.register_login("P07A recipient")
