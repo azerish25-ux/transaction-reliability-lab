@@ -1,0 +1,32 @@
+name: P08C development workspace
+on:
+  push:
+    branches: [main]
+    paths: [.github/workflows/p08c-delivery.yml]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  workspace:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '22'
+      - name: Export tracked source and locked development dependencies
+        run: |
+          mkdir -p /tmp/p08c-workspace
+          git archive --format=tar.gz HEAD > /tmp/p08c-workspace/source.tar.gz
+          git rev-parse HEAD > /tmp/p08c-workspace/source-sha.txt
+          npm ci --prefix frontend --ignore-scripts --no-audit --no-fund
+          tar -czf /tmp/p08c-workspace/frontend-dependencies.tar.gz -C frontend node_modules
+          cd /tmp/p08c-workspace
+          sha256sum *.tar.gz > SHA256SUMS
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: p08c-workspace-${{ github.sha }}
+          path: /tmp/p08c-workspace/
+          retention-days: 1
+          if-no-files-found: error
