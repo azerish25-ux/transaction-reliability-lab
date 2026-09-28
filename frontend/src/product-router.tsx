@@ -6,6 +6,7 @@ import { P08BRoutes, type ProductNavigate } from './p08b-ui.js';
 import { adjustmentRoute } from './p08c-core.js';
 import { P08CRoutes } from './p08c-ui.js';
 import { P08DRoutes } from './p08d-ui.js';
+import { P08ENavigation, P08ERoutes } from './p08e-ui.js';
 import { useSession } from './session.js';
 
 function currentLocation(): string {
@@ -84,15 +85,17 @@ function NavigationBridge({ navigate }: { navigate: ProductNavigate }): JSX.Elem
 export default function ProductRouter(): JSX.Element {
   const session = useSession();
   const { location, path, navigate } = useProductLocation();
-  if (session.status === 'AUTHENTICATED' && (adjustmentRoute(path) || (path === '/' && session.user?.role === 'ADMIN'))) {
-    return <P08CRoutes path={path === '/' ? '/admin/adjustments' : path} navigate={navigate} />;
+  let content: JSX.Element;
+  if (session.status === 'AUTHENTICATED' && (path === '/webhooks' || path.startsWith('/webhooks/'))) {
+    content = <P08ERoutes path={path} navigate={navigate} />;
+  } else if (session.status === 'AUTHENTICATED' && (adjustmentRoute(path) || (path === '/' && session.user?.role === 'ADMIN'))) {
+    content = <P08CRoutes path={path === '/' ? '/admin/adjustments' : path} navigate={navigate} />;
+  } else if (session.status === 'AUTHENTICATED' && (path === '/schedules' || path.startsWith('/schedules/'))) {
+    content = <P08DRoutes path={path} navigate={navigate} />;
+  } else if (isP08BPath(path) && session.status === 'AUTHENTICATED') {
+    content = <P08BRoutes path={path} location={location} navigate={navigate} />;
+  } else {
+    content = <><App /><NavigationBridge navigate={navigate} /></>;
   }
-  if (session.status === 'AUTHENTICATED' && (path === '/schedules' || path.startsWith('/schedules/'))) {
-    return <P08DRoutes path={path} navigate={navigate} />;
-  }
-  const customRoute = isP08BPath(path);
-  if (customRoute && session.status === 'AUTHENTICATED') {
-    return <P08BRoutes path={path} location={location} navigate={navigate} />;
-  }
-  return <><App /><NavigationBridge navigate={navigate} /></>;
+  return <>{content}<P08ENavigation navigate={navigate} /></>;
 }

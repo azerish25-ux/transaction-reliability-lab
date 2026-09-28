@@ -76,7 +76,8 @@ public class FoundationSecurityConfiguration {
                 .requestMatchers("/api/v1/accounts", "/api/v1/accounts/**", "/api/v1/recipients/**",
                     "/api/v1/transfers", "/api/v1/transfers/**", "/api/v1/payments", "/api/v1/payments/**",
                     "/api/v1/schedules", "/api/v1/schedules/**", "/api/v1/webhook-endpoints",
-                    "/api/v1/webhook-endpoints/**", "/api/v1/webhook-deliveries/**").hasRole("CUSTOMER")
+                    "/api/v1/webhook-endpoints/**", "/api/v1/webhook-deliveries/**",
+                    "/api/v1/webhook-commands", "/api/v1/webhook-commands/**").hasRole("CUSTOMER")
                 .requestMatchers("/api/v1/admin/**", "/actuator/metrics", "/actuator/metrics/**")
                     .hasRole("ADMIN")
                 .anyRequest().denyAll())

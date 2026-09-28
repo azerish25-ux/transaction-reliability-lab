@@ -1,0 +1,122 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "LedgerGuard P08E Customer Webhooks",
+    "version": "0.8.0-p08e-candidate",
+    "description": "Synthetic money only. Requires the documented P07 overlay. New UI mutations use command receipts; legacy P07B endpoints remain compatible. Not a full-product release."
+  },
+  "servers": [{"url": "/"}],
+  "security": [{"cookieAuth": []}],
+  "paths": {
+    "/api/v1/webhook-commands": {
+      "post": {
+        "summary": "Apply or replay a customer webhook command atomically",
+        "parameters": [
+          {"name": "Idempotency-Key", "in": "header", "required": true, "schema": {"type": "string", "format": "uuid"}},
+          {"name": "X-XSRF-TOKEN", "in": "header", "required": true, "schema": {"type": "string"}}
+        ],
+        "requestBody": {"required": true, "content": {"application/json": {"schema": {"$ref": "#/components/schemas/Command"}}}},
+        "responses": {
+          "200": {"$ref": "#/components/responses/Status200"},
+          "400": {"$ref": "#/components/responses/Status400"},
+          "401": {"$ref": "#/components/responses/Status401"},
+          "403": {"$ref": "#/components/responses/Status403"},
+          "404": {"$ref": "#/components/responses/Status404"},
+          "409": {"$ref": "#/components/responses/Status409"},
+          "503": {"$ref": "#/components/responses/Status503"}
+        }
+      }
+    },
+    "/api/v1/webhook-commands/{id}": {
+      "get": {
+        "summary": "Read an owned command receipt without re-disclosing a secret",
+        "parameters": [{"name": "id", "in": "path", "required": true, "schema": {"type": "string", "format": "uuid"}}],
+        "responses": {
+          "200": {"$ref": "#/components/responses/Status200"},
+          "400": {"$ref": "#/components/responses/Status400"},
+          "401": {"$ref": "#/components/responses/Status401"},
+          "403": {"$ref": "#/components/responses/Status403"},
+          "404": {"$ref": "#/components/responses/Status404"},
+          "409": {"$ref": "#/components/responses/Status409"},
+          "503": {"$ref": "#/components/responses/Status503"}
+        }
+      }
+    },
+    "/api/v1/webhook-endpoints": {"$ref": "p07b-webhooks.json#/paths/~1api~1v1~1webhook-endpoints"},
+    "/api/v1/webhook-endpoints/{id}": {"$ref": "p07b-webhooks.json#/paths/~1api~1v1~1webhook-endpoints~1{id}"},
+    "/api/v1/webhook-endpoints/{id}/deliveries": {"$ref": "p07b-webhooks.json#/paths/~1api~1v1~1webhook-endpoints~1{id}~1deliveries"},
+    "/api/v1/webhook-deliveries/{id}": {"$ref": "p07b-webhooks.json#/paths/~1api~1v1~1webhook-deliveries~1{id}"}
+  },
+  "components": {
+    "securitySchemes": {"cookieAuth": {"$ref": "p07b-webhooks.json#/components/securitySchemes/cookieAuth"}},
+    "schemas": {
+      "Command": {
+        "oneOf": [
+          {"type": "object", "additionalProperties": false, "properties": {"kind": {"const": "CREATE"}}, "required": ["kind"]},
+          {
+            "type": "object", "additionalProperties": false,
+            "properties": {
+              "kind": {"const": "STATE"}, "endpointId": {"type": "string", "format": "uuid"},
+              "expectedVersion": {"type": "integer", "minimum": 1, "maximum": 9007199254740990}, "enabled": {"type": "boolean"}
+            },
+            "required": ["kind", "endpointId", "expectedVersion", "enabled"]
+          },
+          {
+            "type": "object", "additionalProperties": false,
+            "properties": {
+              "kind": {"const": "ROTATE"}, "endpointId": {"type": "string", "format": "uuid"},
+              "expectedVersion": {"type": "integer", "minimum": 1, "maximum": 9007199254740990}
+            },
+            "required": ["kind", "endpointId", "expectedVersion"]
+          },
+          {
+            "type": "object", "additionalProperties": false,
+            "properties": {
+              "kind": {"const": "RETRY"}, "deliveryId": {"type": "string", "format": "uuid"},
+              "expectedCycle": {"type": "integer", "minimum": 1, "maximum": 2147483646},
+              "reason": {"type": "string", "minLength": 1, "maxLength": 500}
+            },
+            "required": ["kind", "deliveryId", "expectedCycle", "reason"]
+          }
+        ]
+      },
+      "Receipt": {
+        "type": "object", "additionalProperties": false,
+        "properties": {
+          "commandId": {"type": "string", "format": "uuid"},
+          "kind": {"enum": ["CREATE", "STATE", "ROTATE", "RETRY"]},
+          "endpointId": {"type": "string", "format": "uuid"},
+          "deliveryId": {"anyOf": [{"type": "string", "format": "uuid"}, {"type": "null"}]},
+          "appliedVersion": {"type": ["integer", "null"], "minimum": 1, "maximum": 9007199254740991},
+          "appliedCycle": {"type": ["integer", "null"], "minimum": 1, "maximum": 2147483647},
+          "completedAt": {"type": "string", "format": "date-time"}, "replayed": {"type": "boolean"}
+        },
+        "required": ["commandId", "kind", "endpointId", "deliveryId", "appliedVersion", "appliedCycle", "completedAt", "replayed"]
+      },
+      "Result": {
+        "type": "object", "additionalProperties": false,
+        "properties": {
+          "command": {"$ref": "#/components/schemas/Receipt"},
+          "signingSecret": {
+            "type": ["string", "null"], "pattern": "^[A-Za-z0-9_-]{43}$",
+            "description": "Present only in the first successful CREATE/ROTATE response. Always null in GET and replays. Never stored in command receipts."
+          }
+        },
+        "required": ["command", "signingSecret"]
+      }
+    },
+    "responses": {
+      "Status400": {"description": "Invalid strict command or key", "content": {"application/problem+json": {"schema": {"$ref": "p07b-webhooks.json#/components/schemas/Problem"}}}},
+      "Status401": {"description": "Reauthentication required", "content": {"application/problem+json": {"schema": {"$ref": "p07b-webhooks.json#/components/schemas/Problem"}}}},
+      "Status403": {"description": "Role or CSRF denied", "content": {"application/problem+json": {"schema": {"$ref": "p07b-webhooks.json#/components/schemas/Problem"}}}},
+      "Status404": {"description": "Not found or not owned; a GET miss does not prove rollback", "content": {"application/problem+json": {"schema": {"$ref": "p07b-webhooks.json#/components/schemas/Problem"}}}},
+      "Status409": {"description": "Idempotency conflict or version/cycle eligibility conflict", "content": {"application/problem+json": {"schema": {"$ref": "p07b-webhooks.json#/components/schemas/Problem"}}}},
+      "Status503": {"description": "Dependency unavailable; outcome may be uncertain", "content": {"application/problem+json": {"schema": {"$ref": "p07b-webhooks.json#/components/schemas/Problem"}}}},
+      "Status200": {
+        "description": "Original immutable applied-command receipt. This is not proof of current endpoint or delivery state.",
+        "headers": {"Cache-Control": {"schema": {"type": "string", "const": "no-store"}}},
+        "content": {"application/json": {"schema": {"$ref": "#/components/schemas/Result"}}}
+      }
+    }
+  }
+}

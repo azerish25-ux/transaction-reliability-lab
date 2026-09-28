@@ -1,0 +1,53 @@
+{
+  "phase": "P08E",
+  "sourceContract": "docs/implementation/MASTER_SPEC.md",
+  "scope": "Customer webhook UI and durable command receipts; complete P01-P08D regression remains mandatory. Full product INCOMPLETE / NO_GO.",
+  "requirements": [
+    {
+      "id": "P08E-R01",
+      "sections": ["11", "13", "14", "15", "28"],
+      "statement": "Approved subscriptions and secret-free owner reads use real customer navigation and API authorization.",
+      "tests": {"p08e-browser": ["P08EE2E01", "P08EE2E07"], "p08e-client": ["P08ETS01", "P08ETS03", "P08ETS11", "P08ETS12", "P08ETS16"]}
+    },
+    {
+      "id": "P08E-R02",
+      "sections": ["11", "13", "14", "15", "28"],
+      "statement": "Create/rotation disclose a secret only once; no browser persistence, normal read or replay disclosure.",
+      "tests": {"p08e-browser": ["P08EE2E01", "P08EE2E02", "P08EE2E03", "P08EE2E07", "P08EE2E08"], "p08e-client": ["P08ETS07", "P08ETS08", "P08ETS09", "P08ETS11", "P08ETS18"]}
+    },
+    {
+      "id": "P08E-R03",
+      "sections": ["11", "13", "14", "15", "28"],
+      "statement": "Committed response loss preserves the original owner-scoped command identity through reload and reauthentication.",
+      "tests": {"p08e-browser": ["P08EE2E02", "P08EE2E03", "P08EE2E06"], "p08e-client": ["P08ETS04", "P08ETS19", "P08ETS20", "P08ETS21", "P08ETS22", "P08ETS24", "P08ETS25", "P08ETS27"]}
+    },
+    {
+      "id": "P08E-R04",
+      "sections": ["11", "13", "14", "15", "28"],
+      "statement": "Version/cycle conflicts are explicit; concurrent identical commands apply once and receipts stay immutable.",
+      "tests": {
+        "p08e-browser": ["P08EE2E04", "P08EE2E06", "P08EE2E08"],
+        "p08e-client": ["P08ETS02", "P08ETS05", "P08ETS06", "P08ETS10", "P08ETS23", "P08ETS27"],
+        "p08e-unit": ["P08EUT01", "P08EUT02", "P08EUT03", "P08EUT04", "P08EUT05", "P08EUT06", "P08EUT07", "P08EUT08"]
+      }
+    },
+    {
+      "id": "P08E-R05",
+      "sections": ["11", "13", "14", "15", "28"],
+      "statement": "Authoritative delivery/attempt history and audited retries remain independent of settled money.",
+      "tests": {"p08e-browser": ["P08EE2E05", "P08EE2E06", "P08EE2E09"], "p08e-client": ["P08ETS06", "P08ETS13", "P08ETS14", "P08ETS15", "P08ETS17", "P08ETS28"]}
+    },
+    {
+      "id": "P08E-R06",
+      "sections": ["11", "13", "14", "15", "28"],
+      "statement": "Owner/administrator/CSRF boundaries fail closed; unavailable services are not empty or successful states.",
+      "tests": {"p08e-browser": ["P08EE2E07", "P08EE2E10"], "p08e-client": ["P08ETS12", "P08ETS13", "P08ETS14", "P08ETS21", "P08ETS22", "P08ETS24", "P08ETS25", "P08ETS26", "P08ETS28"]}
+    },
+    {
+      "id": "P08E-R07",
+      "sections": ["11", "13", "14", "15", "28"],
+      "statement": "Desktop/tablet/mobile journeys, keyboard focus and authenticated axe checks preserve earlier product behavior.",
+      "tests": {"p08e-browser": ["P08EE2E01", "P08EE2E02", "P08EE2E04", "P08EE2E05", "P08EE2E07", "P08EE2E09", "P08EE2E10"], "p08e-client": ["P08ETS16", "P08ETS28"]}
+    }
+  ]
+}
