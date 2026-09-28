@@ -1,0 +1,32 @@
+name: P08F source workspace
+on:
+  push:
+    branches: [main]
+    paths: [.github/workflows/p08f-workspace.yml]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  source:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '22'
+      - name: Export tracked source and locked frontend tools
+        run: |
+          mkdir -p /tmp/p08f-workspace
+          git bundle create /tmp/p08f-workspace/source.bundle refs/heads/main
+          git rev-parse HEAD > /tmp/p08f-workspace/source-sha.txt
+          npm ci --prefix frontend --ignore-scripts --no-audit --no-fund
+          tar -czf /tmp/p08f-workspace/frontend-tools.tar.gz -C frontend node_modules
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: p08f-workspace-${{ github.sha }}
+          path: /tmp/p08f-workspace/
+          if-no-files-found: error
+          retention-days: 3

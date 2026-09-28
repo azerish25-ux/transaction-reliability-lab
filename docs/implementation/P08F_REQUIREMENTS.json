@@ -1,0 +1,15 @@
+{
+  "milestone": "P08F",
+  "status": "NOT_STARTED",
+  "fullProductStatus": "INCOMPLETE_NO_GO",
+  "scope": "Administrator transaction search, journal detail, audit history, independent reconciliation and failed-work inspection",
+  "requirements": [
+    {"id":"P08F01","description":"Server-authorized bounded transaction search with reference, kind, status, account/user, currency, amount and UTC time filters"},
+    {"id":"P08F02","description":"Authoritative transaction detail with immutable journal entries and linked payment adjustments"},
+    {"id":"P08F03","description":"Bounded redacted financial audit history, distinct from operational/security events"},
+    {"id":"P08F04","description":"Independent read-only reconciliation in one consistent snapshot, with scope, timestamp and explicit discrepancy results"},
+    {"id":"P08F05","description":"Administrator failed-work inspection using existing backend without a second replay implementation"},
+    {"id":"P08F06","description":"Real responsive administrator browser journeys, keyboard and axe checks; customer/anonymous direct API denial"},
+    {"id":"P08F07","description":"Preserve P01-P08E, execute named P08F tests and retain exact-source evidence without upgrading incomplete product status"}
+  ]
+}
