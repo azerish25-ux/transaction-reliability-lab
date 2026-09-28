@@ -67,10 +67,19 @@ async function paymentFixture(lab: Lab) {
   const response = await command(f.payer.api, '/payments', { sourceId: f.source.id, recipientRef: f.destination.publicRef, amountMinor: '2500', currency: 'CAD' });
   expect(response.status()).toBe(202); const paymentId = (await response.json() as { id: string }).id;
   await expect.poll(async () => (await read<PaymentRecord>(f.payer.api, `/payments/${paymentId}`)).state, { timeout: 40_000 }).toBe('SETTLED');
+  // Settlement emits payment.updated. Identify its exact committed event independently
+  // so neither payment.requested nor another payment's notification can satisfy the test.
+  const events = JSON.parse(sql(`SELECT coalesce(json_agg(e.id),'[]'::json) FROM ledger.outbox_events e
+    JOIN ledger.payments p ON p.id=e.aggregate_id WHERE p.id='${paymentId}'
+    AND e.event_type='payment.updated' AND e.payload->>'state'='SETTLED'
+    AND e.payload->>'journalId'=p.journal_id::text;`)) as string[];
+  expect(events).toHaveLength(1);
+  const eventId = events[0];
   let delivery: WebhookDelivery | undefined;
   await expect.poll(async () => {
     const page = await read<ApiPage<WebhookDelivery>>(f.payer.api, `/webhook-endpoints/${ep}/deliveries?limit=50&offset=0`);
-    delivery = page.items.find(value => value.eventType === 'payment.settled'); return Boolean(delivery);
+    delivery = page.items.find(value => value.eventType === 'payment.updated' && value.eventId === eventId);
+    return Boolean(delivery);
   }, { timeout: 30_000 }).toBe(true);
   return { ...f, ep, paymentId, delivery: delivery! };
 }
@@ -197,6 +206,8 @@ test('P08EE2E07-owner-authorization-csrf-and-ordinary-secret-nondisclosure', asy
     const response = await owner.api.get(`/api/v1${path}`); expect(response.status()).toBe(200);
     expect((await response.text()).includes(secret!)).toBe(false);
   }
+  // Rejection must be durably auditable, not merely return 404 while the audit INSERT fails.
+  expect(sql(`SELECT count(*) FROM ledger.security_events WHERE actor_id='${stranger.id}' AND event_type='ACCESS_DENIED';`)).toBe('3');
   expect((await command(stranger.api, '/webhook-commands', { kind: 'ROTATE', endpointId: ep, expectedVersion: 1 })).status()).toBe(404);
   expect((await command(admin.api, '/webhook-commands', { kind: 'CREATE' })).status()).toBe(403);
   expect((await owner.api.post('/api/v1/webhook-commands', { data: { kind: 'CREATE' }, headers: { 'Idempotency-Key': randomUUID() } })).status()).toBe(403);

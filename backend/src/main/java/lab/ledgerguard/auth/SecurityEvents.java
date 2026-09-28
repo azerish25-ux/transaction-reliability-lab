@@ -16,7 +16,13 @@ public class SecurityEvents {
             actor, event, ApiProblems.correlation());
     }
     public void denied(UUID actor, String event) {
-        try { record(actor, event); }
+        // Resource-specific webhook reasons use the existing durable denial category.
+        // V6 deliberately permits ACCESS_DENIED, not arbitrary diagnostic event names.
+        String category = switch (event) {
+            case "WEBHOOK_ACCESS_DENIED", "WEBHOOK_COMMAND_ACCESS_DENIED" -> "ACCESS_DENIED";
+            default -> event;
+        };
+        try { record(actor, category); }
         catch (DataAccessException unavailable) {
             // Operational fallback: no request contents, cookies, identity strings or SQL in logs.
             LoggerFactory.getLogger(SecurityEvents.class).warn("security_event={} persistence=unavailable", event);
