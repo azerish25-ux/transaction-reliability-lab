@@ -22,18 +22,24 @@ jobs:
           set -euo pipefail
           git diff --exit-code a80c87e638a6f0103ad73388094f1d06951ed02f HEAD -- . ':(exclude).github/workflows/p08c-recovery-fix.yml'
           python3 - <<'PY'
-          import base64, hashlib, json, pathlib, zlib
-          encoded = 'eNrdVttuGzcQfc9XEEYQSYCz4t6XNlygAZw2QNEaTtKiSIOal6HFZrXckpRk1ci/d6i1HTt2EqNR06APApbL1eHMmXNm+OoBIef4I2Sn52G2s0d2tLNdgE5NvZPTb/s+Cf5sZ3f4RoC2DuJXlS4kUM6qjGpWAC/rSteVLEt84jor01ooBjxtijRPmzxPgTeV5FKpjAGt60tErgO4CEgz4FrlZVVOWdSZqlpUqT+sy55nIqeJFrlkmGM2brNINU0qlNJOykTqneSG1ugS0rYpw8dlDOMKkxp11c96av0BN9n/r4s7KdMquEi+dbdsXdnxOgu33CN0lAmZ8aazbIyO+CHZE3k72L6E7WH0aejolP9pg9JqEGRC7wPRI76xayEDcsFzNoCMc34IHtwRFTOeDww+M7UgLfAl+82fF/UxY7lRyI2plPNZKzg6X0IUxBkWObP888ADDm1Fvex+Xo11yTjZPe6RbtC3m8g8JwPzf7n5EKgF88FPIYNrTRia+B4myua0a1tCsLHWFqmkUK2RdNBw4U1BnTMtSVQXPKs4lFEoyJnVFG1aopihTkdei0bdUk2uhC6p5LXnGKkh1npVZQ2VBoaypxKOkyMsUASothZZ1BVKDqEFDTqtc31INX3ETSM9PITmF8GR9bFsYj1rTvdmw2fE5kjk6Bm/bJRDPNbTryFGijfNhPElka+Sb8cAzauEYlvYNbMrpgLdEOLvCqqOAvI/lXpkwQ1UQcNyb7pSY4K8JA6Tt7NxIVAjyHJJbStxquAMYnGH1wvh9zBlwhQFehz3i6zlGRRQEblqPW3DGZdgjKGaIYkuCfQI/G28EIlxR8tR0xs8Ge4iYKMdtgmKbWWdQrWa54UqRQTf4vLSSR3PsR9eg3iJR3x2+IHO+JhZx3Mp4uECX1jmMv13HRIwbqH/57BIsrjZkKqT36KfnLwhXc7OpxWNhF53ibk24x7DigcknaRGLEGx3k2yN9Zsh7h8LHyJBH2LmsIuZZq/uwf9cxASP1uECCNAZ+X/q3rMhttYZtOfmqNWBnKVLBNC+haZQSmtVaprzKa4WANM2zNMOBVKRVKbSoGK2KulRZIassLTW7b2u4T2Wi4e5tNGV4a2/47Fe7eFeejXJHd5T3Vm/ASvlozs5g3Q6GwOPBT63DhtDjLowdOfiGuMTBnwvY9IM5YPVRkuTg4AAdjgYZkUeP8JOFa3EbT/e/oEDGJ9N+cL+fPjzXycUiMertdEjan0yGP8YBtPAXiAVNY2LBzAE1tkfS8ndKaZZwx73j5PIavg9Pr4Bd0j4dDBlomV9ENbI4xvn+zRNsyy7a0fWWWsszqiqUsT3ORSqHwnpVCw5pSUpmnumoAKiYprTKlOAdVNFUqNRUsrVhBRfYBs3hz2j3rNvztEo0yk6Y3qJPJ/nYn1yB1B32LE+ErkXp2U0qf2zfe0++Q6ySJYxkcnvlqZBTMe4s6kuvHwzaq8PWFsEdxKIzu6BJftlC3bBXD+x5vvC+Pf9hcZY/h9PCs/wjnD08mX+628n8a/V+pR/6LcbAtL8V2/uD1g78Biz7jIQ=='
-          edits_bytes=zlib.decompress(base64.b64decode(encoded))
-          assert hashlib.sha256(edits_bytes).hexdigest() == 'c6fc0964b01c97384663adf822f3883d79234bb3be445e92f464c2879f8fc072'
-          for change in json.loads(edits_bytes):
-              assert change['path'] in ('frontend/src/App.tsx','frontend/tests/e2e/p08c.spec.ts')
-              path=pathlib.Path(change['path']); text=path.read_text()
-              assert hashlib.sha256(text.encode()).hexdigest()==change['before']
-              assert text.count(change['old'])==1
-              text=text.replace(change['old'],change['new'])
-              assert hashlib.sha256(text.encode()).hexdigest()==change['after']
-              path.write_text(text)
+          from pathlib import Path
+          import hashlib
+          def revise(path, before, after, replacements):
+              p=Path(path); text=p.read_text()
+              assert hashlib.sha256(text.encode()).hexdigest()==before, path
+              for old,new in replacements:
+                  assert text.count(old)==1, path
+                  text=text.replace(old,new)
+              assert hashlib.sha256(text.encode()).hexdigest()==after, path
+              p.write_text(text)
+          revise('frontend/src/App.tsx', '6f4ce0a9620f94ea576f76c55a57af2517bd9ea1841318331ea86cacdd29e077', '02eafd3585572b7925d31753a2b30da43f92b903826f89ddd102cc8cf3034cfd', [
+              ("    setPath(normalized);\n    window.scrollTo({ top: 0, behavior: 'auto' });", "    setPath(normalized);\n    // Notify the outer product router when a preserved instruction leaves the dashboard.\n    window.dispatchEvent(new PopStateEvent('popstate', { state: null }));\n    window.scrollTo({ top: 0, behavior: 'auto' });")
+          ])
+          revise('frontend/tests/e2e/p08c.spec.ts', '980255f66208d94c748aea9de729fc5d64a26aace4dc99cf60894d8451b37b8f', '55276919313b1cbd0381e8985c0c31f68ee69c0062ddaaed4861cf0b916940b2', [
+              ("  await page.getByRole('link', { name: 'Resolve safely' }).first().click();\n  // Revoke the real browser session without erasing its preserved economic intent.", "  await page.getByRole('link', { name: 'Resolve safely' }).first().click();\n  await expect(page.getByRole('heading', { name: 'Payment details', exact: true })).toBeVisible();\n  // Finish the observable authoritative read before revocation; a pending GET may otherwise\n  // correctly expire the UI before the intended POST admission-boundary assertion.\n  await expect(page.getByRole('button', { name: 'Refresh adjustments', exact: true })).toBeEnabled();\n  await expect(page.getByRole('button', { name: 'Retry same refund', exact: true })).toBeVisible();\n  // Revoke the real browser session without erasing its preserved economic intent."),
+              ("  await page.getByRole('button', { name: 'Retry same refund' }).click();\n  await expect(page.getByRole('dialog', { name: 'Your session ended' })).toBeVisible();", "  const denied = page.waitForResponse(r => r.request().method() === 'POST' && r.url().endsWith(`/payments/${f.payment.id}/refunds`) && r.status() === 401, { timeout: 15_000 });\n  await page.getByRole('button', { name: 'Retry same refund' }).click({ timeout: 10_000 });\n  expect((await denied).status()).toBe(401);\n  await expect(page.getByRole('dialog', { name: 'Your session ended' })).toBeVisible();"),
+              ("  await signIn(page, f.recipient); await page.getByRole('link', { name: 'Resolve safely' }).first().click();\n  const replay = page.waitForResponse(r => r.request().method() === 'POST' && r.url().endsWith(`/payments/${f.payment.id}/refunds`) && r.status() === 201);\n  await page.getByRole('button', { name: 'Retry same refund' }).click(); expect((await replay).headers()['idempotency-replayed']).toBe('true');", "  await signIn(page, f.recipient); await page.getByRole('link', { name: 'Resolve safely' }).first().click();\n  await expect(page).toHaveURL(new RegExp(`/payments/${f.payment.id}$`));\n  await expect(page.getByRole('heading', { name: 'Payment details', exact: true })).toBeVisible();\n  await expect(page.getByRole('button', { name: 'Refresh adjustments', exact: true })).toBeEnabled();\n  await expect(page.getByRole('button', { name: 'Retry same refund', exact: true })).toBeVisible();\n  const replay = page.waitForResponse(r => r.request().method() === 'POST' && r.url().endsWith(`/payments/${f.payment.id}/refunds`) && r.status() === 201, { timeout: 15_000 });\n  await page.getByRole('button', { name: 'Retry same refund' }).click({ timeout: 10_000 }); expect((await replay).headers()['idempotency-replayed']).toBe('true');")
+          ])
           PY
           git diff --check
       - name: Verify application, browser types and production client contracts
