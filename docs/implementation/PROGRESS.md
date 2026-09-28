@@ -4,9 +4,9 @@ Overall product remains **INCOMPLETE / NO_GO**. P01–P08E retain exact-source v
 
 ## Exact-source checkpoint
 
-Implementation `026dca3ec4c3c68696e87f8192872a4d2e45e157` passed permanent **LedgerGuard P08E verification** run `36485630387`, including **Required P08E gate**. Tracked source was clean, required failures/errors/skips were zero, and functional browser retries were zero.
+Implementation `644022340c0f3277297ed205610e4227584e720a` passed permanent **LedgerGuard P08E verification** run `36499192991`, including **Required P08E gate**. Tracked source was clean, required failures/errors/skips were zero, and functional browser retries were zero.
 
-Executed totals: 147 JUnit unit, 127 PostgreSQL/HTTP integration, 162 TypeScript client, 114 Browser. Seven P08E requirements and twelve responsive screenshots passed. Durable evidence: [report](../evidence/p08e-026dca3.md), [provenance](../evidence/p08e-026dca3.json).
+Executed totals: 147 JUnit unit, 127 PostgreSQL/HTTP integration, 162 TypeScript client, 114 Browser. Seven P08E requirements and twelve responsive screenshots passed. Durable evidence: [report](../evidence/p08e-6440223.md), [provenance](../evidence/p08e-6440223.json).
 
 ## Delivered P08E scope
 

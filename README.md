@@ -93,6 +93,14 @@ Lost responses retain the original owner-scoped command ID and reviewed version/
 
 Implementation `026dca3ec4c3c68696e87f8192872a4d2e45e157` passed permanent run `36485630387`, including **Required P08E gate**. Executed totals: 147 JUnit unit, 127 PostgreSQL/HTTP integration, 162 TypeScript client, 114 Browser; zero required failures/errors/skips and zero functional browser retries. Seven new requirements and twelve screenshots passed with P01–P08D preserved. See [evidence](docs/evidence/p08e-026dca3.md), [provenance](docs/evidence/p08e-026dca3.json), `docs/implementation/P08E_REQUIREMENTS.json`, and `/api/v1/openapi/p08e-ui.json`.
 
+## P08E customer webhooks — VERIFIED_PASS
+
+With the documented P07 overlay active, use **Webhooks** in customer navigation. Manage the approved sandbox subscription, enable/disable it, deliberately rotate its signing secret, inspect deliveries and attempts, and request eligible audited retries. Notification failure never changes settled payment results.
+
+Lost responses retain the original owner-scoped command ID and reviewed version/cycle. Check the outcome or explicitly retry the same command. A first-only secret response is not recoverable through replay: resolve the original command before deliberately rotating again. Secrets are not placed in browser persistence or ordinary reads.
+
+Implementation `644022340c0f3277297ed205610e4227584e720a` passed permanent run `36499192991`, including **Required P08E gate**. Executed totals: 147 JUnit unit, 127 PostgreSQL/HTTP integration, 162 TypeScript client, 114 Browser; zero required failures/errors/skips and zero functional browser retries. Seven new requirements and twelve screenshots passed with P01–P08D preserved. See [evidence](docs/evidence/p08e-6440223.md), [provenance](docs/evidence/p08e-6440223.json), `docs/implementation/P08E_REQUIREMENTS.json`, and `/api/v1/openapi/p08e-ui.json`.
+
 ## Historical P08D verification status
 
 P08D implementation `13bdd62c924a3230825b6d9304f449f887c8e7fe` passed permanent workflow [run 36464316280](https://github.com/azerish25-ux/transaction-reliability-lab/actions/runs/36464316280) on September 28, 2026, including **Required P08D gate**. Executed totals: 139 JUnit unit, 127 PostgreSQL/HTTP integration, 134 TypeScript client and 84 browser cases. Required failures/errors/skips and functional browser retries were zero. Eight P08D requirements, twelve new responsive screenshots and the preserved P01-P08C campaign passed, including final reconciliation. The [durable report](docs/evidence/p08d-13bdd62.md) and [JSON provenance](docs/evidence/p08d-13bdd62.json) retain exact artifact metadata and scope limitations.

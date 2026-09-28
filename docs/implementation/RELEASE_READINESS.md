@@ -2,7 +2,7 @@
 
 **Overall status: INCOMPLETE. P01–P08E are verified development milestones. Broader administrator interfaces and P09–P11 remain open. No milestone is a complete product release.**
 
-Latest evidence: `026dca3ec4c3c68696e87f8192872a4d2e45e157`, permanent run `36485630387`; [P08E report](../evidence/p08e-026dca3.md). Full-product gates are not upgraded merely because this milestone passed.
+Latest evidence: `644022340c0f3277297ed205610e4227584e720a`, permanent run `36499192991`; [P08E report](../evidence/p08e-6440223.md). Full-product gates are not upgraded merely because this milestone passed.
 
 | Gate | State | Current evidence and missing work |
 |---|---|---|

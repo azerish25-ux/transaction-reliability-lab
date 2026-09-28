@@ -1,0 +1,857 @@
+{
+  "sourceSha": "644022340c0f3277297ed205610e4227584e720a",
+  "workflowRunId": 36499192991,
+  "workflowUrl": "https://github.com/azerish25-ux/transaction-reliability-lab/actions/runs/36499192991",
+  "workflowConclusion": "success",
+  "runAttempt": 1,
+  "jobs": [
+    {
+      "id": 109185760528,
+      "name": "Build, customer webhooks, browser accessibility and financial invariants",
+      "conclusion": "success",
+      "html_url": "https://github.com/azerish25-ux/transaction-reliability-lab/actions/runs/36499192991/job/109185760528"
+    },
+    {
+      "id": 109190425712,
+      "name": "Required P08E gate",
+      "conclusion": "success",
+      "html_url": "https://github.com/azerish25-ux/transaction-reliability-lab/actions/runs/36499192991/job/109190425712"
+    }
+  ],
+  "artifact": {
+    "id": 11004931385,
+    "name": "ledgerguard-p08e-evidence-644022340c0f3277297ed205610e4227584e720a",
+    "digest": "sha256:c2f8ff5ffe7cda01404f35f7df9cbff76d44d84b6e690f2bb47c15b0fd94e7b0",
+    "size_in_bytes": 8554593,
+    "created_at": "2026-09-28T23:57:14Z",
+    "expires_at": "2026-10-12T23:57:13Z"
+  },
+  "downloadSha256": "c2f8ff5ffe7cda01404f35f7df9cbff76d44d84b6e690f2bb47c15b0fd94e7b0",
+  "downloadDigestVerified": true,
+  "suiteTotals": {
+    "JUnit unit": {
+      "tests": 147,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    "PostgreSQL/HTTP integration": {
+      "tests": 127,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    "TypeScript client": {
+      "tests": 162,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    "Browser": {
+      "tests": 114,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    }
+  },
+  "report": {
+    "phase": "P08E",
+    "status": "VERIFIED_PASS",
+    "fullProductStatus": "INCOMPLETE_NO_GO",
+    "sourceSha": "644022340c0f3277297ed205610e4227584e720a",
+    "trackedTreeDirty": false,
+    "timestamp": "2026-09-28T23:57:10.043012+00:00",
+    "suites": {
+      "p08e-client": {
+        "tests": 28,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      "p08e-unit": {
+        "tests": 8,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      "all-browser": {
+        "tests": 114,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      }
+    },
+    "p08eBrowserCases": 30,
+    "screenshots": [
+      {
+        "path": ".evidence/playwright/screenshots/chromium-desktop-p08e-subscriptions.png",
+        "sha256": "9095a49907aaa78e03d61d153f4c78e2752b8fbc29f663128bcfad9ae3679c3f"
+      },
+      {
+        "path": ".evidence/playwright/screenshots/chromium-desktop-p08e-subscription.png",
+        "sha256": "ae78ec342d6a259602321c56aace5cbf075a0155d44d60c53e95f820c687be9d"
+      },
+      {
+        "path": ".evidence/playwright/screenshots/chromium-desktop-p08e-recovery.png",
+        "sha256": "df2470d27003c17c284030b6d8ecc88ea8a21ef16b42348bbc48a4bee6028c32"
+      },
+      {
+        "path": ".evidence/playwright/screenshots/chromium-desktop-p08e-delivery.png",
+        "sha256": "55fa10418c08b7b013b60e9e3fe323087627e1479aebbd915d21d7e01f2963f9"
+      },
+      {
+        "path": ".evidence/playwright/screenshots/chromium-tablet-p08e-subscriptions.png",
+        "sha256": "28ada437e410d62325cabe6b62958f1906b3660bb80815566f9c405928bc4f11"
+      },
+      {
+        "path": ".evidence/playwright/screenshots/chromium-tablet-p08e-subscription.png",
+        "sha256": "4a4c29dd0d6187165d217b101fac7bd8b0e9702b09e82204562656c185e847ad"
+      },
+      {
+        "path": ".evidence/playwright/screenshots/chromium-tablet-p08e-recovery.png",
+        "sha256": "86ea4efa413b8f152d6ac61e2801a1dad151b08f48312f7c3ebcdd1b10d2ad24"
+      },
+      {
+        "path": ".evidence/playwright/screenshots/chromium-tablet-p08e-delivery.png",
+        "sha256": "c515231db4510d9e8b248c26af4e17638c8b288133b5d33e9bd7214fe868abd1"
+      },
+      {
+        "path": ".evidence/playwright/screenshots/chromium-mobile-p08e-subscriptions.png",
+        "sha256": "32178d7a096a9be1f2443c1368c7ae9a39b5751285af187e8bc232fd5d34b1e8"
+      },
+      {
+        "path": ".evidence/playwright/screenshots/chromium-mobile-p08e-subscription.png",
+        "sha256": "e2d2c763b45c91a16e8dbf2f4253c28db78ee20f67b27159983e8201b25ecaf8"
+      },
+      {
+        "path": ".evidence/playwright/screenshots/chromium-mobile-p08e-recovery.png",
+        "sha256": "4f4468209d9f887ac35c2f56a994da1e74671ea2be7be27603bc2ba398c4dc52"
+      },
+      {
+        "path": ".evidence/playwright/screenshots/chromium-mobile-p08e-delivery.png",
+        "sha256": "b9d64b6f0786df019753d7a79ef4b145327158e7aa447e9e4c1523d9daac588a"
+      }
+    ],
+    "requirements": [
+      {
+        "id": "P08E-R01",
+        "sections": [
+          "11",
+          "13",
+          "14",
+          "15",
+          "28"
+        ],
+        "statement": "Approved subscriptions and secret-free owner reads use real customer navigation and API authorization.",
+        "tests": {
+          "p08e-browser": [
+            "P08EE2E01",
+            "P08EE2E07"
+          ],
+          "p08e-client": [
+            "P08ETS01",
+            "P08ETS03",
+            "P08ETS11",
+            "P08ETS12",
+            "P08ETS16"
+          ]
+        },
+        "status": "VERIFIED_PASS",
+        "executed": [
+          {
+            "suite": "p08e-browser",
+            "test": "P08EE2E01-create-one-time-secret-and-responsive-subscriptions"
+          },
+          {
+            "suite": "p08e-browser",
+            "test": "P08EE2E01-create-one-time-secret-and-responsive-subscriptions"
+          },
+          {
+            "suite": "p08e-browser",
+            "test": "P08EE2E01-create-one-time-secret-and-responsive-subscriptions"
+          },
+          {
+            "suite": "p08e-browser",
+            "test": "P08EE2E07-owner-authorization-csrf-and-ordinary-secret-nondisclosure"
+          },
+          {
+            "suite": "p08e-browser",
+            "test": "P08EE2E07-owner-authorization-csrf-and-ordinary-secret-nondisclosure"
+          },
+          {
+            "suite": "p08e-browser",
+            "test": "P08EE2E07-owner-authorization-csrf-and-ordinary-secret-nondisclosure"
+          },
+          {
+            "suite": "p08e-client",
+            "test": "P08ETS01-normalize-commands-and-reject-arbitrary-destinations"
+          },
+          {
+            "suite": "p08e-client",
+            "test": "P08ETS03-real-client-create-carries-csrf-same-origin-and-original-key"
+          },
+          {
+            "suite": "p08e-client",
+            "test": "P08ETS11-ordinary-endpoint-reads-cannot-contain-secrets"
+          },
+          {
+            "suite": "p08e-client",
+            "test": "P08ETS12-endpoint-ownership-and-identity-are-validated"
+          },
+          {
+            "suite": "p08e-client",
+            "test": "P08ETS16-real-client-read-pagination-has-bounds"
+          }
+        ]
+      },
+      {
+        "id": "P08E-R02",
+        "sections": [
+          "11",
+          "13",
+          "14",
+          "15",
+          "28"
+        ],
+        "statement": "Create/rotation disclose a secret only once; no browser persistence, normal read or replay disclosure.",
+        "tests": {
+          "p08e-browser": [
+            "P08EE2E01",
+            "P08EE2E02",
+            "P08EE2E03",
+            "P08EE2E07",
+            "P08EE2E08"
+          ],
+          "p08e-client": [
+            "P08ETS07",
+            "P08ETS08",
+            "P08ETS09",
+            "P08ETS11",
+            "P08ETS18"
+          ]
+        },
+        "status": "VERIFIED_PASS",
+        "executed": [
+          {
+            "suite": "p08e-browser",
+            "test": "P08EE2E01-create-one-time-secret-and-responsive-subscriptions"
+          },
+          {
+            "suite": "p08e-browser",
+            "test": "P08EE2E01-create-one-time-secret-and-responsive-subscriptions"
+          },
+          {
+            "suite": "p08e-browser",
+            "test": "P08EE2E01-create-one-time-secret-and-responsive-subscriptions"
+          },
+          {
+            "suite": "p08e-browser",
+            "test": "P08EE2E02-committed-creation-loss-reloads-and-replays-once"
+          },
+          {
+            "suite": "p08e-browser",
+            "test": "P08EE2E02-committed-creation-loss-reloads-and-replays-once"
+          },
+          {
+            "suite": "p08e-browser",
+            "test": "P08EE2E02-committed-creation-loss-reloads-and-replays-once"
+          },
+          {
+            "suite": "p08e-browser",
+            "test": "P08EE2E03-lost-rotation-reauthenticates-without-a-second-rotation"
+          },
+          {
+            "suite": "p08e-browser",
+            "test": "P08EE2E03-lost-rotation-reauthenticates-without-a-second-rotation"
+          },
+          {
+            "suite": "p08e-browser",
+            "test": "P08EE2E03-lost-rotation-reauthenticates-without-a-second-rotation"
+          },
+          {
+            "suite": "p08e-browser",
+            "test": "P08EE2E07-owner-authorization-csrf-and-ordinary-secret-nondisclosure"
+          },
+          {
+            "suite": "p08e-browser",
+            "test": "P08EE2E07-owner-authorization-csrf-and-ordinary-secret-nondisclosure"
+          },
+          {
+            "suite": "p08e-browser",
+            "test": "P08EE2E07-owner-authorization-csrf-and-ordinary-secret-nondisclosure"
+          },
+          {
+            "suite": "p08e-browser",
+            "test": "P08EE2E08-concurrent-command-dedup-conflict-and-immutable-receipt"
+          },
+          {
+            "suite": "p08e-browser",
+            "test": "P08EE2E08-concurrent-command-dedup-conflict-and-immutable-receipt"
+          },
+          {
+            "suite": "p08e-browser",
+            "test": "P08EE2E08-concurrent-command-dedup-conflict-and-immutable-receipt"
+          },
+          {
+            "suite": "p08e-client",
+            "test": "P08ETS07-read-only-outcome-never-discloses-secret-or-posts"
+          },
+          {
+            "suite": "p08e-client",
+            "test": "P08ETS08-replayed-creation-or-rotation-cannot-redisclose-secret"
+          },
+          {
+            "suite": "p08e-client",
+            "test": "P08ETS09-first-secret-response-is-required-and-read-response-is-never-secret"
+          },
+          {
+            "suite": "p08e-client",
+            "test": "P08ETS11-ordinary-endpoint-reads-cannot-contain-secrets"
+          },
+          {
+            "suite": "p08e-client",
+            "test": "P08ETS18-owner-scoped-storage-contains-only-request-metadata"
+          }
+        ]
+      },
+      {
+        "id": "P08E-R03",
+        "sections": [
+          "11",
+          "13",
+          "14",
+          "15",
+          "28"
+        ],
+        "statement": "Committed response loss preserves the original owner-scoped command identity through reload and reauthentication.",
+        "tests": {
+          "p08e-browser": [
+            "P08EE2E02",
+            "P08EE2E03",
+            "P08EE2E06"
+          ],
+          "p08e-client": [
+            "P08ETS04",
+            "P08ETS19",
+            "P08ETS20",
+            "P08ETS21",
+            "P08ETS22",
+            "P08ETS24",
+            "P08ETS25",
+            "P08ETS27"
+          ]
+        },
+        "status": "VERIFIED_PASS",
+        "executed": [
+          {
+            "suite": "p08e-browser",
+            "test": "P08EE2E02-committed-creation-loss-reloads-and-replays-once"
+          },
+          {
+            "suite": "p08e-browser",
+            "test": "P08EE2E02-committed-creation-loss-reloads-and-replays-once"
+          },
+          {
+            "suite": "p08e-browser",
+            "test": "P08EE2E02-committed-creation-loss-reloads-and-replays-once"
+          },
+          {
+            "suite": "p08e-browser",
+            "test": "P08EE2E03-lost-rotation-reauthenticates-without-a-second-rotation"
+          },
+          {
+            "suite": "p08e-browser",
+            "test": "P08EE2E03-lost-rotation-reauthenticates-without-a-second-rotation"
+          },
+          {
+            "suite": "p08e-browser",
+            "test": "P08EE2E03-lost-rotation-reauthenticates-without-a-second-rotation"
+          },
+          {
+            "suite": "p08e-browser",
+            "test": "P08EE2E06-replaying-a-lost-retry-after-refailure-does-not-start-cycle-three"
+          },
+          {
+            "suite": "p08e-browser",
+            "test": "P08EE2E06-replaying-a-lost-retry-after-refailure-does-not-start-cycle-three"
+          },
+          {
+            "suite": "p08e-browser",
+            "test": "P08EE2E06-replaying-a-lost-retry-after-refailure-does-not-start-cycle-three"
+          },
+          {
+            "suite": "p08e-client",
+            "test": "P08ETS04-rotation-response-loss-reloads-original-key-and-version"
+          },
+          {
+            "suite": "p08e-client",
+            "test": "P08ETS19-reload-retains-original-canonical-request"
+          },
+          {
+            "suite": "p08e-client",
+            "test": "P08ETS20-unresolved-request-blocks-conflicting-replacement"
+          },
+          {
+            "suite": "p08e-client",
+            "test": "P08ETS21-storage-failure-prevents-request-preparation"
+          },
+          {
+            "suite": "p08e-client",
+            "test": "P08ETS22-corrupt-or-extra-stored-fields-fail-closed"
+          },
+          {
+            "suite": "p08e-client",
+            "test": "P08ETS24-admission-failures-do-not-replace-preserved-intent"
+          },
+          {
+            "suite": "p08e-client",
+            "test": "P08ETS25-server-errors-and-non-json-success-remain-uncertain"
+          },
+          {
+            "suite": "p08e-client",
+            "test": "P08ETS27-stale-and-conflicting-commands-do-not-get-new-keys"
+          }
+        ]
+      },
+      {
+        "id": "P08E-R04",
+        "sections": [
+          "11",
+          "13",
+          "14",
+          "15",
+          "28"
+        ],
+        "statement": "Version/cycle conflicts are explicit; concurrent identical commands apply once and receipts stay immutable.",
+        "tests": {
+          "p08e-browser": [
+            "P08EE2E04",
+            "P08EE2E06",
+            "P08EE2E08"
+          ],
+          "p08e-client": [
+            "P08ETS02",
+            "P08ETS05",
+            "P08ETS06",
+            "P08ETS10",
+            "P08ETS23",
+            "P08ETS27"
+          ],
+          "p08e-unit": [
+            "P08EUT01",
+            "P08EUT02",
+            "P08EUT03",
+            "P08EUT04",
+            "P08EUT05",
+            "P08EUT06",
+            "P08EUT07",
+            "P08EUT08"
+          ]
+        },
+        "status": "VERIFIED_PASS",
+        "executed": [
+          {
+            "suite": "p08e-browser",
+            "test": "P08EE2E04-version-race-remains-explicit-and-keyboard-focus-restores"
+          },
+          {
+            "suite": "p08e-browser",
+            "test": "P08EE2E04-version-race-remains-explicit-and-keyboard-focus-restores"
+          },
+          {
+            "suite": "p08e-browser",
+            "test": "P08EE2E04-version-race-remains-explicit-and-keyboard-focus-restores"
+          },
+          {
+            "suite": "p08e-browser",
+            "test": "P08EE2E06-replaying-a-lost-retry-after-refailure-does-not-start-cycle-three"
+          },
+          {
+            "suite": "p08e-browser",
+            "test": "P08EE2E06-replaying-a-lost-retry-after-refailure-does-not-start-cycle-three"
+          },
+          {
+            "suite": "p08e-browser",
+            "test": "P08EE2E06-replaying-a-lost-retry-after-refailure-does-not-start-cycle-three"
+          },
+          {
+            "suite": "p08e-browser",
+            "test": "P08EE2E08-concurrent-command-dedup-conflict-and-immutable-receipt"
+          },
+          {
+            "suite": "p08e-browser",
+            "test": "P08EE2E08-concurrent-command-dedup-conflict-and-immutable-receipt"
+          },
+          {
+            "suite": "p08e-browser",
+            "test": "P08EE2E08-concurrent-command-dedup-conflict-and-immutable-receipt"
+          },
+          {
+            "suite": "p08e-client",
+            "test": "P08ETS02-version-and-cycle-bounds-are-exact"
+          },
+          {
+            "suite": "p08e-client",
+            "test": "P08ETS05-state-command-preserves-reviewed-eligibility"
+          },
+          {
+            "suite": "p08e-client",
+            "test": "P08ETS06-retry-command-preserves-cycle-and-reason"
+          },
+          {
+            "suite": "p08e-client",
+            "test": "P08ETS10-malformed-or-mismatched-success-is-uncertain"
+          },
+          {
+            "suite": "p08e-client",
+            "test": "P08ETS23-completion-cannot-delete-another-command"
+          },
+          {
+            "suite": "p08e-client",
+            "test": "P08ETS27-stale-and-conflicting-commands-do-not-get-new-keys"
+          },
+          {
+            "suite": "p08e-unit",
+            "test": "P08EUT01_create_has_only_the_approved_implicit_destination"
+          },
+          {
+            "suite": "p08e-unit",
+            "test": "P08EUT02_state_preserves_exact_expected_version"
+          },
+          {
+            "suite": "p08e-unit",
+            "test": "P08EUT03_rotation_has_no_secret_or_state_in_its_request"
+          },
+          {
+            "suite": "p08e-unit",
+            "test": "P08EUT04_versions_reject_unsafe_or_missing_values"
+          },
+          {
+            "suite": "p08e-unit",
+            "test": "P08EUT05_retry_reason_and_cycle_are_normalized_and_preserved"
+          },
+          {
+            "suite": "p08e-unit",
+            "test": "P08EUT06_command_keys_require_complete_uuid_identities"
+          },
+          {
+            "suite": "p08e-unit",
+            "test": "P08EUT07_retry_cycle_cannot_overflow_and_irrelevant_fields_are_rejected"
+          },
+          {
+            "suite": "p08e-unit",
+            "test": "P08EUT08_unknown_or_incomplete_commands_fail_closed"
+          }
+        ]
+      },
+      {
+        "id": "P08E-R05",
+        "sections": [
+          "11",
+          "13",
+          "14",
+          "15",
+          "28"
+        ],
+        "statement": "Authoritative delivery/attempt history and audited retries remain independent of settled money.",
+        "tests": {
+          "p08e-browser": [
+            "P08EE2E05",
+            "P08EE2E06",
+            "P08EE2E09"
+          ],
+          "p08e-client": [
+            "P08ETS06",
+            "P08ETS13",
+            "P08ETS14",
+            "P08ETS15",
+            "P08ETS17",
+            "P08ETS28"
+          ]
+        },
+        "status": "VERIFIED_PASS",
+        "executed": [
+          {
+            "suite": "p08e-browser",
+            "test": "P08EE2E05-real-settlement-failed-delivery-audited-retry-and-financial-isolation"
+          },
+          {
+            "suite": "p08e-browser",
+            "test": "P08EE2E05-real-settlement-failed-delivery-audited-retry-and-financial-isolation"
+          },
+          {
+            "suite": "p08e-browser",
+            "test": "P08EE2E05-real-settlement-failed-delivery-audited-retry-and-financial-isolation"
+          },
+          {
+            "suite": "p08e-browser",
+            "test": "P08EE2E06-replaying-a-lost-retry-after-refailure-does-not-start-cycle-three"
+          },
+          {
+            "suite": "p08e-browser",
+            "test": "P08EE2E06-replaying-a-lost-retry-after-refailure-does-not-start-cycle-three"
+          },
+          {
+            "suite": "p08e-browser",
+            "test": "P08EE2E06-replaying-a-lost-retry-after-refailure-does-not-start-cycle-three"
+          },
+          {
+            "suite": "p08e-browser",
+            "test": "P08EE2E09-real-event-pagination-keeps-financial-identities"
+          },
+          {
+            "suite": "p08e-browser",
+            "test": "P08EE2E09-real-event-pagination-keeps-financial-identities"
+          },
+          {
+            "suite": "p08e-browser",
+            "test": "P08EE2E09-real-event-pagination-keeps-financial-identities"
+          },
+          {
+            "suite": "p08e-client",
+            "test": "P08ETS06-retry-command-preserves-cycle-and-reason"
+          },
+          {
+            "suite": "p08e-client",
+            "test": "P08ETS13-delivery-owner-endpoint-and-detail-identity-are-validated"
+          },
+          {
+            "suite": "p08e-client",
+            "test": "P08ETS14-unknown-states-and-false-delivery-claims-are-rejected"
+          },
+          {
+            "suite": "p08e-client",
+            "test": "P08ETS15-running-attempt-is-not-a-completed-attempt"
+          },
+          {
+            "suite": "p08e-client",
+            "test": "P08ETS17-attempt-history-is-sanitized-and-unique"
+          },
+          {
+            "suite": "p08e-client",
+            "test": "P08ETS28-receipt-links-and-read-only-owner-validation"
+          }
+        ]
+      },
+      {
+        "id": "P08E-R06",
+        "sections": [
+          "11",
+          "13",
+          "14",
+          "15",
+          "28"
+        ],
+        "statement": "Owner/administrator/CSRF boundaries fail closed; unavailable services are not empty or successful states.",
+        "tests": {
+          "p08e-browser": [
+            "P08EE2E07",
+            "P08EE2E10"
+          ],
+          "p08e-client": [
+            "P08ETS12",
+            "P08ETS13",
+            "P08ETS14",
+            "P08ETS21",
+            "P08ETS22",
+            "P08ETS24",
+            "P08ETS25",
+            "P08ETS26",
+            "P08ETS28"
+          ]
+        },
+        "status": "VERIFIED_PASS",
+        "executed": [
+          {
+            "suite": "p08e-browser",
+            "test": "P08EE2E07-owner-authorization-csrf-and-ordinary-secret-nondisclosure"
+          },
+          {
+            "suite": "p08e-browser",
+            "test": "P08EE2E07-owner-authorization-csrf-and-ordinary-secret-nondisclosure"
+          },
+          {
+            "suite": "p08e-browser",
+            "test": "P08EE2E07-owner-authorization-csrf-and-ordinary-secret-nondisclosure"
+          },
+          {
+            "suite": "p08e-browser",
+            "test": "P08EE2E10-unavailable-service-is-not-an-empty-or-successful-list"
+          },
+          {
+            "suite": "p08e-browser",
+            "test": "P08EE2E10-unavailable-service-is-not-an-empty-or-successful-list"
+          },
+          {
+            "suite": "p08e-browser",
+            "test": "P08EE2E10-unavailable-service-is-not-an-empty-or-successful-list"
+          },
+          {
+            "suite": "p08e-client",
+            "test": "P08ETS12-endpoint-ownership-and-identity-are-validated"
+          },
+          {
+            "suite": "p08e-client",
+            "test": "P08ETS13-delivery-owner-endpoint-and-detail-identity-are-validated"
+          },
+          {
+            "suite": "p08e-client",
+            "test": "P08ETS14-unknown-states-and-false-delivery-claims-are-rejected"
+          },
+          {
+            "suite": "p08e-client",
+            "test": "P08ETS21-storage-failure-prevents-request-preparation"
+          },
+          {
+            "suite": "p08e-client",
+            "test": "P08ETS22-corrupt-or-extra-stored-fields-fail-closed"
+          },
+          {
+            "suite": "p08e-client",
+            "test": "P08ETS24-admission-failures-do-not-replace-preserved-intent"
+          },
+          {
+            "suite": "p08e-client",
+            "test": "P08ETS25-server-errors-and-non-json-success-remain-uncertain"
+          },
+          {
+            "suite": "p08e-client",
+            "test": "P08ETS26-malformed-path-identities-and-retry-text-are-rejected"
+          },
+          {
+            "suite": "p08e-client",
+            "test": "P08ETS28-receipt-links-and-read-only-owner-validation"
+          }
+        ]
+      },
+      {
+        "id": "P08E-R07",
+        "sections": [
+          "11",
+          "13",
+          "14",
+          "15",
+          "28"
+        ],
+        "statement": "Desktop/tablet/mobile journeys, keyboard focus and authenticated axe checks preserve earlier product behavior.",
+        "tests": {
+          "p08e-browser": [
+            "P08EE2E01",
+            "P08EE2E02",
+            "P08EE2E04",
+            "P08EE2E05",
+            "P08EE2E07",
+            "P08EE2E09",
+            "P08EE2E10"
+          ],
+          "p08e-client": [
+            "P08ETS16",
+            "P08ETS28"
+          ]
+        },
+        "status": "VERIFIED_PASS",
+        "executed": [
+          {
+            "suite": "p08e-browser",
+            "test": "P08EE2E01-create-one-time-secret-and-responsive-subscriptions"
+          },
+          {
+            "suite": "p08e-browser",
+            "test": "P08EE2E01-create-one-time-secret-and-responsive-subscriptions"
+          },
+          {
+            "suite": "p08e-browser",
+            "test": "P08EE2E01-create-one-time-secret-and-responsive-subscriptions"
+          },
+          {
+            "suite": "p08e-browser",
+            "test": "P08EE2E02-committed-creation-loss-reloads-and-replays-once"
+          },
+          {
+            "suite": "p08e-browser",
+            "test": "P08EE2E02-committed-creation-loss-reloads-and-replays-once"
+          },
+          {
+            "suite": "p08e-browser",
+            "test": "P08EE2E02-committed-creation-loss-reloads-and-replays-once"
+          },
+          {
+            "suite": "p08e-browser",
+            "test": "P08EE2E04-version-race-remains-explicit-and-keyboard-focus-restores"
+          },
+          {
+            "suite": "p08e-browser",
+            "test": "P08EE2E04-version-race-remains-explicit-and-keyboard-focus-restores"
+          },
+          {
+            "suite": "p08e-browser",
+            "test": "P08EE2E04-version-race-remains-explicit-and-keyboard-focus-restores"
+          },
+          {
+            "suite": "p08e-browser",
+            "test": "P08EE2E05-real-settlement-failed-delivery-audited-retry-and-financial-isolation"
+          },
+          {
+            "suite": "p08e-browser",
+            "test": "P08EE2E05-real-settlement-failed-delivery-audited-retry-and-financial-isolation"
+          },
+          {
+            "suite": "p08e-browser",
+            "test": "P08EE2E05-real-settlement-failed-delivery-audited-retry-and-financial-isolation"
+          },
+          {
+            "suite": "p08e-browser",
+            "test": "P08EE2E07-owner-authorization-csrf-and-ordinary-secret-nondisclosure"
+          },
+          {
+            "suite": "p08e-browser",
+            "test": "P08EE2E07-owner-authorization-csrf-and-ordinary-secret-nondisclosure"
+          },
+          {
+            "suite": "p08e-browser",
+            "test": "P08EE2E07-owner-authorization-csrf-and-ordinary-secret-nondisclosure"
+          },
+          {
+            "suite": "p08e-browser",
+            "test": "P08EE2E09-real-event-pagination-keeps-financial-identities"
+          },
+          {
+            "suite": "p08e-browser",
+            "test": "P08EE2E09-real-event-pagination-keeps-financial-identities"
+          },
+          {
+            "suite": "p08e-browser",
+            "test": "P08EE2E09-real-event-pagination-keeps-financial-identities"
+          },
+          {
+            "suite": "p08e-browser",
+            "test": "P08EE2E10-unavailable-service-is-not-an-empty-or-successful-list"
+          },
+          {
+            "suite": "p08e-browser",
+            "test": "P08EE2E10-unavailable-service-is-not-an-empty-or-successful-list"
+          },
+          {
+            "suite": "p08e-browser",
+            "test": "P08EE2E10-unavailable-service-is-not-an-empty-or-successful-list"
+          },
+          {
+            "suite": "p08e-client",
+            "test": "P08ETS16-real-client-read-pagination-has-bounds"
+          },
+          {
+            "suite": "p08e-client",
+            "test": "P08ETS28-receipt-links-and-read-only-owner-validation"
+          }
+        ]
+      }
+    ],
+    "scope": "P01-P08D preserved; customer webhook management, durable command recovery, secret nondisclosure, signed delivery/retry browser and SQL oracles. Broader administrator interfaces, P09-P11 and final release remain open."
+  },
+  "limitations": [
+    "Full product remains INCOMPLETE / NO_GO.",
+    "Raw artifacts have finite retention.",
+    "Tested source differs from later evidence-documentation commits.",
+    "Secret-handling journeys disable automatic recordings; manual screenshots exclude secret displays."
+  ]
+}

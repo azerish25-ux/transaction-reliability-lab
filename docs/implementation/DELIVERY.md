@@ -75,3 +75,8 @@ P08A source `d675db096b8f023469e253737ade80a2b8b3b0fa` passed run `36345292129`.
 ## P08E exact-source delivery
 
 Implementation `026dca3ec4c3c68696e87f8192872a4d2e45e157` passed permanent run `36485630387` and Required P08E gate. Later evidence-documentation commits are separate from the tested source. See [report](../evidence/p08e-026dca3.md) and [provenance](../evidence/p08e-026dca3.json). Full product remains INCOMPLETE / NO_GO. Broader administrator interfaces are next.
+
+
+## P08E exact-source delivery
+
+Implementation `644022340c0f3277297ed205610e4227584e720a` passed permanent run `36499192991` and Required P08E gate. Later evidence-documentation commits are separate from the tested source. See [report](../evidence/p08e-6440223.md) and [provenance](../evidence/p08e-6440223.json). Full product remains INCOMPLETE / NO_GO. Broader administrator interfaces are next.
