@@ -1,7 +1,7 @@
 # P06 verified evidence — payment cancellation, refunds and reversal
 
 Verified source: `bb1eeb1167b71fb92fb28f82c110fc489f60f03b`
-Workflow: `LedgerGuard P06 verification`
+Workflow: `P06 verification`
 Run: `36306335283`
 Event: `push`
 Result: `VERIFIED_PASS`

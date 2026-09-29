@@ -1,8 +1,8 @@
-# LedgerGuard P07B exact-SHA verification
+# Bad Penny P07B exact-SHA verification
 
 Result: **VERIFIED_PASS**  
 Implementation source: `cc6b3ca81d2368c188aa7a79cec2d37b2dd8b975`  
-Permanent workflow: `LedgerGuard P07B verification`  
+Permanent workflow: `P07B verification`\
 Workflow run: `36330862462`  
 Completed: September 27, 2026  
 Full-product result: **INCOMPLETE / NO_GO**

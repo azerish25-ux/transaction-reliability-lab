@@ -30,7 +30,7 @@ Full-product result: `INCOMPLETE / NO_GO`
 
 ## P08C GitHub delivery
 
-Permanent `LedgerGuard P08C verification` run `36436424432`, attempt 1, checked out the exact implementation SHA and passed on September 28, 2026. Verification job `108975429770` and required gate `108980532491` both succeeded.
+Permanent `P08C verification` run `36436424432`, attempt 1, checked out the exact implementation SHA and passed on September 28, 2026. Verification job `108975429770` and required gate `108980532491` both succeeded.
 
 The full run preserved P01-P08B and executed the P08C production-client, PostgreSQL/HTTP and responsive browser/accessibility evidence, with successful reconciliation, secret scan, requirements gate, teardown and artifact publication. The gate enforces zero failed/errored/skipped required cases, zero functional browser retries and a clean tracked source tree.
 
@@ -46,7 +46,7 @@ Recipient-owner partial/full refunds; administrator payment lookup and full reve
 
 Verified P08B source: `5d6d883444845bc5de3364d0c682c3df26005d8e`.
 
-Permanent `LedgerGuard P08B verification` push workflow run `36355379901` completed successfully on September 27, 2026.
+Permanent `P08B verification` push workflow run `36355379901` completed successfully on September 27, 2026.
 
 - Verification job `108721959438`: SUCCESS.
 - Required gate `108723219635`: SUCCESS.

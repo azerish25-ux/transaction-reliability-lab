@@ -97,7 +97,7 @@ Overall product: **INCOMPLETE / NO_GO**. P08F is a verified development mileston
 
 ## Exact-source verification
 
-Implementation `8802f8b20c9bf3996d19ba90e7be26fd123b7580` passed permanent **LedgerGuard P08F verification** run `36511855593`, including **Required P08F gate**. Executed totals: 159 JUnit unit, 140 PostgreSQL/HTTP integration, 186 TypeScript client, 147 Browser. Required failures, errors and skips were zero; functional browser retries were zero. The gate also executed nine evidence-validator regression tests.
+Implementation `8802f8b20c9bf3996d19ba90e7be26fd123b7580` passed permanent **P08F verification** run `36511855593`, including **Required P08F gate**. Executed totals: 159 JUnit unit, 140 PostgreSQL/HTTP integration, 186 TypeScript client, 147 Browser. Required failures, errors and skips were zero; functional browser retries were zero. The gate also executed nine evidence-validator regression tests.
 
 P08F contributes 12 Java validation/authorization unit cases, 13 real PostgreSQL/HTTP integration cases, 24 production-client cases, 30 administrator browser journeys and three additional responsive table/keyboard cases. Seven requirements and fifteen responsive screenshots are bound to the clean tested source. [Durable report](../evidence/p08f-8802f8b.md), [JSON provenance](../evidence/p08f-8802f8b.json), and [requirements matrix](../evidence/p08f-8802f8b/requirements-matrix.md).
 
@@ -129,7 +129,7 @@ Overall product remains **INCOMPLETE / NO_GO**. P01–P08E retain exact-source v
 
 ## Exact-source checkpoint
 
-Implementation `644022340c0f3277297ed205610e4227584e720a` passed permanent **LedgerGuard P08E verification** run `36499192991`, including **Required P08E gate**. Tracked source was clean, required failures/errors/skips were zero, and functional browser retries were zero.
+Implementation `644022340c0f3277297ed205610e4227584e720a` passed permanent **P08E verification** run `36499192991`, including **Required P08E gate**. Tracked source was clean, required failures/errors/skips were zero, and functional browser retries were zero.
 
 Executed totals: 147 JUnit unit, 127 PostgreSQL/HTTP integration, 162 TypeScript client, 114 Browser. Seven P08E requirements and twelve responsive screenshots passed. Durable evidence: [report](../evidence/p08e-6440223.md), [provenance](../evidence/p08e-6440223.json).
 

@@ -1,15 +1,15 @@
-# LedgerGuard
+# Bad Penny
 ## Financial Transaction Reliability Laboratory
 
 **Synthetic money only. P01-P08F retain verified development milestones. P09A is IMPLEMENTED_UNVERIFIED. The full product remains INCOMPLETE / NO_GO.**
 
-LedgerGuard is a compact transaction system for investigating duplicate intent, uncertain outcomes, concurrent spending, accounting invariants and asynchronous recovery across the browser, API, PostgreSQL and RabbitMQ. It is not a bank, payment processor, compliance product or production-ready financial service.
+Bad Penny is a compact transaction system for investigating duplicate intent, uncertain outcomes, concurrent spending, accounting invariants and asynchronous recovery across the browser, API, PostgreSQL and RabbitMQ. It is not a bank, payment processor, compliance product or production-ready financial service.
 
 The latest verified product milestone adds **administrator transaction search, ledger detail, financial audit history, independent reconciliation and failed-work investigation**. Customer account, transfer, payment, adjustment, schedule and webhook journeys remain covered by the regression campaign.
 
 P09A's isolated F01/D02 laboratory is now delivered and undergoing real-stack integration. Recent corrections address guardian startup, loopback console networking and evidence integrity; they are not a completed live-experiment pass. See the [current integration checkpoint](docs/implementation/P09A_INTEGRATION.md) and [progress](docs/implementation/PROGRESS.md). Full release-isolation G12 remains open.
 
-Verified P08F source: `8802f8b20c9bf3996d19ba90e7be26fd123b7580`; permanent **LedgerGuard P08F verification** run `36511855593`, including **Required P08F gate**. [Executed evidence](docs/evidence/p08f-8802f8b.md), [machine-readable provenance](docs/evidence/p08f-8802f8b.json), [progress](docs/implementation/PROGRESS.md), [full-product release gates](docs/implementation/RELEASE_READINESS.md).
+Verified P08F source: `8802f8b20c9bf3996d19ba90e7be26fd123b7580`; permanent **P08F verification** run `36511855593`, including **Required P08F gate**. [Executed evidence](docs/evidence/p08f-8802f8b.md), [machine-readable provenance](docs/evidence/p08f-8802f8b.json), [progress](docs/implementation/PROGRESS.md), [full-product release gates](docs/implementation/RELEASE_READINESS.md).
 
 ## P09A hardening delivery
 
@@ -115,3 +115,12 @@ Useful commands:
 ./scripts/lab status
 ./scripts/lab down
 ```
+
+## Naming and compatibility
+
+Bad Penny is the project name. Existing Java package paths, database names,
+Docker volumes, webhook headers and `.ledgerguard/` runtime paths remain
+unchanged so documented commands keep working. Historical artifact names, raw
+results and screenshots are preserved exactly as recorded. Verification labels
+in the narrative describe the campaign scope, not a rename of past GitHub runs.
+This branding change does not attribute historical test results to a new source.

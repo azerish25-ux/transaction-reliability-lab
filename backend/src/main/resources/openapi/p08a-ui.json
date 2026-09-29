@@ -1,7 +1,7 @@
 {
   "openapi": "3.1.0",
   "info": {
-    "title": "LedgerGuard P08A customer interface contract",
+    "title": "Bad Penny P08A customer interface contract",
     "version": "0.8.1",
     "description": "Scoped contract for the same-origin customer authentication, balances, account history and customer-safe transaction-detail slice. Synthetic money only."
   },

@@ -1,7 +1,7 @@
 {
   "openapi": "3.1.0",
   "info": {
-    "title": "LedgerGuard P07B Webhook API",
+    "title": "Bad Penny P07B Webhook API",
     "version": "0.7.0-p07b-candidate",
     "description": "Synthetic-money laboratory contract for owner-managed, encrypted-secret, exact-byte HMAC webhook delivery. This scoped contract does not claim the full product is complete."
   },

@@ -1,7 +1,7 @@
 {
   "openapi": "3.1.0",
   "info": {
-    "title": "LedgerGuard P08B customer money-movement contract",
+    "title": "Bad Penny P08B customer money-movement contract",
     "version": "0.8.2",
     "description": "Scoped same-origin contract for owner-authorized immediate transfers, asynchronous payment creation and history, authoritative status polling, replay-safe uncertainty resolution and pending-payment cancellation. Synthetic money only."
   },

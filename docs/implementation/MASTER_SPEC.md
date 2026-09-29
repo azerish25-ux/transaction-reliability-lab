@@ -1,10 +1,10 @@
-# LedgerGuard — Complete Implementation and Delivery Mandate
+# Bad Penny — Complete Implementation and Delivery Mandate
 
 ## 0. Execute this project; do not merely describe it
 
 Build, test, document, and deliver the complete project specified below:
 
-Project: LedgerGuard — Financial Transaction Reliability Laboratory
+Project: Bad Penny — Financial Transaction Reliability Laboratory
 Repository: https://github.com/azerish25-ux/transaction-reliability-lab.git
 Repository owner/name: azerish25-ux/transaction-reliability-lab
 Delivery branch: main, subject to the repository's actual protection rules.
@@ -832,7 +832,7 @@ Write docs/testing/NOT_AUTOMATED.md covering what remains better suited to human
 
 ## 27. Evidence package, documentation, and demo video
 
-README must explain the project in approximately one screen before deeper detail: what LedgerGuard is, why its testing matters, sandbox-only status, one-command run, architecture, three representative failure demonstrations, current verified status, and links into evidence.
+README must explain the project in approximately one screen before deeper detail: what Bad Penny is, why its testing matters, sandbox-only status, one-command run, architecture, three representative failure demonstrations, current verified status, and links into evidence.
 
 Provide:
 - Architecture diagram source and a rendered readable artifact.

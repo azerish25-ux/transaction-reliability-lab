@@ -1,7 +1,7 @@
 {
   "openapi": "3.1.0",
   "info": {
-    "title": "LedgerGuard P07A scheduled-transfer candidate",
+    "title": "Bad Penny P07A scheduled-transfer candidate",
     "version": "0.6.0-P07A-INCOMPLETE",
     "description": "Scoped candidate contract for durable scheduled transfers. The complete current compatibility contract remains p06.json until P07 is verified."
   },

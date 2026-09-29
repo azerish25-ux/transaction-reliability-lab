@@ -8,7 +8,7 @@ Status: **VERIFIED_PASS for the documented foundation scope; overall product rem
 - Branch: `main`
 - Clean source commit: `cb9930168ffdc793a5759f754a39685369620422`
 - Source tree: `b958f1c96f8540f5bd766ffcffa7339cae2830b1`
-- Workflow: [LedgerGuard fast verification run 36267641798](https://github.com/azerish25-ux/transaction-reliability-lab/actions/runs/36267641798)
+- Workflow: [fast verification run 36267641798](https://github.com/azerish25-ux/transaction-reliability-lab/actions/runs/36267641798)
 - Event: `push`
 - Verification job `108475257072`: SUCCESS
 - Required aggregate gate `108475591888`: SUCCESS

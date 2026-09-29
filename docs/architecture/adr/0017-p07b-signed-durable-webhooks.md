@@ -4,7 +4,7 @@ Status: accepted for the P07B candidate. Full-product release status remains NO_
 
 ## Context
 
-LedgerGuard already commits financial events through PostgreSQL outbox rows. External HTTP is slower and less reliable than the financial transaction boundary: a receiver can time out, return a retryable status, accept an event and lose its response, or remain unavailable across process restarts. Calling receivers inside a money-changing transaction would couple settlement correctness to an untrusted network dependency.
+Bad Penny already commits financial events through PostgreSQL outbox rows. External HTTP is slower and less reliable than the financial transaction boundary: a receiver can time out, return a retryable status, accept an event and lose its response, or remain unavailable across process restarts. Calling receivers inside a money-changing transaction would couple settlement correctness to an untrusted network dependency.
 
 The project also needs inspectable evidence for exact-byte signatures, SSRF/redirect controls, duplicate suppression, bounded retries, restart recovery, owner authorization and administrator operations.
 

@@ -1,4 +1,4 @@
-# LedgerGuard evidence index
+# Bad Penny evidence index
 
 ## Latest verified milestone: P08F
 
@@ -22,7 +22,7 @@ The customer schedule milestone passed at `13bdd62c924a3230825b6d9304f449f887c8e
 
 ## Preserved verified P08C evidence
 
-Implementation `3b87e3a078d7b9270b56964ed1c50dc299958379` passed permanent `LedgerGuard P08C verification` run `36436424432`, attempt 1, on September 28, 2026. Verification job `108975429770` and required gate `108980532491` both succeeded.
+Implementation `3b87e3a078d7b9270b56964ed1c50dc299958379` passed permanent `P08C verification` run `36436424432`, attempt 1, on September 28, 2026. Verification job `108975429770` and required gate `108980532491` both succeeded.
 
 - [Durable human-readable P08C report](p08c-3b87e3a.md)
 - [Machine-readable P08C provenance](p08c-3b87e3a.json)
@@ -36,7 +36,7 @@ Artifact `10977005382` has GitHub-reported SHA-256 `7bf691dab89de39fd74912ba73d1
 
 ## Preserved verified P08B evidence
 
-Implementation `5d6d883444845bc5de3364d0c682c3df26005d8e` passed permanent `LedgerGuard P08B verification` push workflow run `36355379901` for the exact `main` source SHA.
+Implementation `5d6d883444845bc5de3364d0c682c3df26005d8e` passed permanent `P08B verification` push workflow run `36355379901` for the exact `main` source SHA.
 
 - [Durable human-readable P08B report](p08b-5d6d883.md)
 - [Machine-readable P08B provenance](p08b-5d6d883.json)

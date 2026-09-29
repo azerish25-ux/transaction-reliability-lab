@@ -24,7 +24,7 @@
         7,
         7
       ],
-      "requirement": "Project: LedgerGuard — Financial Transaction Reliability Laboratory",
+      "requirement": "Project: Bad Penny — Financial Transaction Reliability Laboratory",
       "status": "NOT_STARTED",
       "executed_evidence": []
     },
@@ -6389,7 +6389,7 @@
         835,
         835
       ],
-      "requirement": "README must explain the project in approximately one screen before deeper detail: what LedgerGuard is, why its testing matters, sandbox-only status, one-command run, architecture, three representative failure demonstrations, current verified status, and links into evidence.",
+      "requirement": "README must explain the project in approximately one screen before deeper detail: what Bad Penny is, why its testing matters, sandbox-only status, one-command run, architecture, three representative failure demonstrations, current verified status, and links into evidence.",
       "status": "NOT_STARTED",
       "executed_evidence": []
     },

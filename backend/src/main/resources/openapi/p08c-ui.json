@@ -1,7 +1,7 @@
 {
   "openapi": "3.1.0",
   "info": {
-    "title": "LedgerGuard P08C adjustment interface",
+    "title": "Bad Penny P08C adjustment interface",
     "version": "0.8.3",
     "description": "Synthetic money only. Scoped real customer refunds and ADMIN full reversals; preserves immutable settlement and exact-SHA verification boundary. NOT a production financial service. CAD/USD 2 decimals, JPY 0, KWD 3; no conversion."
   },

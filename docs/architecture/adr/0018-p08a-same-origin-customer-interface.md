@@ -5,7 +5,7 @@ Date: 2026-09-27
 
 ## Context
 
-LedgerGuard already had a verified financial API and TypeScript client core but no browser application. The first interface increment must exercise real session, account and ledger boundaries without widening disclosure or introducing fake dashboard data. Sandbox origin controls require unsafe browser requests to present a loopback host and an Origin matching the externally visible port.
+Bad Penny already had a verified financial API and TypeScript client core but no browser application. The first interface increment must exercise real session, account and ledger boundaries without widening disclosure or introducing fake dashboard data. Sandbox origin controls require unsafe browser requests to present a loopback host and an Origin matching the externally visible port.
 
 ## Decision
 

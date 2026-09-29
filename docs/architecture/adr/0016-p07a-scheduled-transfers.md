@@ -4,7 +4,7 @@ Status: source candidate, not verified until the permanent remote gate passes th
 
 ## Decision
 
-LedgerGuard stores schedule intent as an intended local timestamp, IANA zone, recurrence, definition version and derived next UTC instant. `SchedulePolicy` resolves and advances local time in Java, while the restricted PostgreSQL command boundary independently validates the derived instant with the same gap/overlap policy. PostgreSQL remains the financial, lifecycle and duplicate-effect authority.
+Bad Penny stores schedule intent as an intended local timestamp, IANA zone, recurrence, definition version and derived next UTC instant. `SchedulePolicy` resolves and advances local time in Java, while the restricted PostgreSQL command boundary independently validates the derived instant with the same gap/overlap policy. PostgreSQL remains the financial, lifecycle and duplicate-effect authority.
 
 The P07A schema is an additive Flyway location, `classpath:db/p07`, activated through `compose.p07.yaml`. The default `compose.yaml` remains the exact verified P06 topology until P07 receives its own permanent gate. The overlay restarts the API with both migration locations and adds two independently running scheduler processes.
 

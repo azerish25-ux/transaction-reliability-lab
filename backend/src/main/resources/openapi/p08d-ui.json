@@ -1,7 +1,7 @@
 {
   "openapi": "3.1.0",
   "info": {
-    "title": "LedgerGuard P08D customer schedule interface",
+    "title": "Bad Penny P08D customer schedule interface",
     "version": "0.4.0",
     "description": "P07A schedule commands and owner-scoped history, plus a pure server-authoritative temporal preview. Synthetic money only. Preview does not create schedules or reserve funds."
   },

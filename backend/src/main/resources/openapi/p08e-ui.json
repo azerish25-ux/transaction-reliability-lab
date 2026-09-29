@@ -1,7 +1,7 @@
 {
   "openapi": "3.1.0",
   "info": {
-    "title": "LedgerGuard P08E Customer Webhooks",
+    "title": "Bad Penny P08E Customer Webhooks",
     "version": "0.8.0-p08e-candidate",
     "description": "Synthetic money only. Requires the documented P07 overlay. New UI mutations use command receipts; legacy P07B endpoints remain compatible. Not a full-product release."
   },

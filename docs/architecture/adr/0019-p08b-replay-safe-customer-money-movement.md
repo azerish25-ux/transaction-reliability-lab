@@ -27,4 +27,4 @@ A browser creates a new reliability boundary. A POST can commit in PostgreSQL wh
 - A customer may be temporarily blocked from creating another money command until the preserved instruction is resolved; this is intentional protection against duplicate intent.
 - Local storage contains synthetic economic routing data and exact amounts. It remains owner-scoped and contains no credentials, but it is not treated as an authoritative financial store.
 - Payment pages may show pending for an extended period or pause automatic polling after a bounded campaign. Manual refresh remains safe.
-- P08B does not make LedgerGuard a production financial service and does not complete the full P08 or product release scope.
+- P08B does not make Bad Penny a production financial service and does not complete the full P08 or product release scope.

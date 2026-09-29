@@ -1,7 +1,7 @@
 {
   "openapi": "3.0.3",
   "info": {
-    "title": "LedgerGuard asynchronous payment reliability API",
+    "title": "Bad Penny asynchronous payment reliability API",
     "version": "0.5.0",
     "description": "Synthetic money only. P05 adds accepted asynchronous payments with atomic fund reservations, a PostgreSQL transactional outbox, confirmed durable RabbitMQ publication, manual-ack workers, inbox deduplication, monotonic status projection, failed-work inspection and audited replay. Delivery is at least once; each payment has at most one committed settlement effect. Cancellation, refund, reversal, schedules, webhooks and the React product interface remain later milestones."
   },

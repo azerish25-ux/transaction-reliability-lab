@@ -1,7 +1,7 @@
 name: P08F verified evidence handoff
 on:
   workflow_run:
-    workflows: [LedgerGuard P08F verification]
+    workflows: [Bad Penny P08F verification, LedgerGuard P08F verification]
     types: [completed]
 permissions:
   contents: write
@@ -27,7 +27,7 @@ jobs:
           import xml.etree.ElementTree as ET
           from pathlib import Path, PurePosixPath
           repo = os.environ['GITHUB_REPOSITORY']
-          assert repo == 'azerish25-ux/transaction-reliability-lab'
+          assert os.environ['GITHUB_REPOSITORY_ID'] == '1388407800'
           run_id = int(os.environ['VERIFIED_RUN'])
           sha = os.environ['VERIFIED_SHA']
           assert re.fullmatch('[0-9a-f]{40}', sha)
@@ -42,7 +42,7 @@ jobs:
           run = gh(f'actions/runs/{run_id}')
           assert run['head_sha'] == sha and run['head_branch'] == 'main' and run['event'] == 'push'
           assert run['head_repository']['full_name'] == repo
-          assert run['path'] == '.github/workflows/pr.yml' and run['name'] == 'LedgerGuard P08F verification'
+          assert run['path'] == '.github/workflows/pr.yml' and run['name'] in {'Bad Penny P08F verification', 'LedgerGuard P08F verification'}
           assert run['status'] == 'completed' and run['conclusion'] == 'success'
           jobs_response = gh(f'actions/runs/{run_id}/jobs?per_page=100')
           jobs = jobs_response['jobs']
