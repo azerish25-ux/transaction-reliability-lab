@@ -7,6 +7,7 @@ const assert = require('node:assert/strict');
 const root = path.resolve(__dirname, '../..');
 const frontendRequire = createRequire(path.join(root, 'frontend/package.json'));
 const {chromium} = frontendRequire('playwright');
+const {expect} = frontendRequire('@playwright/test');
 const values = Object.fromEntries(fs.readFileSync(path.join(root, '.ledgerguard/p09a/runtime.env'), 'utf8').trim().split('\n').map(line => [line.slice(0, line.indexOf('=')), line.slice(line.indexOf('=') + 1)]));
 const base = `http://127.0.0.1:${values.LEDGER_LAB_PORT}`;
 const output = path.join(root, '.evidence/p09a/browser');
@@ -19,60 +20,92 @@ fs.mkdirSync(output, {recursive: true});
   const consoleErrors = [];
   page.on('pageerror', error => consoleErrors.push(error.name));
   const tests = [];
+  let stage = 'UNAUTHENTICATED_LAB_DENIED';
+  let failure = null;
   try {
     await page.goto(base + '/lab/');
     await page.getByRole('heading', {name: 'Sign in to the lab'}).waitFor();
     const unauthenticated = await context.request.get(base + '/lab/api/runs');
     assert.equal(unauthenticated.status(), 401);
-    tests.push({id: 'UNAUTHENTICATED_LAB_DENIED', status: 'PASS'});
+    tests.push({id: stage, status: 'PASS'});
 
+    stage = 'ADMIN_COMMAND_REQUIRES_CSRF';
     await page.getByLabel('Password', {exact: true}).fill(values.LEDGER_DEMO_PASSWORD);
     await page.getByRole('button', {name: 'Sign in', exact: true}).click();
     await page.getByRole('heading', {name: 'Execution boundary'}).waitFor();
     const denied = await context.request.post(base + '/lab/api/runs', {
       data: {requestId: crypto.randomUUID(), scenario: 'F01', seed: 74021}, headers: {Origin: base}});
     assert.equal(denied.status(), 403); // No command CSRF token.
-    tests.push({id: 'ADMIN_COMMAND_REQUIRES_CSRF', status: 'PASS'});
+    tests.push({id: stage, status: 'PASS'});
 
+    stage = 'F01_OPEN_CONFIRMATION';
     await page.getByRole('button', {name: 'Run F01', exact: true}).click();
-    await page.getByRole('dialog').waitFor();
+    const dialog = page.getByRole('dialog', {name: 'Confirm isolated experiment', exact: true});
+    await expect(dialog).toBeVisible();
+    stage = 'F01_CONFIRMATION_FOCUS';
     assert.equal(await page.evaluate(() => document.getElementById('confirmation').contains(document.activeElement)), true);
-    await page.getByRole('button', {name: 'Confirm', exact: true}).click();
-    await page.waitForFunction(() => /^PASSED · /.test(document.getElementById('verdict').textContent), null, {timeout: 180000});
-    const actual = await page.locator('#evidence').textContent();
-    assert.equal(JSON.parse(actual).scenario, 'F01');
-    assert.equal(JSON.parse(actual).verdict, 'PASSED');
+    stage = 'F01_CONFIRM';
+    await dialog.getByRole('button', {name: 'Confirm', exact: true}).click();
+    stage = 'F01_AWAIT_REAL_VERDICT';
+    // Locator assertions use Playwright's utility world. Do not bypass or relax
+    // the application's CSP to run waitForFunction's main-world eval loop.
+    await expect(page.locator('#verdict')).toHaveText(/^PASSED · /, {timeout: 180000});
+    const actual = JSON.parse(await page.locator('#evidence').textContent());
+    assert.equal(actual.scenario, 'F01');
+    assert.equal(actual.verdict, 'PASSED');
     tests.push({id: 'ADMIN_BROWSER_EXECUTES_REAL_F01', status: 'PASS'});
+
+    stage = 'D02_OPEN_CONFIRMATION';
     await page.getByRole('button', {name: 'Run D02', exact: true}).click();
-    await page.getByRole('button', {name: 'Confirm', exact: true}).click();
-    await page.waitForFunction(() => /^DETECTED · /.test(document.getElementById('verdict').textContent), null, {timeout: 180000});
-    assert.equal(JSON.parse(await page.locator('#evidence').textContent()).scenario, 'D02');
+    await expect(dialog).toBeVisible();
+    stage = 'D02_CONFIRM';
+    await dialog.getByRole('button', {name: 'Confirm', exact: true}).click();
+    stage = 'D02_AWAIT_REAL_VERDICT';
+    await expect(page.locator('#verdict')).toHaveText(/^DETECTED · /, {timeout: 180000});
+    const detected = JSON.parse(await page.locator('#evidence').textContent());
+    assert.equal(detected.scenario, 'D02');
+    assert.equal(detected.verdict, 'DETECTED');
     tests.push({id: 'ADMIN_BROWSER_EXECUTES_REAL_D02', status: 'PASS'});
+
+    stage = 'RESPONSIVE_SCREENSHOTS';
     await page.screenshot({path: path.join(output, 'desktop.png'), fullPage: true});
     await page.setViewportSize({width: 390, height: 844});
     assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true);
     await page.screenshot({path: path.join(output, 'mobile.png'), fullPage: true});
     tests.push({id: 'MOBILE_NO_HORIZONTAL_OVERFLOW', status: 'PASS'});
 
-    // Keyboard focus must survive the live two-second status refresh.
+    stage = 'KEYBOARD_FOCUS_SURVIVES_POLL';
     await page.getByRole('button', {name: 'Refresh', exact: true}).focus();
     await page.waitForTimeout(2400);
-    assert.equal(await page.evaluate(() => document.activeElement.id), 'refresh');
-    tests.push({id: 'KEYBOARD_FOCUS_SURVIVES_POLL', status: 'PASS'});
+    await expect(page.locator('#refresh')).toBeFocused();
+    tests.push({id: stage, status: 'PASS'});
+
+    stage = 'AUTHENTICATED_CUSTOMER_LAB_DENIED';
     await page.getByRole('button', {name: 'Sign out', exact: true}).click();
     await page.getByRole('heading', {name: 'Sign in to the lab'}).waitFor();
     await page.getByLabel('Email', {exact: true}).fill('alice@example.test');
     await page.getByLabel('Password', {exact: true}).fill(values.LEDGER_DEMO_PASSWORD);
     await page.getByRole('button', {name: 'Sign in', exact: true}).click();
-    await page.waitForFunction(() => document.getElementById('notice').textContent.includes('ADMIN_REQUIRED'));
+    await expect(page.locator('#notice')).toContainText('ADMIN_REQUIRED');
     assert.equal((await context.request.get(base + '/lab/api/catalogue')).status(), 403);
-    tests.push({id: 'AUTHENTICATED_CUSTOMER_LAB_DENIED', status: 'PASS'});
+    tests.push({id: stage, status: 'PASS'});
+    stage = 'NO_BROWSER_PAGE_ERRORS';
     assert.deepEqual(consoleErrors, []);
-    tests.push({id: 'NO_BROWSER_PAGE_ERRORS', status: 'PASS'});
+    tests.push({id: stage, status: 'PASS'});
+  } catch (error) {
+    // Emit fixed categories and our own stage IDs, never arbitrary error text,
+    // locator call logs, entered passwords, cookies, traces or storage state.
+    const category = /strict mode violation/.test(error.message) ? 'STRICT_LOCATOR'
+      : /Content Security Policy|unsafe-eval|EvalError/.test(error.message) ? 'CSP_EVALUATION'
+      : /Timeout|timed out|timeout/i.test(error.message) ? 'TIMEOUT'
+      : error.name === 'AssertionError' ? 'ASSERTION_FAILURE' : 'BROWSER_ERROR';
+    failure = {stage, category};
+    console.error(JSON.stringify({browserFailure: failure}));
+    throw error;
   } finally {
-    // No storageState, raw traces, HAR or cookies are published.
     fs.writeFileSync(path.join(output, 'results.json'), JSON.stringify({sourceSha: values.LEDGER_LAB_SOURCE,
-      scope: 'REAL_BROWSER_LIVE_LAB', tests, expectedTests: 8, complete: tests.length === 8}, null, 2));
+      scope: 'REAL_BROWSER_LIVE_LAB', tests, expectedTests: 8, complete: tests.length === 8 && failure === null,
+      failure}, null, 2));
     await context.close(); await browser.close();
   }
-})().catch(error => { console.error(error.name + ': browser verification failed'); process.exitCode = 1; });
+})().catch(() => { console.error('Browser verification failed; inspect the sanitized stage diagnostic.'); process.exitCode = 1; });
