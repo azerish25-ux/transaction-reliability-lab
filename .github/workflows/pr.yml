@@ -32,58 +32,14 @@ jobs:
           cache-dependency-path: frontend/package-lock.json
       - name: Prepare deterministic tools
         run: chmod +x mvnw scripts/lab scripts/test-core scripts/test-client scripts/assert-p04-evidence scripts/assert-p05-evidence scripts/assert-p06-evidence scripts/assert-p07a-evidence scripts/assert-p07b-evidence scripts/assert-p08a-evidence scripts/assert-p08b-evidence scripts/assert-p08c-evidence scripts/assert-p08d-evidence scripts/assert-p08e-evidence scripts/assert-p08f-evidence scripts/smoke-auth scripts/smoke-adjustments scripts/smoke-schedules scripts/smoke-webhooks scripts/unit-probes scripts/validate-evidence scripts/scan-secrets infra/docker/postgres/00-roles.sh
-      - name: Install locked frontend dependencies
-        run: npm ci --prefix frontend --ignore-scripts --no-audit --no-fund
-      - name: Verify strict frontend source, client contracts and production build
-        run: npm --prefix frontend run verify
-      - name: Run Java and TypeScript component regressions
-        run: ./scripts/lab test unit
-      - name: Execute JUnit, PostgreSQL, multi-process HTTP, schedule and webhook verification
-        run: ./mvnw -B -ntp -f backend/pom.xml verify
-      - name: Validate Compose models
-        run: |
-          docker compose --env-file .env.example -f compose.yaml config --quiet
-          docker compose --env-file .env.example -f compose.yaml -f compose.p07.yaml config --quiet
-      - name: Scan tracked source for high-signal literal secrets
-        run: ./scripts/scan-secrets
-      - name: Install exact Chromium runtime
-        run: npm exec --prefix frontend -- playwright install --with-deps chromium
-      - name: Start, migrate, seed and reconcile the P08F topology
-        run: ./scripts/lab up
-      - name: Preserve P05 payment, RabbitMQ, duplicate-delivery and process-death proofs
-        run: python3 scripts/smoke-auth
-      - name: Preserve P06 cancellation, refund, reversal and adjustment proofs
-        run: python3 scripts/smoke-adjustments
-      - name: Activate additive webhook schema, two schedulers, two dispatchers and the signed receiver
-        run: |
-          docker compose --env-file .ledgerguard/runtime.env -f compose.yaml -f compose.p07.yaml up -d --build --wait api scheduler-a scheduler-b receiver webhook-dispatcher-a webhook-dispatcher-b
-      - name: Preserve P07A schedules, duplicate protection and accounting
-        run: python3 scripts/smoke-schedules
-      - name: Exercise P07B encrypted secrets, signatures, retries, restart and authorization
-        run: python3 scripts/smoke-webhooks
-      - name: Apply isolated browser fixture IP budget (normal identity limits retained)
-        run: |
-          docker compose --env-file .ledgerguard/runtime.env -f compose.yaml -f compose.p07.yaml -f compose.p08c-test.yaml up -d --no-deps --wait api
-          docker compose --env-file .ledgerguard/runtime.env -f compose.yaml restart web
-      - name: Exercise P08A-P08F customer and administrator journeys, uncertainty recovery and accessibility
-        run: npm --prefix frontend run test:e2e
-      - name: Verify live status and repeatable reconciliation
-        run: |
-          ./scripts/lab status
-          ./scripts/lab reconcile
-      - name: Require P01-P08E regression and every executed P08F requirement
-        run: python3 scripts/assert-p08f-evidence
-      - name: Capture service logs
-        if: always()
-        run: |
-          ./scripts/lab logs
-          mkdir -p .evidence/compose
-          docker compose --env-file .ledgerguard/runtime.env -f compose.yaml -f compose.p07.yaml logs --no-color > .evidence/compose/p08f-services.log 2>&1 || true
-      - name: Stop the scoped environment
-        if: always()
-        run: |
-          docker compose --env-file .ledgerguard/runtime.env -f compose.yaml -f compose.p07.yaml down --remove-orphans || true
-          ./scripts/lab down || true
+      - name: Execute the shared CLI and CI P01-P08F campaign
+        run: ./scripts/lab test pr
+      - name: Collect diagnostic logs after an interrupted job
+        if: cancelled()
+        run: python3 scripts/verify-product collect
+      - name: Stop scoped services after an interrupted job
+        if: cancelled()
+        run: python3 scripts/verify-product stop
       - name: Publish verification evidence
         if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
@@ -118,3 +74,54 @@ jobs:
         run: |
           echo "verify=$VERIFY_RESULT"
           test "$VERIFY_RESULT" = success
+
+  p09a:
+    name: Isolated P09A lab, live faults, defect detection and restoration
+    needs: [verify]
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - name: Check out the same immutable candidate
+        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+      - name: Configure Java 21
+        uses: actions/setup-java@b6effb05e454b25005698d916606bdc6ffcbf961
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: maven
+          cache-dependency-path: backend/pom.xml
+      - name: Configure Node 22
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - name: Execute the lab component after the product campaign passed
+        run: python3 lab-support/p09a/cli.py verify-lab
+      - name: Ensure scoped lab teardown, including cancelled jobs
+        if: always()
+        run: python3 lab-support/p09a/cli.py down
+      - name: Publish only curated P09A evidence, never runtime secrets or raw traces
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: ledgerguard-p09a-evidence-${{ github.sha }}
+          path: .evidence/p09a/
+          include-hidden-files: true
+          if-no-files-found: warn
+          retention-days: 14
+
+  p09a-gate:
+    name: Required P09A gate
+    if: always()
+    needs: [verify, p09a]
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Require both normal product and isolated laboratory verification
+        env:
+          PRODUCT_RESULT: ${{ needs.verify.result }}
+          LAB_RESULT: ${{ needs.p09a.result }}
+        run: |
+          test "$PRODUCT_RESULT" = success
+          test "$LAB_RESULT" = success

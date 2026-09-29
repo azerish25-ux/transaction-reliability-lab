@@ -40,11 +40,19 @@ Implemented commands:
   ./scripts/lab test pr
   ./scripts/lab reconcile
   ./scripts/lab evidence
+  ./scripts/lab up --lab
+  ./scripts/lab down --lab
+  ./scripts/lab down --lab --reset-data
+  ./scripts/lab status --lab
+  ./scripts/lab resilience F01
+  ./scripts/lab defect D02
+  ./scripts/lab defects --all
+  ./scripts/lab test p09a-unit
+  ./scripts/lab test p09a
 
-P01–P07B provide verified authentication, accounts, transfers, payments,
-adjustments, schedules and signed durable webhooks. P08A adds the real
-same-origin React authentication, balance, history and transaction-detail UI.
-Later P08 interfaces and the full release laboratory remain blockers.
+P01–P08F have retained exact-source milestone evidence. P09A adds an opt-in,
+disposable F01/D02 laboratory. Implementation is not a verified release.
+The complete P09 catalogue and P10–P11 remain open; --all fails when incomplete.
 """
 
 def run(command: list[str], *, check: bool = True, capture: bool = False, input_text: str | None = None) -> subprocess.CompletedProcess[str]:
@@ -147,11 +155,11 @@ def command_up() -> int:
     except (subprocess.CalledProcessError,RuntimeError) as failure:
         capture_logs(); print(f"STARTUP FAILED: {failure}",file=sys.stderr); return 1
     base=api_base_url(); ui=ui_base_url()
-    print("LedgerGuard P08A is ready (synthetic money only; no real financial services).")
+    print("LedgerGuard base topology is ready (synthetic money only; no real financial services).")
     print(f"Product UI: {ui}")
     print(f"API health: {base}/actuator/health/readiness")
     print(f"System boundary: {base}/api/v1/system")
-    print(f"P08A scoped OpenAPI: {base}/api/v1/openapi/p08a-ui.json")
+    print(f"P08F scoped OpenAPI: {base}/api/v1/openapi/p08f-ui.json")
     print(f"Database runtime role: {system.get('databaseRole')}")
     print("Sandbox identities: alice@example.test, bob@example.test, merchant@example.test, admin@example.test.")
     print("Their generated password is LEDGER_DEMO_PASSWORD in private .ledgerguard/runtime.env; it is not printed in CI logs.")
@@ -184,60 +192,26 @@ def command_test(target: str) -> int:
             if result.returncode: return result.returncode
         return 0
     if target=="ui": return frontend_verify()
-    if target=="e2e":
-        if not docker_ready(): print("BLOCKED: browser verification requires Docker.",file=sys.stderr); return 2
-        if frontend_verify(): return 1
-        if playwright_install(): return 1
-        started=command_up()
-        if started: return started
-        outcome=0
-        try: outcome=run(["npm","--prefix","frontend","run","test:e2e"],check=False).returncode
-        finally:
-            stopped=command_down()
-            if not outcome and stopped: outcome=stopped
-        return outcome
+    if target in {"pr", "e2e"}:
+        if not docker_ready(): print("BLOCKED: product verification requires Docker.",file=sys.stderr); return 2
+        return run([sys.executable, "scripts/verify-product", target], check=False).returncode
+    if target == "p09a-unit":
+        return run([sys.executable, "-m", "unittest", "discover", "-s", "tests", "-p", "test_p09a*.py", "-v"], check=False).returncode
+    if target == "p09a":
+        return run([sys.executable, "lab-support/p09a/cli.py", "verify"], check=False).returncode
     if target in {"database","auth","transfer","payment","adjustment"}:
         if not docker_ready(): print("BLOCKED: a working Docker daemon is required by Testcontainers.",file=sys.stderr); return 2
         return maven_verify({"database":None,"auth":"AuthenticationAccountsIT","transfer":"TransferReliabilityIT","payment":"TransferReliabilityIT","adjustment":"PaymentAdjustmentReliabilityIT"}[target])
-    if target=="pr":
-        if not docker_ready(): print("BLOCKED: PR verification requires Docker.",file=sys.stderr); return 2
-        preflight=[
-            ["npm","ci","--prefix","frontend"],
-            ["npm","--prefix","frontend","run","verify"],
-            ["./scripts/lab","test","unit"],
-            ["./mvnw","-B","-ntp","-f","backend/pom.xml","verify"],
-            ["./scripts/scan-secrets"],
-            ["docker","compose","--env-file",".env.example","-f","compose.yaml","config","--quiet"],
-            ["docker","compose","--env-file",".env.example","-f","compose.yaml","-f","compose.p07.yaml","config","--quiet"]
-        ]
-        for command in preflight:
-            result=run(command,check=False)
-            if result.returncode: return result.returncode
-        if playwright_install(): return 1
-        started=command_up()
-        if started: return started
-        outcome=0
-        try:
-            for command in [
-                ["npm","--prefix","frontend","run","test:e2e"],
-                ["python3","scripts/smoke-auth"],
-                ["python3","scripts/smoke-adjustments"],
-                ["python3","scripts/assert-p06-evidence"]
-            ]:
-                result=run(command,check=False)
-                if result.returncode: outcome=result.returncode; break
-            if not outcome: outcome=command_status()
-            if not outcome:
-                try: reconcile()
-                except subprocess.CalledProcessError as failure: outcome=failure.returncode or 1
-        finally:
-            stopped=command_down()
-            if not outcome and stopped: outcome=stopped
-        return outcome
     print(f"BLOCKED / NOT_STARTED: test lane {target!r} is not implemented.",file=sys.stderr); return 2
 def main() -> int:
     args=sys.argv[1:]
     if not args or args[0] in {"help","--help","-h"}: print(HELP); return 0
+    if args in (["up", "--lab"], ["down", "--lab"], ["status", "--lab"]):
+        return run([sys.executable, "lab-support/p09a/cli.py", args[0]], check=False).returncode
+    if args == ["down", "--lab", "--reset-data"]:
+        return run([sys.executable, "lab-support/p09a/cli.py", "down", "--reset-data"], check=False).returncode
+    if args[0] in {"defect", "defects", "resilience"}:
+        return run([sys.executable, "lab-support/p09a/cli.py", *args], check=False).returncode
     if args==["doctor"]: return command_doctor()
     if args==["up"]: return command_up()
     if args==["down"]: return command_down()
@@ -248,6 +222,6 @@ def main() -> int:
         if not docker_ready(): print("BLOCKED: reconciliation requires the running Compose database.",file=sys.stderr); return 2
         reconcile(); return 0
     if args==["evidence"]: return run(["./scripts/validate-evidence"],check=False).returncode
-    if args[0] in {"defect","defects","resilience","performance","demo"}: print("BLOCKED / NOT_STARTED: this belongs to a later implementation phase.",file=sys.stderr); return 2
+    if args[0] in {"performance","demo"}: print("BLOCKED / NOT_STARTED: this belongs to a later implementation phase.",file=sys.stderr); return 2
     print("Unknown command.\n"+HELP,file=sys.stderr); return 2
 if __name__=="__main__": raise SystemExit(main())

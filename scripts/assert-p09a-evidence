@@ -1,0 +1,86 @@
+#!/usr/bin/env python3
+"""Fail-closed P09A evidence validation; no empty, dirty, setup-error or stale pass."""
+from pathlib import Path
+import json
+import subprocess
+import sys
+import xml.etree.ElementTree as ET
+ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT / 'lab-support/p09a'))
+from core import LabError, digest, validate_result, valid_uuid
+BASE = ROOT / '.evidence/p09a'
+
+
+def load(path):
+    return json.loads(path.read_text())
+
+
+def verify():
+    source = subprocess.check_output(['git', 'rev-parse', 'HEAD'], cwd=ROOT, text=True).strip()
+    if subprocess.check_output(['git', 'status', '--porcelain', '--untracked-files=all'], cwd=ROOT, text=True).strip():
+        raise LabError('EVIDENCE_DIRTY_CHECKOUT')
+    summary = load(BASE / 'summary.json')
+    if (summary['sourceSha'] != source or summary['completeP09'] is not False
+            or summary['implementedFaultsVerified'] != 1 or summary['validDefectsDetected'] != 1
+            or len(summary['runs']) != 2 or {r['scenario'] for r in summary['runs']} != {'F01', 'D02'}):
+        raise LabError('EVIDENCE_SUMMARY_INVALID')
+    for run in summary['runs']:
+        directory = BASE / valid_uuid(run['id'])
+        manifest = load(directory / 'manifest.json')
+        if manifest['sourceSha'] != source or manifest['runId'] != run['id']:
+            raise LabError('EVIDENCE_MANIFEST_IDENTITY_MISMATCH')
+        if set(manifest['files']) != {'verdict.json', 'results.xml'}:
+            raise LabError('EVIDENCE_MANIFEST_FILES_INVALID')
+        for name, expected in manifest['files'].items():
+            if digest((directory / name).read_bytes()) != expected:
+                raise LabError('EVIDENCE_ARTIFACT_HASH_MISMATCH')
+        value = load(directory / 'verdict.json'); validate_result(value, source)
+        if value['runId'] != run['id'] or value['scenario'] != run['scenario'] or value['verdict'] != run['verdict']:
+            raise LabError('EVIDENCE_RUN_IDENTITY_MISMATCH')
+        xml = ET.parse(directory / 'results.xml').getroot()
+        expected_failure = 1 if run['scenario'] == 'D02' else 0
+        if (len(xml.findall('testcase')) != len(value['phases']) or int(xml.get('failures', '-1')) != expected_failure
+                or int(xml.get('errors', '-1')) != 0 or int(xml.get('skipped', '-1')) != 0):
+            raise LabError('EVIDENCE_JUNIT_DISCOVERY_INVALID')
+    browser = load(BASE / 'browser/results.json')
+    expected_browser = {'UNAUTHENTICATED_LAB_DENIED', 'ADMIN_COMMAND_REQUIRES_CSRF',
+                        'ADMIN_BROWSER_EXECUTES_REAL_F01', 'ADMIN_BROWSER_EXECUTES_REAL_D02',
+                        'MOBILE_NO_HORIZONTAL_OVERFLOW', 'KEYBOARD_FOCUS_SURVIVES_POLL',
+                        'AUTHENTICATED_CUSTOMER_LAB_DENIED', 'NO_BROWSER_PAGE_ERRORS'}
+    if (browser['sourceSha'] != source or browser['scope'] != 'REAL_BROWSER_LIVE_LAB'
+            or browser.get('complete') is not True or len(browser['tests']) != 8
+            or {t['id'] for t in browser['tests']} != expected_browser
+            or any(t['status'] != 'PASS' for t in browser['tests'])):
+        raise LabError('EVIDENCE_BROWSER_INCOMPLETE')
+    for name in ('desktop.png', 'mobile.png'):
+        if not (BASE / 'browser' / name).read_bytes().startswith(b'\x89PNG\r\n\x1a\n'):
+            raise LabError('EVIDENCE_SCREENSHOT_INVALID')
+    lifecycle = load(BASE / 'lifecycle.json')
+    if (lifecycle['sourceSha'] != source or len(lifecycle['tests']) != 2
+            or {t['id'] for t in lifecycle['tests']} != {'CONTROLLER_SIGKILL_GUARDIAN_RECOVERY', 'REAL_MUTANT_AUTOMATIC_EXPIRY'}
+            or any(t['status'] != 'PASS' for t in lifecycle['tests'])):
+        raise LabError('EVIDENCE_LIFECYCLE_INCOMPLETE')
+    for test in lifecycle['tests']:
+        run = load(BASE / valid_uuid(test['runId']) / 'verdict.json')
+        expected = 'CANCELLED' if test['id'] == 'CONTROLLER_SIGKILL_GUARDIAN_RECOVERY' else 'SURVIVED'
+        if run['sourceSha'] != source or run['verdict'] != expected or run['cleanup'].get('restored') is not True:
+            raise LabError('EVIDENCE_LIFECYCLE_VERDICT_INVALID')
+    packaging = load(BASE / 'packaging.json')
+    if (packaging['scope'] != 'P09A_SPECIFIC_EXCLUSION_ONLY' or packaging['excluded'] is not True
+            or packaging['globalG12Complete'] is not False or packaging['jarEntriesInspected'] < 1
+            or packaging['frontendFilesInspected'] < 1
+            or packaging['normalJarSha256'] != digest((ROOT / 'backend/target/ledgerguard.jar').read_bytes())):
+        raise LabError('EVIDENCE_NORMAL_PACKAGING_INVALID')
+    images = load(BASE / 'images.json')
+    if (images['sourceSha'] != source or images['dirtySource'] is not False
+            or set(images['imageIds']) != {'postgres', 'toxiproxy', 'api', 'control-api', 'controller', 'guardian'}
+            or images['composeSha256'] != digest((ROOT / 'compose.lab.yaml').read_bytes())):
+        raise LabError('EVIDENCE_IMAGE_PROVENANCE_INVALID')
+    print('P09A evidence validated: F01=1/8, D02=1/24; full P09 remains INCOMPLETE.')
+
+
+if __name__ == '__main__':
+    try: verify()
+    except Exception as error:
+        print('P09A EVIDENCE FAILED: ' + (error.code if isinstance(error, LabError) else type(error).__name__), file=sys.stderr)
+        raise SystemExit(1)

@@ -1,0 +1,124 @@
+#!/usr/bin/env python3
+"""One P01–P08F campaign for both the public CLI and GitHub Actions.
+
+Only collection failures are diagnostic. Startup, assertions and teardown fail
+closed. This module deliberately contains no P09 lab controls.
+"""
+from __future__ import annotations
+import argparse
+from pathlib import Path
+import subprocess
+import sys
+
+ROOT = Path(__file__).resolve().parent.parent
+ENV = ROOT / '.ledgerguard/runtime.env'
+COMPOSE = ['docker', 'compose', '--env-file', '.ledgerguard/runtime.env', '-f', 'compose.yaml']
+P07 = [*COMPOSE, '-f', 'compose.p07.yaml']
+BROWSER = [*P07, '-f', 'compose.p08c-test.yaml']
+
+
+def preparation(lane: str) -> list[list[str]]:
+    commands = [
+        ['npm', 'ci', '--prefix', 'frontend', '--ignore-scripts', '--no-audit', '--no-fund'],
+        ['npm', '--prefix', 'frontend', 'run', 'verify'],
+    ]
+    if lane == 'pr':
+        commands += [
+            ['./scripts/lab', 'test', 'unit'],
+            ['./mvnw', '-B', '-ntp', '-f', 'backend/pom.xml', 'verify'],
+            ['./scripts/scan-secrets'],
+        ]
+    commands += [
+        ['docker', 'compose', '--env-file', '.env.example', '-f', 'compose.yaml', 'config', '--quiet'],
+        ['docker', 'compose', '--env-file', '.env.example', '-f', 'compose.yaml', '-f', 'compose.p07.yaml', 'config', '--quiet'],
+        ['npm', 'exec', '--prefix', 'frontend', '--', 'playwright', 'install', '--with-deps', 'chromium'],
+    ]
+    return commands
+
+
+def campaign(lane: str) -> list[list[str]]:
+    commands = [
+        ['./scripts/lab', 'up'],
+        ['python3', 'scripts/smoke-auth'],
+        ['python3', 'scripts/smoke-adjustments'],
+        [*P07, 'up', '-d', '--build', '--wait', 'api', 'scheduler-a', 'scheduler-b',
+         'receiver', 'webhook-dispatcher-a', 'webhook-dispatcher-b'],
+        ['python3', 'scripts/smoke-schedules'],
+        ['python3', 'scripts/smoke-webhooks'],
+        [*BROWSER, 'up', '-d', '--no-deps', '--wait', 'api'],
+        [*COMPOSE, 'restart', 'web'],
+        ['npm', '--prefix', 'frontend', 'run', 'test:e2e'],
+        ['./scripts/lab', 'status'],
+        ['./scripts/lab', 'reconcile'],
+    ]
+    if lane == 'pr':
+        commands.append(['python3', 'scripts/assert-p08f-evidence'])
+    return commands
+
+
+def execute(command: list[str], timeout: int = 5400) -> int:
+    print('+ ' + ' '.join(command), flush=True)
+    try:
+        return subprocess.run(command, cwd=ROOT, check=False, timeout=timeout).returncode
+    except subprocess.TimeoutExpired:
+        print('TIMEOUT: required campaign command did not complete', file=sys.stderr)
+        return 124
+    except OSError as error:
+        print(f'BLOCKED: {type(error).__name__}', file=sys.stderr)
+        return 2
+
+
+def collect() -> int:
+    if not ENV.exists():
+        return 0
+    target = ROOT / '.evidence/compose'
+    target.mkdir(parents=True, exist_ok=True)
+    try:
+        with (target / 'p08f-services.log').open('w', encoding='utf-8') as out:
+            return subprocess.run([*P07, 'logs', '--no-color'], cwd=ROOT, stdout=out,
+                                  stderr=subprocess.STDOUT, timeout=60, check=False).returncode
+    except (OSError, subprocess.TimeoutExpired):
+        return 1
+
+
+def stop() -> int:
+    if not ENV.exists():
+        return 0
+    # One merged topology includes every P07 and browser-overlay service.
+    return execute([*BROWSER, 'down', '--remove-orphans'], timeout=180)
+
+
+def verify(lane: str) -> int:
+    for command in preparation(lane):
+        result = execute(command)
+        if result:
+            return result
+    result = 1
+    try:
+        for command in campaign(lane):
+            result = execute(command)
+            if result:
+                break
+    finally:
+        if collect():
+            print('WARNING: diagnostic service-log collection was incomplete', file=sys.stderr)
+        cleanup = stop()
+        if cleanup:
+            print('CLEANUP_FAILED: scoped product topology did not stop', file=sys.stderr)
+            result = cleanup
+    return result
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument('action', choices=['pr', 'e2e', 'collect', 'stop'])
+    action = parser.parse_args().action
+    if action == 'collect':
+        return collect()
+    if action == 'stop':
+        return stop()
+    return verify(action)
+
+
+if __name__ == '__main__':
+    raise SystemExit(main())

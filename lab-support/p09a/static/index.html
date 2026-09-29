@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="en">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>LedgerGuard — Reliability laboratory</title><link rel="stylesheet" href="/lab/style.css">
+<script src="/lab/app.js" defer></script></head>
+<body>
+<a class="skip" href="#main">Skip to laboratory</a>
+<header><div><span class="eyebrow">LEDGERGUARD / P09A</span><h1>Reliability laboratory</h1></div>
+<span class="badge">DISPOSABLE SANDBOX</span></header>
+<main id="main">
+<p class="boundary">Synthetic money only. These experiments deliberately disrupt an isolated database. The normal application is not a target. Restoration removes faults; it does not reverse completed synthetic transactions.</p>
+<p id="notice" role="status" aria-live="polite"></p>
+<section id="login-panel" class="panel narrow" aria-labelledby="login-title">
+<span class="eyebrow">ADMINISTRATOR ACCESS</span><h2 id="login-title">Sign in to the lab</h2>
+<p>Use the separately generated lab credentials, not your normal sandbox password.</p>
+<form id="login-form"><label for="email">Email</label><input id="email" type="email" autocomplete="username" value="admin@example.test" required>
+<label for="password">Password</label><input id="password" type="password" autocomplete="current-password" required>
+<button type="submit">Sign in</button></form></section>
+<div id="workspace" hidden>
+<section class="panel status-panel" aria-labelledby="runtime-title"><div><span class="eyebrow">ISOLATED RUNTIME</span><h2 id="runtime-title">Execution boundary</h2></div>
+<dl><div><dt>Instance</dt><dd id="instance">—</dd></div><div><dt>Source commit</dt><dd id="source">—</dd></div>
+<div><dt>Guardian / worker</dt><dd id="health">Checking</dd></div><div><dt>Active fault / expiry</dt><dd id="fault">None</dd></div></dl>
+<button id="logout" class="secondary" type="button">Sign out</button></section>
+<section aria-labelledby="scenario-title"><div class="section-heading"><h2 id="scenario-title">Experiments</h2><span>1 active run · Faults expire within 20 seconds</span></div>
+<div class="cards">
+<article class="panel"><span class="eyebrow">F01 / INFRASTRUCTURE FAULT</span><h3>Database interruption</h3>
+<p>The correct application faces real PostgreSQL latency and a disconnected connection. Retry must resolve to the original transfer.</p>
+<dl><div><dt>Mechanism</dt><dd>JDBC → Toxiproxy → PostgreSQL</dd></div><div><dt>Target</dt><dd>Disposable PostgreSQL only</dd></div></dl>
+<button type="button" class="run" data-scenario="F01">Run F01</button></article>
+<article class="panel"><span class="eyebrow">D02 / SEEDED IMPLEMENTATION DEFECT</span><h3>Changed-recipient replay</h3>
+<p>A scoped SQL variant omits the idempotency fingerprint rejection. The unchanged test must detect the wrong accepted replay.</p>
+<dl><div><dt>Sequence</dt><dd>Baseline → mutant → restored baseline</dd></div><div><dt>Detection</dt><dd>Expected HTTP 409, not a setup failure</dd></div></dl>
+<button type="button" class="run" data-scenario="D02">Run D02</button></article>
+</div><p class="muted">F02–F08 and the other 23 seeded defects are not implemented in P09A. Two working entries do not complete the 32-scenario mandate.</p></section>
+<section class="panel" aria-labelledby="run-title"><div class="section-heading"><h2 id="run-title">Run history and evidence</h2>
+<button id="refresh" type="button" class="secondary">Refresh</button></div>
+<p id="empty">No experiment has been recorded for this instance.</p><div id="runs" class="run-list"></div>
+<section id="detail" hidden aria-labelledby="detail-title"><div class="section-heading"><h3 id="detail-title" tabindex="-1">Run detail</h3>
+<button id="reset" type="button" class="danger">Cancel and restore</button></div>
+<p id="verdict"></p><a id="junit" hidden>Inspect actual JUnit output</a><pre id="evidence" tabindex="0" aria-label="Machine-readable run evidence"></pre></section>
+</section>
+</div>
+<dialog id="confirmation" aria-labelledby="confirm-title" aria-describedby="confirm-description">
+<form method="dialog"><h2 id="confirm-title">Confirm isolated experiment</h2>
+<p id="confirm-description"></p><div class="actions"><button value="cancel" class="secondary">Cancel</button><button value="confirm">Confirm</button></div></form></dialog>
+</main><footer>Historical results are not live health. Only clean-source, validated evidence counts toward completion.</footer>
+</body></html>

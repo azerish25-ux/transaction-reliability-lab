@@ -1,0 +1,173 @@
+# Independent topology, not an overlay: no normal application volume or port is reused.
+name: ledgerguard-p09a-${LEDGER_LAB_INSTANCE:?explicit lab instance required}
+
+x-sandbox: &sandbox
+  SPRING_PROFILES_ACTIVE: sandbox
+  LEDGER_SANDBOX_HTTP: "true"
+  LEDGER_AUTH_KEY: ${LEDGER_AUTH_KEY:?required}
+  LEDGER_RUNTIME_USER: ledger_runtime
+  LEDGER_RUNTIME_PASSWORD: ${LEDGER_RUNTIME_PASSWORD:?required}
+  LEDGER_MESSAGING_ENABLED: "false"
+  LEDGER_PAYMENT_WORKER_ENABLED: "false"
+  LEDGER_OUTBOX_PUBLISHER_ENABLED: "false"
+  LEDGER_DATABASE_POOL_SIZE: "4"
+
+x-lab: &lab
+  LEDGER_LAB_ENABLED: "true"
+  LEDGER_LAB_INSTANCE: ${LEDGER_LAB_INSTANCE:?required}
+  LEDGER_LAB_SOURCE: ${LEDGER_LAB_SOURCE:?required}
+  LEDGER_LAB_SOURCE_DIRTY: ${LEDGER_LAB_SOURCE_DIRTY:?required}
+  LEDGER_LAB_ORIGIN: http://127.0.0.1:${LEDGER_LAB_PORT:-8090}
+
+x-security: &security
+  read_only: true
+  tmpfs: [/tmp]
+  cap_drop: [ALL]
+  security_opt: ["no-new-privileges:true"]
+  networks: [lab]
+  restart: unless-stopped
+  stop_grace_period: 25s
+  pids_limit: 256
+
+services:
+  postgres:
+    image: postgres:17.11-bookworm
+    environment:
+      POSTGRES_DB: ${LEDGER_LAB_DATABASE:?required}
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${POSTGRES_SUPERUSER_PASSWORD:?required}
+      LEDGER_OWNER_PASSWORD: ${LEDGER_OWNER_PASSWORD:?required}
+      LEDGER_RUNTIME_PASSWORD: ${LEDGER_RUNTIME_PASSWORD:?required}
+    volumes:
+      - database:/var/lib/postgresql/data
+      - ./infra/docker/postgres/00-roles.sh:/docker-entrypoint-initdb.d/00-roles.sh:ro
+    networks: [lab]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d $${POSTGRES_DB}"]
+      interval: 2s
+      timeout: 3s
+      retries: 40
+    restart: unless-stopped
+    security_opt: ["no-new-privileges:true"]
+
+  toxiproxy:
+    <<: *security
+    image: ghcr.io/shopify/toxiproxy:2.12.0
+    user: "10001:10001"
+    command: ["-host", "0.0.0.0", "-config", "/config/proxies.json"]
+    volumes:
+      - ./lab-support/p09a/toxiproxy.json:/config/proxies.json:ro
+    healthcheck:
+      test: ["CMD", "/toxiproxy-cli", "list"]
+      interval: 2s
+      timeout: 3s
+      retries: 30
+
+  api:
+    <<: *security
+    build:
+      context: .
+      dockerfile: infra/docker/Dockerfile.backend
+    environment:
+      <<: *sandbox
+      LEDGER_DATABASE_URL: jdbc:postgresql://toxiproxy:15432/${LEDGER_LAB_DATABASE:?required}?connectTimeout=3&socketTimeout=8
+      LEDGER_PROCESS_NAME: LedgerGuard-P09A-Target
+      LEDGER_MIGRATION_URL: jdbc:postgresql://postgres:5432/${LEDGER_LAB_DATABASE:?required}
+      LEDGER_OWNER_USER: ledger_owner
+      LEDGER_OWNER_PASSWORD: ${LEDGER_OWNER_PASSWORD:?required}
+    depends_on:
+      postgres: {condition: service_healthy}
+      toxiproxy: {condition: service_healthy}
+    healthcheck:
+      test: ["CMD", "curl", "--fail", "--silent", "http://127.0.0.1:8080/actuator/health/readiness"]
+      interval: 3s
+      timeout: 3s
+      retries: 45
+      start_period: 15s
+
+  control-api:
+    <<: *security
+    build:
+      context: .
+      dockerfile: infra/docker/Dockerfile.backend
+    environment:
+      <<: *sandbox
+      LEDGER_DATABASE_URL: jdbc:postgresql://postgres:5432/${LEDGER_LAB_DATABASE:?required}?connectTimeout=3&socketTimeout=8
+      LEDGER_PROCESS_NAME: LedgerGuard-P09A-Control
+      LEDGER_FLYWAY_ENABLED: "false"
+    depends_on:
+      api: {condition: service_healthy}
+    healthcheck:
+      test: ["CMD", "curl", "--fail", "--silent", "http://127.0.0.1:8080/actuator/health/readiness"]
+      interval: 3s
+      timeout: 3s
+      retries: 45
+
+  seed:
+    image: postgres:17.11-bookworm
+    profiles: [tools]
+    environment:
+      PGHOST: postgres
+      PGDATABASE: ${LEDGER_LAB_DATABASE:?required}
+      PGUSER: ledger_owner
+      PGPASSWORD: ${LEDGER_OWNER_PASSWORD:?required}
+      LEDGER_DEMO_PASSWORD: ${LEDGER_DEMO_PASSWORD:?required}
+      LEDGER_LAB_INSTANCE: ${LEDGER_LAB_INSTANCE:?required}
+    entrypoint: [/bin/sh, -ec]
+    command:
+      - "psql -X -v ON_ERROR_STOP=1 -f /seed/seed.sql && psql -X -v ON_ERROR_STOP=1 -f /seed/seed-auth.sql && psql -X -v ON_ERROR_STOP=1 -f /lab/bootstrap.sql"
+    volumes:
+      - ./infra/docker/postgres:/seed:ro
+      - ./lab-support/p09a/bootstrap.sql:/lab/bootstrap.sql:ro
+    networks: [lab]
+    depends_on:
+      control-api: {condition: service_healthy}
+    security_opt: ["no-new-privileges:true"]
+
+  controller:
+    <<: *security
+    build:
+      context: .
+      dockerfile: lab-support/p09a/Dockerfile
+    environment:
+      <<: *lab
+      LEDGER_RUNTIME_PASSWORD: ${LEDGER_RUNTIME_PASSWORD:?required}
+      LEDGER_DEMO_PASSWORD: ${LEDGER_DEMO_PASSWORD:?required}
+      LEDGER_LAB_CSRF_KEY: ${LEDGER_LAB_CSRF_KEY:?required}
+    volumes: [state:/state]
+    ports:
+      - "127.0.0.1:${LEDGER_LAB_PORT:-8090}:8090"
+    depends_on:
+      control-api: {condition: service_healthy}
+    healthcheck:
+      test: ["CMD", "python", "health.py", "controller"]
+      interval: 2s
+      timeout: 4s
+      retries: 40
+      start_period: 10s
+
+  guardian:
+    <<: *security
+    build:
+      context: .
+      dockerfile: lab-support/p09a/Dockerfile
+    command: [python, guardian.py]
+    environment:
+      <<: *lab
+      LEDGER_OWNER_PASSWORD: ${LEDGER_OWNER_PASSWORD:?required}
+    volumes: [state:/state]
+    depends_on:
+      control-api: {condition: service_healthy}
+    healthcheck:
+      test: ["CMD", "python", "health.py", "guardian"]
+      interval: 2s
+      timeout: 4s
+      retries: 40
+      start_period: 10s
+
+volumes:
+  database: {}
+  state: {}
+networks:
+  lab:
+    internal: true
