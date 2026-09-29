@@ -225,4 +225,17 @@ class AdministratorInvestigationIT {
             assertEquals("42501",assertThrows(SQLException.class,()->s.executeUpdate("DELETE FROM ledger.reconciliation_runs")).getSQLState());
         }
     }
+    @Test void P08FIT13_eventVersionsRemainNumericallyOrderedBeyondNine() throws Exception {
+        Fixture f=fixture(true);Actor admin=actor(true);
+        for(int i=0;i<12;i++) status(201,f.recipient.browser.call("POST","/payments/"+f.payment+"/refunds",
+            Map.of("amountMinor","1","reason","Numeric version ordering regression")));
+        Response response=admin.browser.call("GET","/admin/transactions/"+f.payment,null);status(200,response);
+        JsonNode detail=body(response);assertEquals("14",detail.at("/transaction/version").asText());
+        JsonNode events=detail.at("/events/items");assertEquals(14,events.size());
+        for(int i=0;i<events.size();i++) assertEquals(Integer.toString(14-i),events.get(i).path("aggregateVersion").asText());
+        JsonNode audit=body(admin.browser.call("GET","/admin/audit?aggregateId="+f.payment,null)).at("/results/items");
+        assertEquals(14,audit.size());
+        for(int i=0;i<audit.size();i++) assertEquals(Integer.toString(14-i),audit.get(i).path("sequence").asText());
+    }
+
 }

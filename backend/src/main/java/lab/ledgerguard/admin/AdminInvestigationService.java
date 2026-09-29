@@ -87,7 +87,7 @@ public final class AdminInvestigationService {
             UUID aggregate = operation.parentId() == null ? id : operation.parentId();
             var events = jdbc.query("""
                 SELECT id,event_type,aggregate_version::text,correlation_id,occurred_at,published_at,failed_at,attempts
-                FROM ledger.outbox_events WHERE aggregate_id=? ORDER BY aggregate_version DESC,occurred_at DESC,id DESC LIMIT 26
+                FROM ledger.outbox_events WHERE aggregate_id=? ORDER BY ledger.outbox_events.aggregate_version DESC,occurred_at DESC,id DESC LIMIT 26
                 """, (rs,n) -> new EventLink(uuid(rs,"id"),rs.getString("event_type"),rs.getString("aggregate_version"),
                     uuid(rs,"correlation_id"),instant(rs,"occurred_at"),instant(rs,"published_at"),instant(rs,"failed_at"),rs.getInt("attempts")), aggregate);
             var failed = jdbc.query("""
@@ -118,7 +118,7 @@ public final class AdminInvestigationService {
             if (filters.values().containsKey("to")) where.append(" AND occurred_at<:to");
             // Explicit columns: never serialize canonical_body, credentials, free-form metadata or security-event payloads.
             var rows = named.query("SELECT aggregate_id,sequence::text,actor_id,action,operation_id,correlation_id,aggregate_version::text,occurred_at "
-                + "FROM ledger.audit_records" + where + " ORDER BY occurred_at DESC,aggregate_id DESC,sequence DESC LIMIT :limit OFFSET :offset",
+                + "FROM ledger.audit_records" + where + " ORDER BY occurred_at DESC,aggregate_id DESC,ledger.audit_records.sequence DESC LIMIT :limit OFFSET :offset",
                 filters.parameters(), (rs,n) -> new AuditRecord(uuid(rs,"aggregate_id"),rs.getString("sequence"),uuid(rs,"actor_id"),
                     rs.getString("action"),uuid(rs,"operation_id"),uuid(rs,"correlation_id"),rs.getString("aggregate_version"),instant(rs,"occurred_at")));
             return new AuditPage(snapshot, Page.from(rows,filters.limit(),filters.offset()), "NOT_CHECKED");
