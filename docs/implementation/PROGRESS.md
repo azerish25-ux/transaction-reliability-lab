@@ -1,3 +1,21 @@
+# P09A integration — IMPLEMENTED_UNVERIFIED
+
+Overall product: **INCOMPLETE / NO_GO**. The F01/D02 laboratory is delivered on `main`; its real-stack integration is being verified. Do not restart P09 from scratch or treat the earlier P08F pass as a pass for new code.
+
+Current implementation candidate: `b6d291a57eaeb35aae3d48fff0319552dcfae6c7`, [run 36560099620](https://github.com/azerish25-ux/transaction-reliability-lab/actions/runs/36560099620). The full integration record, actual failing runs, source identities and remaining isolation blocker are in [P09A_INTEGRATION.md](P09A_INTEGRATION.md).
+
+Delivered corrections include concurrent same-candidate product/lab CI with unchanged required gates, sanitized restoration diagnostics, complete JUnit and PNG integrity validation, source/build/image/instance provenance, the Toxiproxy listener normalization fix, and loopback console publication through a controller-only bridge. Normal financial code and migrations were not modified by these corrections.
+
+Verification established so far: 47 newly added component tests passed locally. The real lab job on `92a2563ee302df843eb47a5a461fbeae0db10440` passed all 163 component tests, frontend verification, Maven packaging and P09A-specific normal-artifact checks. Guardian startup and physical teardown restoration then passed, exposing a separate host-console connection failure. The console-topology correction is in the newer candidate above; an in-progress run is not a pass. The full product campaign and Required P08F gate passed separately on historical source `cc49976f576bc95038aaad5a66e82e5333b9ef8c` in run `36557255628`; that source's lab gate correctly failed.
+
+## Next executable action
+
+Complete `./scripts/lab test p09a` on one clean source: fix observed integration failures, execute real F01 and D02 baseline/mutant/restoration, browser/authorization and death/expiry tests, and validate the retained evidence. Both product and isolated-lab jobs must succeed before P09A becomes VERIFIED_PASS. Then implement F02/D06. Global G12 remains open because legacy active fault hooks still compile into normal artifacts; preserve existing recovery tests while separating them. The other 30 P09 scenarios, P10 and P11 remain incomplete.
+
+## Preserved P08F checkpoint
+
+The historical records below retain their exact tested sources and scopes. Their old next-action statements are superseded by the P09A checkpoint above.
+
 # P08F administrator investigation — VERIFIED_PASS
 
 Overall product: **INCOMPLETE / NO_GO**. P08F is a verified development milestone, not a complete product release.

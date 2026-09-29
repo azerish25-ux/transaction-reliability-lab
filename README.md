@@ -1,13 +1,15 @@
 # LedgerGuard
 ## Financial Transaction Reliability Laboratory
 
-**Synthetic money only. P01-P08F are verified development milestones. The full product remains INCOMPLETE / NO_GO.**
+**Synthetic money only. P01-P08F retain verified development milestones. P09A is IMPLEMENTED_UNVERIFIED. The full product remains INCOMPLETE / NO_GO.**
 
 LedgerGuard is a compact transaction system for investigating duplicate intent, uncertain outcomes, concurrent spending, accounting invariants and asynchronous recovery across the browser, API, PostgreSQL and RabbitMQ. It is not a bank, payment processor, compliance product or production-ready financial service.
 
-The latest milestone adds **administrator transaction search, ledger detail, financial audit history, independent reconciliation and failed-work investigation**. Customer account, transfer, payment, adjustment, schedule and webhook journeys remain covered by the regression campaign.
+The latest verified product milestone adds **administrator transaction search, ledger detail, financial audit history, independent reconciliation and failed-work investigation**. Customer account, transfer, payment, adjustment, schedule and webhook journeys remain covered by the regression campaign.
 
-Verified source: `8802f8b20c9bf3996d19ba90e7be26fd123b7580`; permanent **LedgerGuard P08F verification** run `36511855593`, including **Required P08F gate**. [Executed evidence](docs/evidence/p08f-8802f8b.md), [machine-readable provenance](docs/evidence/p08f-8802f8b.json), [progress](docs/implementation/PROGRESS.md), [full-product release gates](docs/implementation/RELEASE_READINESS.md).
+P09A's isolated F01/D02 laboratory is now delivered and undergoing real-stack integration. Recent corrections address guardian startup, loopback console networking and evidence integrity; they are not a completed live-experiment pass. See the [current integration checkpoint](docs/implementation/P09A_INTEGRATION.md) and [progress](docs/implementation/PROGRESS.md). Full release-isolation G12 remains open.
+
+Verified P08F source: `8802f8b20c9bf3996d19ba90e7be26fd123b7580`; permanent **LedgerGuard P08F verification** run `36511855593`, including **Required P08F gate**. [Executed evidence](docs/evidence/p08f-8802f8b.md), [machine-readable provenance](docs/evidence/p08f-8802f8b.json), [progress](docs/implementation/PROGRESS.md), [full-product release gates](docs/implementation/RELEASE_READINESS.md).
 
 ## Run the base topology
 
@@ -81,7 +83,7 @@ The administrator contract is `/api/v1/openapi/p08f-ui.json`. Earlier scoped con
 
 See [original implementation contract](docs/implementation/MASTER_SPEC.md), [P08F requirements](docs/implementation/P08F_REQUIREMENTS.json), [administrator architecture decision](docs/architecture/adr/0023-p08f-administrator-investigation.md), [financial boundary](docs/architecture/FINANCIAL_BOUNDARY.md), [testing strategy](docs/testing/STRATEGY.md), [evidence index](docs/evidence/INDEX.md) and [delivery record](docs/implementation/DELIVERY.md). Historical evidence retains its own tested source and scope.
 
-**Next is P09:** the isolated F01-F08 fault campaign, D01-D24 seeded defects, lab-only console and baseline/mutant/restoration runner. P10 contracts/security/performance/restore and complete CI lanes, and P11 final exploratory evidence, diagrams, video and release delivery remain open. No public hosting, full-product accessibility conformance, security certification or production-financial readiness is claimed.
+**Next is P09A verification closure**, not rebuilding its F01/D02 implementation. Run `./scripts/lab test p09a`, resolve real integration failures and require same-source product and lab success. The other seven faults and 23 seeded defects remain open; F02/D06 is the next expansion after that pass. P10 contracts/security/performance/restore and complete CI lanes, and P11 final exploratory evidence, diagrams, video and release delivery remain open. No public hosting, full-product accessibility conformance, security certification or production-financial readiness is claimed.
 
 Useful commands:
 
@@ -94,6 +96,8 @@ Useful commands:
 ./scripts/lab test payment
 ./scripts/lab test adjustment
 ./scripts/lab test pr
+./scripts/lab test p09a-unit
+./scripts/lab test p09a
 ./scripts/lab reconcile
 ./scripts/lab status
 ./scripts/lab down
