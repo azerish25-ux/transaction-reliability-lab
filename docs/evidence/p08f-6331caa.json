@@ -1,0 +1,1272 @@
+{
+  "sourceSha": "6331caadd8a5dae0191150c569f767b586d3e1df",
+  "workflowRunId": 36561276857,
+  "workflowUrl": "https://github.com/azerish25-ux/transaction-reliability-lab/actions/runs/36561276857",
+  "workflowConclusion": "success",
+  "runAttempt": 1,
+  "jobs": [
+    {
+      "id": 109382469606,
+      "name": "Isolated P09A lab, live faults, defect detection and restoration",
+      "conclusion": "success",
+      "html_url": "https://github.com/azerish25-ux/transaction-reliability-lab/actions/runs/36561276857/job/109382469606"
+    },
+    {
+      "id": 109382469913,
+      "name": "Build, administrator investigation, browser accessibility and financial invariants",
+      "conclusion": "success",
+      "html_url": "https://github.com/azerish25-ux/transaction-reliability-lab/actions/runs/36561276857/job/109382469913"
+    },
+    {
+      "id": 109389230155,
+      "name": "Required P08F gate",
+      "conclusion": "success",
+      "html_url": "https://github.com/azerish25-ux/transaction-reliability-lab/actions/runs/36561276857/job/109389230155"
+    },
+    {
+      "id": 109389230172,
+      "name": "Required P09A gate",
+      "conclusion": "success",
+      "html_url": "https://github.com/azerish25-ux/transaction-reliability-lab/actions/runs/36561276857/job/109389230172"
+    }
+  ],
+  "artifact": {
+    "id": 11029934514,
+    "name": "ledgerguard-p08f-evidence-6331caadd8a5dae0191150c569f767b586d3e1df",
+    "digest": "sha256:3f4c14782ebd6b60c34160a1d7ff9c9e646b15eb31ba09f6ff9ab638cf22ebf1",
+    "size_in_bytes": 12224894,
+    "created_at": "2026-09-29T11:41:47Z",
+    "expires_at": "2026-10-13T11:41:45Z"
+  },
+  "downloadSha256": "3f4c14782ebd6b60c34160a1d7ff9c9e646b15eb31ba09f6ff9ab638cf22ebf1",
+  "downloadDigestVerified": true,
+  "suiteTotals": {
+    "JUnit unit": {
+      "tests": 159,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    "PostgreSQL/HTTP integration": {
+      "tests": 140,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    "TypeScript client": {
+      "tests": 186,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    "Browser": {
+      "tests": 147,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    }
+  },
+  "report": {
+    "suites": {
+      "p08f-client": {
+        "tests": 24,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      "p08f-unit": {
+        "tests": 12,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      "p08f-integration": {
+        "tests": 13,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      "all-browser": {
+        "tests": 147,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      }
+    },
+    "p08fBrowserCases": 30,
+    "p08fLayoutCases": 3,
+    "requirements": [
+      {
+        "id": "P08F01",
+        "description": "Server-authorized bounded transaction search with reference, kind, status, account/user, currency, amount and UTC time filters",
+        "tests": {
+          "p08f-unit": [
+            "P08FUT01",
+            "P08FUT02",
+            "P08FUT03",
+            "P08FUT04",
+            "P08FUT05",
+            "P08FUT06",
+            "P08FUT07",
+            "P08FUT08",
+            "P08FUT09",
+            "P08FUT10",
+            "P08FUT12"
+          ],
+          "p08f-integration": [
+            "P08FIT02",
+            "P08FIT03",
+            "P08FIT04"
+          ],
+          "p08f-client": [
+            "P08FTS01",
+            "P08FTS02",
+            "P08FTS03",
+            "P08FTS04",
+            "P08FTS05",
+            "P08FTS06",
+            "P08FTS07",
+            "P08FTS08",
+            "P08FTS09",
+            "P08FTS10",
+            "P08FTS11",
+            "P08FTS12"
+          ],
+          "p08f-browser": [
+            "P08FE2E01",
+            "P08FE2E08",
+            "P08FE2E09"
+          ]
+        },
+        "status": "VERIFIED_PASS",
+        "executed": [
+          {
+            "suite": "p08f-unit",
+            "test": "P08FUT01_defaultsAndPaginationBounds"
+          },
+          {
+            "suite": "p08f-unit",
+            "test": "P08FUT02_unknownAndDuplicateFiltersRejected"
+          },
+          {
+            "suite": "p08f-unit",
+            "test": "P08FUT03_identifiersRequireCanonicalUuidSyntax"
+          },
+          {
+            "suite": "p08f-unit",
+            "test": "P08FUT04_allRequiredKindsStatesCurrenciesAccepted"
+          },
+          {
+            "suite": "p08f-unit",
+            "test": "P08FUT05_exactMoneyBoundsAndNoFloat"
+          },
+          {
+            "suite": "p08f-unit",
+            "test": "P08FUT06_invertedAmountRangeRejected"
+          },
+          {
+            "suite": "p08f-unit",
+            "test": "P08FUT07_utcOnlyTemporalBounds"
+          },
+          {
+            "suite": "p08f-unit",
+            "test": "P08FUT08_halfOpenRangeMustAdvance"
+          },
+          {
+            "suite": "p08f-unit",
+            "test": "P08FUT09_accountAndUserNormalization"
+          },
+          {
+            "suite": "p08f-unit",
+            "test": "P08FUT10_auditFiltersDoNotExposeArbitraryPredicates"
+          },
+          {
+            "suite": "p08f-unit",
+            "test": "P08FUT12_filtersAreImmutableAndControlCharactersRejected"
+          },
+          {
+            "suite": "p08f-integration",
+            "test": "P08FIT02_allTransactionFiltersAndExactStrings"
+          },
+          {
+            "suite": "p08f-integration",
+            "test": "P08FIT03_badUnknownAndRepeatedFiltersAreControlled"
+          },
+          {
+            "suite": "p08f-integration",
+            "test": "P08FIT04_stableTieBreakAndBoundedPages"
+          },
+          {
+            "suite": "p08f-client",
+            "test": "P08FTS01-canonical-filter-and-safe-query-encoding"
+          },
+          {
+            "suite": "p08f-client",
+            "test": "P08FTS02-bounded-pagination"
+          },
+          {
+            "suite": "p08f-client",
+            "test": "P08FTS03-large-integer-filters-never-round"
+          },
+          {
+            "suite": "p08f-client",
+            "test": "P08FTS04-malformed-and-reversed-money-ranges-rejected"
+          },
+          {
+            "suite": "p08f-client",
+            "test": "P08FTS05-unknown-duplicate-and-control-filters-rejected"
+          },
+          {
+            "suite": "p08f-client",
+            "test": "P08FTS06-explicit-UTC-half-open-ranges"
+          },
+          {
+            "suite": "p08f-client",
+            "test": "P08FTS07-enums-and-audit-action-validation"
+          },
+          {
+            "suite": "p08f-client",
+            "test": "P08FTS08-malformed-path-identities-blocked-before-network"
+          },
+          {
+            "suite": "p08f-client",
+            "test": "P08FTS09-router-boundary-is-specific"
+          },
+          {
+            "suite": "p08f-client",
+            "test": "P08FTS10-non-snapshot-response-fails-closed"
+          },
+          {
+            "suite": "p08f-client",
+            "test": "P08FTS11-search-uses-production-client-and-exact-strings"
+          },
+          {
+            "suite": "p08f-client",
+            "test": "P08FTS12-invalid-page-and-number-money-rejected"
+          },
+          {
+            "suite": "p08f-browser",
+            "test": "P08FE2E01 search all filters and inspect real journal at responsive widths"
+          },
+          {
+            "suite": "p08f-browser",
+            "test": "P08FE2E01 search all filters and inspect real journal at responsive widths"
+          },
+          {
+            "suite": "p08f-browser",
+            "test": "P08FE2E01 search all filters and inspect real journal at responsive widths"
+          },
+          {
+            "suite": "p08f-browser",
+            "test": "P08FE2E08 read errors invalid filters and absent resources never show stale success"
+          },
+          {
+            "suite": "p08f-browser",
+            "test": "P08FE2E08 read errors invalid filters and absent resources never show stale success"
+          },
+          {
+            "suite": "p08f-browser",
+            "test": "P08FE2E08 read errors invalid filters and absent resources never show stale success"
+          },
+          {
+            "suite": "p08f-browser",
+            "test": "P08FE2E09 deterministic paged transaction search uses real database order"
+          },
+          {
+            "suite": "p08f-browser",
+            "test": "P08FE2E09 deterministic paged transaction search uses real database order"
+          },
+          {
+            "suite": "p08f-browser",
+            "test": "P08FE2E09 deterministic paged transaction search uses real database order"
+          }
+        ]
+      },
+      {
+        "id": "P08F02",
+        "description": "Authoritative transaction detail with immutable journal entries and linked payment adjustments",
+        "tests": {
+          "p08f-integration": [
+            "P08FIT05",
+            "P08FIT12",
+            "P08FIT13"
+          ],
+          "p08f-client": [
+            "P08FTS14"
+          ],
+          "p08f-browser": [
+            "P08FE2E01",
+            "P08FE2E03"
+          ]
+        },
+        "status": "VERIFIED_PASS",
+        "executed": [
+          {
+            "suite": "p08f-integration",
+            "test": "P08FIT05_detailShowsExactJournalAndLinkedAdjustment"
+          },
+          {
+            "suite": "p08f-integration",
+            "test": "P08FIT12_readsAndRunHistoryCannotMutateFinancialRecords"
+          },
+          {
+            "suite": "p08f-integration",
+            "test": "P08FIT13_eventVersionsRemainNumericallyOrderedBeyondNine"
+          },
+          {
+            "suite": "p08f-client",
+            "test": "P08FTS14-detail-validates-identity-and-journal-entry-wire-types"
+          },
+          {
+            "suite": "p08f-browser",
+            "test": "P08FE2E01 search all filters and inspect real journal at responsive widths"
+          },
+          {
+            "suite": "p08f-browser",
+            "test": "P08FE2E01 search all filters and inspect real journal at responsive widths"
+          },
+          {
+            "suite": "p08f-browser",
+            "test": "P08FE2E01 search all filters and inspect real journal at responsive widths"
+          },
+          {
+            "suite": "p08f-browser",
+            "test": "P08FE2E03 audit history links immutable operation identities without private payloads"
+          },
+          {
+            "suite": "p08f-browser",
+            "test": "P08FE2E03 audit history links immutable operation identities without private payloads"
+          },
+          {
+            "suite": "p08f-browser",
+            "test": "P08FE2E03 audit history links immutable operation identities without private payloads"
+          }
+        ]
+      },
+      {
+        "id": "P08F03",
+        "description": "Bounded redacted financial audit history, distinct from operational/security events",
+        "tests": {
+          "p08f-integration": [
+            "P08FIT06",
+            "P08FIT09",
+            "P08FIT13"
+          ],
+          "p08f-client": [
+            "P08FTS13"
+          ],
+          "p08f-browser": [
+            "P08FE2E03",
+            "P08FE2E06"
+          ]
+        },
+        "status": "VERIFIED_PASS",
+        "executed": [
+          {
+            "suite": "p08f-integration",
+            "test": "P08FIT06_auditIsBoundedAndDoesNotSerializePrivateBodies"
+          },
+          {
+            "suite": "p08f-integration",
+            "test": "P08FIT09_auditTamperingDetectedAndRestored"
+          },
+          {
+            "suite": "p08f-integration",
+            "test": "P08FIT13_eventVersionsRemainNumericallyOrderedBeyondNine"
+          },
+          {
+            "suite": "p08f-client",
+            "test": "P08FTS13-audit-does-not-infer-integrity"
+          },
+          {
+            "suite": "p08f-browser",
+            "test": "P08FE2E03 audit history links immutable operation identities without private payloads"
+          },
+          {
+            "suite": "p08f-browser",
+            "test": "P08FE2E03 audit history links immutable operation identities without private payloads"
+          },
+          {
+            "suite": "p08f-browser",
+            "test": "P08FE2E03 audit history links immutable operation identities without private payloads"
+          },
+          {
+            "suite": "p08f-browser",
+            "test": "P08FE2E06 discrepancy evidence is real, retained and restored without automatic repair"
+          },
+          {
+            "suite": "p08f-browser",
+            "test": "P08FE2E06 discrepancy evidence is real, retained and restored without automatic repair"
+          },
+          {
+            "suite": "p08f-browser",
+            "test": "P08FE2E06 discrepancy evidence is real, retained and restored without automatic repair"
+          }
+        ]
+      },
+      {
+        "id": "P08F04",
+        "description": "Independent read-only reconciliation in one consistent snapshot, with scope, timestamp and explicit discrepancy results",
+        "tests": {
+          "p08f-integration": [
+            "P08FIT07",
+            "P08FIT08",
+            "P08FIT09",
+            "P08FIT10",
+            "P08FIT11",
+            "P08FIT12"
+          ],
+          "p08f-client": [
+            "P08FTS15",
+            "P08FTS16",
+            "P08FTS17",
+            "P08FTS18",
+            "P08FTS19",
+            "P08FTS20",
+            "P08FTS21",
+            "P08FTS22",
+            "P08FTS23"
+          ],
+          "p08f-browser": [
+            "P08FE2E04",
+            "P08FE2E05",
+            "P08FE2E06",
+            "P08FE2E10"
+          ]
+        },
+        "status": "VERIFIED_PASS",
+        "executed": [
+          {
+            "suite": "p08f-integration",
+            "test": "P08FIT07_reconciliationSnapshotSavedOnceAndReloaded"
+          },
+          {
+            "suite": "p08f-integration",
+            "test": "P08FIT08_discrepancyIsReportedWithoutRepairingMoney"
+          },
+          {
+            "suite": "p08f-integration",
+            "test": "P08FIT09_auditTamperingDetectedAndRestored"
+          },
+          {
+            "suite": "p08f-integration",
+            "test": "P08FIT10_readOnlySnapshotDoesNotMixConcurrentCommits"
+          },
+          {
+            "suite": "p08f-integration",
+            "test": "P08FIT11_concurrentRunIdentityRetainsOneReport"
+          },
+          {
+            "suite": "p08f-integration",
+            "test": "P08FIT12_readsAndRunHistoryCannotMutateFinancialRecords"
+          },
+          {
+            "suite": "p08f-client",
+            "test": "P08FTS15-report-all-checks-and-real-discrepancy-accepted"
+          },
+          {
+            "suite": "p08f-client",
+            "test": "P08FTS16-missing-duplicate-and-contradictory-checks-never-pass"
+          },
+          {
+            "suite": "p08f-client",
+            "test": "P08FTS17-run-post-has-CSRF-and-original-run-identity"
+          },
+          {
+            "suite": "p08f-client",
+            "test": "P08FTS18-lost-response-and-malformed-success-stay-uncertain"
+          },
+          {
+            "suite": "p08f-client",
+            "test": "P08FTS19-read-report-does-not-post-or-execute-again"
+          },
+          {
+            "suite": "p08f-client",
+            "test": "P08FTS20-owner-scoped-request-survives-reload"
+          },
+          {
+            "suite": "p08f-client",
+            "test": "P08FTS21-corrupt-or-extra-persisted-metadata-fails-closed"
+          },
+          {
+            "suite": "p08f-client",
+            "test": "P08FTS22-storage-failure-prevents-unrecoverable-run"
+          },
+          {
+            "suite": "p08f-client",
+            "test": "P08FTS23-completion-only-removes-own-current-request"
+          },
+          {
+            "suite": "p08f-browser",
+            "test": "P08FE2E04 run and reload a real clean consistent-snapshot report"
+          },
+          {
+            "suite": "p08f-browser",
+            "test": "P08FE2E04 run and reload a real clean consistent-snapshot report"
+          },
+          {
+            "suite": "p08f-browser",
+            "test": "P08FE2E04 run and reload a real clean consistent-snapshot report"
+          },
+          {
+            "suite": "p08f-browser",
+            "test": "P08FE2E05 committed response loss survives reload and reauthentication with one report"
+          },
+          {
+            "suite": "p08f-browser",
+            "test": "P08FE2E05 committed response loss survives reload and reauthentication with one report"
+          },
+          {
+            "suite": "p08f-browser",
+            "test": "P08FE2E05 committed response loss survives reload and reauthentication with one report"
+          },
+          {
+            "suite": "p08f-browser",
+            "test": "P08FE2E06 discrepancy evidence is real, retained and restored without automatic repair"
+          },
+          {
+            "suite": "p08f-browser",
+            "test": "P08FE2E06 discrepancy evidence is real, retained and restored without automatic repair"
+          },
+          {
+            "suite": "p08f-browser",
+            "test": "P08FE2E06 discrepancy evidence is real, retained and restored without automatic repair"
+          },
+          {
+            "suite": "p08f-browser",
+            "test": "P08FE2E10 report remains historical after later financial work and requires CSRF for runs"
+          },
+          {
+            "suite": "p08f-browser",
+            "test": "P08FE2E10 report remains historical after later financial work and requires CSRF for runs"
+          },
+          {
+            "suite": "p08f-browser",
+            "test": "P08FE2E10 report remains historical after later financial work and requires CSRF for runs"
+          }
+        ]
+      },
+      {
+        "id": "P08F05",
+        "description": "Administrator failed-work inspection using existing backend without a second replay implementation",
+        "tests": {
+          "p08f-integration": [
+            "P08FIT01"
+          ],
+          "p08f-client": [
+            "P08FTS24"
+          ],
+          "p08f-browser": [
+            "P08FE2E07"
+          ]
+        },
+        "status": "VERIFIED_PASS",
+        "executed": [
+          {
+            "suite": "p08f-integration",
+            "test": "P08FIT01_directAdministratorAuthorization"
+          },
+          {
+            "suite": "p08f-client",
+            "test": "P08FTS24-failed-work-drops-envelopes-and-reuses-existing-replay"
+          },
+          {
+            "suite": "p08f-browser",
+            "test": "P08FE2E07 existing failed-work replay is explicit and does not duplicate settled money"
+          },
+          {
+            "suite": "p08f-browser",
+            "test": "P08FE2E07 existing failed-work replay is explicit and does not duplicate settled money"
+          },
+          {
+            "suite": "p08f-browser",
+            "test": "P08FE2E07 existing failed-work replay is explicit and does not duplicate settled money"
+          }
+        ]
+      },
+      {
+        "id": "P08F06",
+        "description": "Real responsive administrator browser journeys, keyboard and axe checks; customer/anonymous direct API denial",
+        "tests": {
+          "p08f-unit": [
+            "P08FUT11"
+          ],
+          "p08f-integration": [
+            "P08FIT01"
+          ],
+          "p08f-client": [
+            "P08FTS08",
+            "P08FTS09"
+          ],
+          "p08f-browser": [
+            "P08FE2E01",
+            "P08FE2E02",
+            "P08FE2E03",
+            "P08FE2E04",
+            "P08FE2E05",
+            "P08FE2E06",
+            "P08FE2E07",
+            "P08FE2E08",
+            "P08FE2E09",
+            "P08FE2E10"
+          ],
+          "p08f-layout": [
+            "P08FLAYOUT01"
+          ]
+        },
+        "status": "VERIFIED_PASS",
+        "executed": [
+          {
+            "suite": "p08f-unit",
+            "test": "P08FUT11_serviceDefenseRejectsMissingOrCustomerIdentity"
+          },
+          {
+            "suite": "p08f-integration",
+            "test": "P08FIT01_directAdministratorAuthorization"
+          },
+          {
+            "suite": "p08f-client",
+            "test": "P08FTS08-malformed-path-identities-blocked-before-network"
+          },
+          {
+            "suite": "p08f-client",
+            "test": "P08FTS09-router-boundary-is-specific"
+          },
+          {
+            "suite": "p08f-browser",
+            "test": "P08FE2E01 search all filters and inspect real journal at responsive widths"
+          },
+          {
+            "suite": "p08f-browser",
+            "test": "P08FE2E01 search all filters and inspect real journal at responsive widths"
+          },
+          {
+            "suite": "p08f-browser",
+            "test": "P08FE2E01 search all filters and inspect real journal at responsive widths"
+          },
+          {
+            "suite": "p08f-browser",
+            "test": "P08FE2E02 customer and anonymous users cannot read administrator records"
+          },
+          {
+            "suite": "p08f-browser",
+            "test": "P08FE2E02 customer and anonymous users cannot read administrator records"
+          },
+          {
+            "suite": "p08f-browser",
+            "test": "P08FE2E02 customer and anonymous users cannot read administrator records"
+          },
+          {
+            "suite": "p08f-browser",
+            "test": "P08FE2E03 audit history links immutable operation identities without private payloads"
+          },
+          {
+            "suite": "p08f-browser",
+            "test": "P08FE2E03 audit history links immutable operation identities without private payloads"
+          },
+          {
+            "suite": "p08f-browser",
+            "test": "P08FE2E03 audit history links immutable operation identities without private payloads"
+          },
+          {
+            "suite": "p08f-browser",
+            "test": "P08FE2E04 run and reload a real clean consistent-snapshot report"
+          },
+          {
+            "suite": "p08f-browser",
+            "test": "P08FE2E04 run and reload a real clean consistent-snapshot report"
+          },
+          {
+            "suite": "p08f-browser",
+            "test": "P08FE2E04 run and reload a real clean consistent-snapshot report"
+          },
+          {
+            "suite": "p08f-browser",
+            "test": "P08FE2E05 committed response loss survives reload and reauthentication with one report"
+          },
+          {
+            "suite": "p08f-browser",
+            "test": "P08FE2E05 committed response loss survives reload and reauthentication with one report"
+          },
+          {
+            "suite": "p08f-browser",
+            "test": "P08FE2E05 committed response loss survives reload and reauthentication with one report"
+          },
+          {
+            "suite": "p08f-browser",
+            "test": "P08FE2E06 discrepancy evidence is real, retained and restored without automatic repair"
+          },
+          {
+            "suite": "p08f-browser",
+            "test": "P08FE2E06 discrepancy evidence is real, retained and restored without automatic repair"
+          },
+          {
+            "suite": "p08f-browser",
+            "test": "P08FE2E06 discrepancy evidence is real, retained and restored without automatic repair"
+          },
+          {
+            "suite": "p08f-browser",
+            "test": "P08FE2E07 existing failed-work replay is explicit and does not duplicate settled money"
+          },
+          {
+            "suite": "p08f-browser",
+            "test": "P08FE2E07 existing failed-work replay is explicit and does not duplicate settled money"
+          },
+          {
+            "suite": "p08f-browser",
+            "test": "P08FE2E07 existing failed-work replay is explicit and does not duplicate settled money"
+          },
+          {
+            "suite": "p08f-browser",
+            "test": "P08FE2E08 read errors invalid filters and absent resources never show stale success"
+          },
+          {
+            "suite": "p08f-browser",
+            "test": "P08FE2E08 read errors invalid filters and absent resources never show stale success"
+          },
+          {
+            "suite": "p08f-browser",
+            "test": "P08FE2E08 read errors invalid filters and absent resources never show stale success"
+          },
+          {
+            "suite": "p08f-browser",
+            "test": "P08FE2E09 deterministic paged transaction search uses real database order"
+          },
+          {
+            "suite": "p08f-browser",
+            "test": "P08FE2E09 deterministic paged transaction search uses real database order"
+          },
+          {
+            "suite": "p08f-browser",
+            "test": "P08FE2E09 deterministic paged transaction search uses real database order"
+          },
+          {
+            "suite": "p08f-browser",
+            "test": "P08FE2E10 report remains historical after later financial work and requires CSRF for runs"
+          },
+          {
+            "suite": "p08f-browser",
+            "test": "P08FE2E10 report remains historical after later financial work and requires CSRF for runs"
+          },
+          {
+            "suite": "p08f-browser",
+            "test": "P08FE2E10 report remains historical after later financial work and requires CSRF for runs"
+          },
+          {
+            "suite": "p08f-layout",
+            "test": "P08FLAYOUT01 administrator tables retain headings and keyboard scrolling"
+          },
+          {
+            "suite": "p08f-layout",
+            "test": "P08FLAYOUT01 administrator tables retain headings and keyboard scrolling"
+          },
+          {
+            "suite": "p08f-layout",
+            "test": "P08FLAYOUT01 administrator tables retain headings and keyboard scrolling"
+          }
+        ]
+      },
+      {
+        "id": "P08F07",
+        "description": "Preserve P01-P08E, execute named P08F tests and retain exact-source evidence without upgrading incomplete product status",
+        "tests": {
+          "p08f-client": [
+            "P08FTS01",
+            "P08FTS02",
+            "P08FTS03",
+            "P08FTS04",
+            "P08FTS05",
+            "P08FTS06",
+            "P08FTS07",
+            "P08FTS08",
+            "P08FTS09",
+            "P08FTS10",
+            "P08FTS11",
+            "P08FTS12",
+            "P08FTS13",
+            "P08FTS14",
+            "P08FTS15",
+            "P08FTS16",
+            "P08FTS17",
+            "P08FTS18",
+            "P08FTS19",
+            "P08FTS20",
+            "P08FTS21",
+            "P08FTS22",
+            "P08FTS23",
+            "P08FTS24"
+          ],
+          "p08f-integration": [
+            "P08FIT01",
+            "P08FIT02",
+            "P08FIT03",
+            "P08FIT04",
+            "P08FIT05",
+            "P08FIT06",
+            "P08FIT07",
+            "P08FIT08",
+            "P08FIT09",
+            "P08FIT10",
+            "P08FIT11",
+            "P08FIT12",
+            "P08FIT13"
+          ],
+          "p08f-unit": [
+            "P08FUT01",
+            "P08FUT02",
+            "P08FUT03",
+            "P08FUT04",
+            "P08FUT05",
+            "P08FUT06",
+            "P08FUT07",
+            "P08FUT08",
+            "P08FUT09",
+            "P08FUT10",
+            "P08FUT11",
+            "P08FUT12"
+          ],
+          "p08f-browser": [
+            "P08FE2E01",
+            "P08FE2E02",
+            "P08FE2E03",
+            "P08FE2E04",
+            "P08FE2E05",
+            "P08FE2E06",
+            "P08FE2E07",
+            "P08FE2E08",
+            "P08FE2E09",
+            "P08FE2E10"
+          ],
+          "p08f-layout": [
+            "P08FLAYOUT01"
+          ]
+        },
+        "status": "VERIFIED_PASS",
+        "executed": [
+          {
+            "suite": "p08f-client",
+            "test": "P08FTS01-canonical-filter-and-safe-query-encoding"
+          },
+          {
+            "suite": "p08f-client",
+            "test": "P08FTS02-bounded-pagination"
+          },
+          {
+            "suite": "p08f-client",
+            "test": "P08FTS03-large-integer-filters-never-round"
+          },
+          {
+            "suite": "p08f-client",
+            "test": "P08FTS04-malformed-and-reversed-money-ranges-rejected"
+          },
+          {
+            "suite": "p08f-client",
+            "test": "P08FTS05-unknown-duplicate-and-control-filters-rejected"
+          },
+          {
+            "suite": "p08f-client",
+            "test": "P08FTS06-explicit-UTC-half-open-ranges"
+          },
+          {
+            "suite": "p08f-client",
+            "test": "P08FTS07-enums-and-audit-action-validation"
+          },
+          {
+            "suite": "p08f-client",
+            "test": "P08FTS08-malformed-path-identities-blocked-before-network"
+          },
+          {
+            "suite": "p08f-client",
+            "test": "P08FTS09-router-boundary-is-specific"
+          },
+          {
+            "suite": "p08f-client",
+            "test": "P08FTS10-non-snapshot-response-fails-closed"
+          },
+          {
+            "suite": "p08f-client",
+            "test": "P08FTS11-search-uses-production-client-and-exact-strings"
+          },
+          {
+            "suite": "p08f-client",
+            "test": "P08FTS12-invalid-page-and-number-money-rejected"
+          },
+          {
+            "suite": "p08f-client",
+            "test": "P08FTS13-audit-does-not-infer-integrity"
+          },
+          {
+            "suite": "p08f-client",
+            "test": "P08FTS14-detail-validates-identity-and-journal-entry-wire-types"
+          },
+          {
+            "suite": "p08f-client",
+            "test": "P08FTS15-report-all-checks-and-real-discrepancy-accepted"
+          },
+          {
+            "suite": "p08f-client",
+            "test": "P08FTS16-missing-duplicate-and-contradictory-checks-never-pass"
+          },
+          {
+            "suite": "p08f-client",
+            "test": "P08FTS17-run-post-has-CSRF-and-original-run-identity"
+          },
+          {
+            "suite": "p08f-client",
+            "test": "P08FTS18-lost-response-and-malformed-success-stay-uncertain"
+          },
+          {
+            "suite": "p08f-client",
+            "test": "P08FTS19-read-report-does-not-post-or-execute-again"
+          },
+          {
+            "suite": "p08f-client",
+            "test": "P08FTS20-owner-scoped-request-survives-reload"
+          },
+          {
+            "suite": "p08f-client",
+            "test": "P08FTS21-corrupt-or-extra-persisted-metadata-fails-closed"
+          },
+          {
+            "suite": "p08f-client",
+            "test": "P08FTS22-storage-failure-prevents-unrecoverable-run"
+          },
+          {
+            "suite": "p08f-client",
+            "test": "P08FTS23-completion-only-removes-own-current-request"
+          },
+          {
+            "suite": "p08f-client",
+            "test": "P08FTS24-failed-work-drops-envelopes-and-reuses-existing-replay"
+          },
+          {
+            "suite": "p08f-integration",
+            "test": "P08FIT01_directAdministratorAuthorization"
+          },
+          {
+            "suite": "p08f-integration",
+            "test": "P08FIT02_allTransactionFiltersAndExactStrings"
+          },
+          {
+            "suite": "p08f-integration",
+            "test": "P08FIT03_badUnknownAndRepeatedFiltersAreControlled"
+          },
+          {
+            "suite": "p08f-integration",
+            "test": "P08FIT04_stableTieBreakAndBoundedPages"
+          },
+          {
+            "suite": "p08f-integration",
+            "test": "P08FIT05_detailShowsExactJournalAndLinkedAdjustment"
+          },
+          {
+            "suite": "p08f-integration",
+            "test": "P08FIT06_auditIsBoundedAndDoesNotSerializePrivateBodies"
+          },
+          {
+            "suite": "p08f-integration",
+            "test": "P08FIT07_reconciliationSnapshotSavedOnceAndReloaded"
+          },
+          {
+            "suite": "p08f-integration",
+            "test": "P08FIT08_discrepancyIsReportedWithoutRepairingMoney"
+          },
+          {
+            "suite": "p08f-integration",
+            "test": "P08FIT09_auditTamperingDetectedAndRestored"
+          },
+          {
+            "suite": "p08f-integration",
+            "test": "P08FIT10_readOnlySnapshotDoesNotMixConcurrentCommits"
+          },
+          {
+            "suite": "p08f-integration",
+            "test": "P08FIT11_concurrentRunIdentityRetainsOneReport"
+          },
+          {
+            "suite": "p08f-integration",
+            "test": "P08FIT12_readsAndRunHistoryCannotMutateFinancialRecords"
+          },
+          {
+            "suite": "p08f-integration",
+            "test": "P08FIT13_eventVersionsRemainNumericallyOrderedBeyondNine"
+          },
+          {
+            "suite": "p08f-unit",
+            "test": "P08FUT01_defaultsAndPaginationBounds"
+          },
+          {
+            "suite": "p08f-unit",
+            "test": "P08FUT02_unknownAndDuplicateFiltersRejected"
+          },
+          {
+            "suite": "p08f-unit",
+            "test": "P08FUT03_identifiersRequireCanonicalUuidSyntax"
+          },
+          {
+            "suite": "p08f-unit",
+            "test": "P08FUT04_allRequiredKindsStatesCurrenciesAccepted"
+          },
+          {
+            "suite": "p08f-unit",
+            "test": "P08FUT05_exactMoneyBoundsAndNoFloat"
+          },
+          {
+            "suite": "p08f-unit",
+            "test": "P08FUT06_invertedAmountRangeRejected"
+          },
+          {
+            "suite": "p08f-unit",
+            "test": "P08FUT07_utcOnlyTemporalBounds"
+          },
+          {
+            "suite": "p08f-unit",
+            "test": "P08FUT08_halfOpenRangeMustAdvance"
+          },
+          {
+            "suite": "p08f-unit",
+            "test": "P08FUT09_accountAndUserNormalization"
+          },
+          {
+            "suite": "p08f-unit",
+            "test": "P08FUT10_auditFiltersDoNotExposeArbitraryPredicates"
+          },
+          {
+            "suite": "p08f-unit",
+            "test": "P08FUT11_serviceDefenseRejectsMissingOrCustomerIdentity"
+          },
+          {
+            "suite": "p08f-unit",
+            "test": "P08FUT12_filtersAreImmutableAndControlCharactersRejected"
+          },
+          {
+            "suite": "p08f-browser",
+            "test": "P08FE2E01 search all filters and inspect real journal at responsive widths"
+          },
+          {
+            "suite": "p08f-browser",
+            "test": "P08FE2E01 search all filters and inspect real journal at responsive widths"
+          },
+          {
+            "suite": "p08f-browser",
+            "test": "P08FE2E01 search all filters and inspect real journal at responsive widths"
+          },
+          {
+            "suite": "p08f-browser",
+            "test": "P08FE2E02 customer and anonymous users cannot read administrator records"
+          },
+          {
+            "suite": "p08f-browser",
+            "test": "P08FE2E02 customer and anonymous users cannot read administrator records"
+          },
+          {
+            "suite": "p08f-browser",
+            "test": "P08FE2E02 customer and anonymous users cannot read administrator records"
+          },
+          {
+            "suite": "p08f-browser",
+            "test": "P08FE2E03 audit history links immutable operation identities without private payloads"
+          },
+          {
+            "suite": "p08f-browser",
+            "test": "P08FE2E03 audit history links immutable operation identities without private payloads"
+          },
+          {
+            "suite": "p08f-browser",
+            "test": "P08FE2E03 audit history links immutable operation identities without private payloads"
+          },
+          {
+            "suite": "p08f-browser",
+            "test": "P08FE2E04 run and reload a real clean consistent-snapshot report"
+          },
+          {
+            "suite": "p08f-browser",
+            "test": "P08FE2E04 run and reload a real clean consistent-snapshot report"
+          },
+          {
+            "suite": "p08f-browser",
+            "test": "P08FE2E04 run and reload a real clean consistent-snapshot report"
+          },
+          {
+            "suite": "p08f-browser",
+            "test": "P08FE2E05 committed response loss survives reload and reauthentication with one report"
+          },
+          {
+            "suite": "p08f-browser",
+            "test": "P08FE2E05 committed response loss survives reload and reauthentication with one report"
+          },
+          {
+            "suite": "p08f-browser",
+            "test": "P08FE2E05 committed response loss survives reload and reauthentication with one report"
+          },
+          {
+            "suite": "p08f-browser",
+            "test": "P08FE2E06 discrepancy evidence is real, retained and restored without automatic repair"
+          },
+          {
+            "suite": "p08f-browser",
+            "test": "P08FE2E06 discrepancy evidence is real, retained and restored without automatic repair"
+          },
+          {
+            "suite": "p08f-browser",
+            "test": "P08FE2E06 discrepancy evidence is real, retained and restored without automatic repair"
+          },
+          {
+            "suite": "p08f-browser",
+            "test": "P08FE2E07 existing failed-work replay is explicit and does not duplicate settled money"
+          },
+          {
+            "suite": "p08f-browser",
+            "test": "P08FE2E07 existing failed-work replay is explicit and does not duplicate settled money"
+          },
+          {
+            "suite": "p08f-browser",
+            "test": "P08FE2E07 existing failed-work replay is explicit and does not duplicate settled money"
+          },
+          {
+            "suite": "p08f-browser",
+            "test": "P08FE2E08 read errors invalid filters and absent resources never show stale success"
+          },
+          {
+            "suite": "p08f-browser",
+            "test": "P08FE2E08 read errors invalid filters and absent resources never show stale success"
+          },
+          {
+            "suite": "p08f-browser",
+            "test": "P08FE2E08 read errors invalid filters and absent resources never show stale success"
+          },
+          {
+            "suite": "p08f-browser",
+            "test": "P08FE2E09 deterministic paged transaction search uses real database order"
+          },
+          {
+            "suite": "p08f-browser",
+            "test": "P08FE2E09 deterministic paged transaction search uses real database order"
+          },
+          {
+            "suite": "p08f-browser",
+            "test": "P08FE2E09 deterministic paged transaction search uses real database order"
+          },
+          {
+            "suite": "p08f-browser",
+            "test": "P08FE2E10 report remains historical after later financial work and requires CSRF for runs"
+          },
+          {
+            "suite": "p08f-browser",
+            "test": "P08FE2E10 report remains historical after later financial work and requires CSRF for runs"
+          },
+          {
+            "suite": "p08f-browser",
+            "test": "P08FE2E10 report remains historical after later financial work and requires CSRF for runs"
+          },
+          {
+            "suite": "p08f-layout",
+            "test": "P08FLAYOUT01 administrator tables retain headings and keyboard scrolling"
+          },
+          {
+            "suite": "p08f-layout",
+            "test": "P08FLAYOUT01 administrator tables retain headings and keyboard scrolling"
+          },
+          {
+            "suite": "p08f-layout",
+            "test": "P08FLAYOUT01 administrator tables retain headings and keyboard scrolling"
+          }
+        ]
+      }
+    ],
+    "phase": "P08F",
+    "status": "VERIFIED_PASS",
+    "fullProductStatus": "INCOMPLETE_NO_GO",
+    "sourceSha": "6331caadd8a5dae0191150c569f767b586d3e1df",
+    "trackedTreeDirty": false,
+    "timestamp": "2026-09-29T11:41:43.169145+00:00",
+    "screenshots": [
+      {
+        "path": ".evidence/playwright/screenshots/chromium-desktop-p08f-search.png",
+        "sha256": "67c6c957b8de2bf07fb655274bc8ead02cb64c483bce0cda498f9b2a979e84d5"
+      },
+      {
+        "path": ".evidence/playwright/screenshots/chromium-desktop-p08f-detail.png",
+        "sha256": "ac7e114a92d9c36332ff791c22d58dbf1f6286c5bf0afea9390d33a3c85abf54"
+      },
+      {
+        "path": ".evidence/playwright/screenshots/chromium-desktop-p08f-audit.png",
+        "sha256": "8aa5eb7008b603e7ba19de9979feb6409402688ab5db06aa86fa4fbdb42c1047"
+      },
+      {
+        "path": ".evidence/playwright/screenshots/chromium-desktop-p08f-report.png",
+        "sha256": "42e9dd2bacb6710f23b66484fa57215b167825297d53161713b401c079b76d35"
+      },
+      {
+        "path": ".evidence/playwright/screenshots/chromium-desktop-p08f-failed-work.png",
+        "sha256": "baed74c73fa60934278ce57c4ef45a3ce034d1b5a9adb6fb124a0891c7e4eeaa"
+      },
+      {
+        "path": ".evidence/playwright/screenshots/chromium-tablet-p08f-search.png",
+        "sha256": "25ee7cd0f086feb8faa8c9b6078a56a67daf0783b4143511e7e60e144857e38c"
+      },
+      {
+        "path": ".evidence/playwright/screenshots/chromium-tablet-p08f-detail.png",
+        "sha256": "39ee19958a1e924dac5c5e891d7f52232b599264f224befaab349fb07be4d103"
+      },
+      {
+        "path": ".evidence/playwright/screenshots/chromium-tablet-p08f-audit.png",
+        "sha256": "2ce166999640d35718778a6829732fe75fe30154a832d2a44d88d26b2fc7d8fd"
+      },
+      {
+        "path": ".evidence/playwright/screenshots/chromium-tablet-p08f-report.png",
+        "sha256": "9410d4aa065fcf135c742da3a14bf02d42d8c47245080cfc44c8c24f458366fc"
+      },
+      {
+        "path": ".evidence/playwright/screenshots/chromium-tablet-p08f-failed-work.png",
+        "sha256": "b8fb060a005868ff60e2e4e1d97bb8a82739f2e70af076a37faa970514290c00"
+      },
+      {
+        "path": ".evidence/playwright/screenshots/chromium-mobile-p08f-search.png",
+        "sha256": "42f28be5ca224b679528778cede56f9d3b70c0899088f08635da37fd384a8444"
+      },
+      {
+        "path": ".evidence/playwright/screenshots/chromium-mobile-p08f-detail.png",
+        "sha256": "21ccf30ddc5898f6ebfa435cc708572c5a481c04b00807ddf6876aa1ee661041"
+      },
+      {
+        "path": ".evidence/playwright/screenshots/chromium-mobile-p08f-audit.png",
+        "sha256": "af47b23f9d7035d2dcc7d9faee2eeb4ae05d1dbf7c0afa25da1cac131cbeab1f"
+      },
+      {
+        "path": ".evidence/playwright/screenshots/chromium-mobile-p08f-report.png",
+        "sha256": "eafb766e67a9d14ae964380916168e35fb3fd71dccd5ce544029d2ff8ae30bf4"
+      },
+      {
+        "path": ".evidence/playwright/screenshots/chromium-mobile-p08f-failed-work.png",
+        "sha256": "10af9ef0ef6c213544fe556c4569ad1b5e91ec4ac00a73d3a64c390209f6ac61"
+      }
+    ],
+    "scope": "P01-P08E preserved; administrator investigation, consistent read-only financial checks, saved report recovery and responsive accessibility. P09-P11 and final release remain open."
+  },
+  "retainedScreenshots": [
+    {
+      "path": "docs/evidence/p08f-6331caa/chromium-desktop-p08f-search.png",
+      "sha256": "67c6c957b8de2bf07fb655274bc8ead02cb64c483bce0cda498f9b2a979e84d5"
+    },
+    {
+      "path": "docs/evidence/p08f-6331caa/chromium-desktop-p08f-detail.png",
+      "sha256": "ac7e114a92d9c36332ff791c22d58dbf1f6286c5bf0afea9390d33a3c85abf54"
+    },
+    {
+      "path": "docs/evidence/p08f-6331caa/chromium-tablet-p08f-report.png",
+      "sha256": "9410d4aa065fcf135c742da3a14bf02d42d8c47245080cfc44c8c24f458366fc"
+    },
+    {
+      "path": "docs/evidence/p08f-6331caa/chromium-mobile-p08f-audit.png",
+      "sha256": "af47b23f9d7035d2dcc7d9faee2eeb4ae05d1dbf7c0afa25da1cac131cbeab1f"
+    }
+  ],
+  "limitations": [
+    "Full product remains INCOMPLETE / NO_GO; P09-P11 and final release campaigns remain open.",
+    "Raw CI artifacts have finite retention; the selected screenshots and summary are retained in Git.",
+    "The tested source SHA is distinct from subsequent evidence-documentation commits.",
+    "Administrator journeys disable automatic recordings; retained screenshots use synthetic fixtures.",
+    "A read-only snapshot report is not current live health, financial readiness or security certification."
+  ]
+}
