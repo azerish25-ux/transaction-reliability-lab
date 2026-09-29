@@ -31,3 +31,12 @@
 @media(max-width:950px){.admin-filter-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.admin-count-grid{grid-template-columns:repeat(3,minmax(0,1fr))}.admin-detail-grid{grid-template-columns:1fr;gap:0}}
 @media(max-width:540px){.admin-filter-grid{grid-template-columns:1fr}.admin-navigation{padding:.75rem;gap:.2rem}.admin-navigation a{font-size:.82rem;padding:.55rem}.admin-count-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.admin-facts{grid-template-columns:1fr;gap:.2rem}.admin-facts dd{margin-bottom:.7rem}.admin-pager>div{width:100%}.admin-pager button{flex:1}.admin-heading .button{width:100%;justify-content:center}.admin-panel{border-radius:.55rem}.admin-check>div{align-items:start}.admin-money{white-space:normal}}
 @media(prefers-reduced-motion:reduce){.admin-workspace *{scroll-behavior:auto!important;transition:none!important;animation:none!important}}
+
+/* Keep investigation tables semantic and horizontally scrollable, rather than inheriting
+   the customer-wallet mobile card transformation and losing their column headings. */
+.admin-table{display:table}
+.admin-table thead{display:table-header-group;position:static;width:auto;height:auto;overflow:visible;clip:auto}
+.admin-table tbody{display:table-row-group}
+.admin-table tr,.admin-table tbody tr{display:table-row;border:0;border-radius:0;padding:0}
+.admin-table th,.admin-table td{display:table-cell}
+.admin-table td::before{content:none}
