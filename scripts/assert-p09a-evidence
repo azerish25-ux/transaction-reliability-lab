@@ -4,15 +4,16 @@ from pathlib import Path
 import json
 import subprocess
 import sys
-import xml.etree.ElementTree as ET
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / 'lab-support/p09a'))
-from core import LabError, digest, validate_result, valid_uuid
+from core import LabError, digest, junit, validate_result, valid_uuid
+from evidence_integrity import (EvidenceIntegrityError, MAX_XML, frontend_manifest,
+                                read_artifact, validate_images, validate_junit, validate_png)
 BASE = ROOT / '.evidence/p09a'
 
 
 def load(path):
-    return json.loads(path.read_text())
+    return json.loads(read_artifact(BASE, path, maximum=MAX_XML))
 
 
 def verify():
@@ -21,9 +22,12 @@ def verify():
         raise LabError('EVIDENCE_DIRTY_CHECKOUT')
     summary = load(BASE / 'summary.json')
     if (summary['sourceSha'] != source or summary['completeP09'] is not False
+            or summary.get('requiredFaults') != 8 or summary.get('requiredDefects') != 24
             or summary['implementedFaultsVerified'] != 1 or summary['validDefectsDetected'] != 1
-            or len(summary['runs']) != 2 or {r['scenario'] for r in summary['runs']} != {'F01', 'D02'}):
+            or len(summary['runs']) != 2 or {r['scenario'] for r in summary['runs']} != {'F01', 'D02'}
+            or len({r['id'] for r in summary['runs']}) != 2):
         raise LabError('EVIDENCE_SUMMARY_INVALID')
+    instances = set()
     for run in summary['runs']:
         directory = BASE / valid_uuid(run['id'])
         manifest = load(directory / 'manifest.json')
@@ -32,16 +36,14 @@ def verify():
         if set(manifest['files']) != {'verdict.json', 'results.xml'}:
             raise LabError('EVIDENCE_MANIFEST_FILES_INVALID')
         for name, expected in manifest['files'].items():
-            if digest((directory / name).read_bytes()) != expected:
+            if digest(read_artifact(BASE, directory / name, maximum=MAX_XML)) != expected:
                 raise LabError('EVIDENCE_ARTIFACT_HASH_MISMATCH')
         value = load(directory / 'verdict.json'); validate_result(value, source)
         if value['runId'] != run['id'] or value['scenario'] != run['scenario'] or value['verdict'] != run['verdict']:
             raise LabError('EVIDENCE_RUN_IDENTITY_MISMATCH')
-        xml = ET.parse(directory / 'results.xml').getroot()
-        expected_failure = 1 if run['scenario'] == 'D02' else 0
-        if (len(xml.findall('testcase')) != len(value['phases']) or int(xml.get('failures', '-1')) != expected_failure
-                or int(xml.get('errors', '-1')) != 0 or int(xml.get('skipped', '-1')) != 0):
-            raise LabError('EVIDENCE_JUNIT_DISCOVERY_INVALID')
+        instances.add(value['instanceId'])
+        # Counts alone cannot establish which business assertion actually failed.
+        validate_junit(read_artifact(BASE, directory / 'results.xml', maximum=MAX_XML), junit(value))
     browser = load(BASE / 'browser/results.json')
     expected_browser = {'UNAUTHENTICATED_LAB_DENIED', 'ADMIN_COMMAND_REQUIRES_CSRF',
                         'ADMIN_BROWSER_EXECUTES_REAL_F01', 'ADMIN_BROWSER_EXECUTES_REAL_D02',
@@ -53,8 +55,7 @@ def verify():
             or any(t['status'] != 'PASS' for t in browser['tests'])):
         raise LabError('EVIDENCE_BROWSER_INCOMPLETE')
     for name in ('desktop.png', 'mobile.png'):
-        if not (BASE / 'browser' / name).read_bytes().startswith(b'\x89PNG\r\n\x1a\n'):
-            raise LabError('EVIDENCE_SCREENSHOT_INVALID')
+        validate_png(read_artifact(BASE, BASE / 'browser' / name))
     lifecycle = load(BASE / 'lifecycle.json')
     if (lifecycle['sourceSha'] != source or len(lifecycle['tests']) != 2
             or {t['id'] for t in lifecycle['tests']} != {'CONTROLLER_SIGKILL_GUARDIAN_RECOVERY', 'REAL_MUTANT_AUTOMATIC_EXPIRY'}
@@ -66,21 +67,21 @@ def verify():
         if run['sourceSha'] != source or run['verdict'] != expected or run['cleanup'].get('restored') is not True:
             raise LabError('EVIDENCE_LIFECYCLE_VERDICT_INVALID')
     packaging = load(BASE / 'packaging.json')
+    frontend = frontend_manifest(ROOT / 'frontend/dist')
     if (packaging['scope'] != 'P09A_SPECIFIC_EXCLUSION_ONLY' or packaging['excluded'] is not True
+            or packaging.get('sourceSha') != source or packaging.get('dirtySource') is not False
             or packaging['globalG12Complete'] is not False or packaging['jarEntriesInspected'] < 1
-            or packaging['frontendFilesInspected'] < 1
+            or packaging['frontendFilesInspected'] != len(frontend)
+            or packaging.get('normalFrontendSha256') != frontend
             or packaging['normalJarSha256'] != digest((ROOT / 'backend/target/ledgerguard.jar').read_bytes())):
         raise LabError('EVIDENCE_NORMAL_PACKAGING_INVALID')
     images = load(BASE / 'images.json')
-    if (images['sourceSha'] != source or images['dirtySource'] is not False
-            or set(images['imageIds']) != {'postgres', 'toxiproxy', 'api', 'control-api', 'controller', 'guardian'}
-            or images['composeSha256'] != digest((ROOT / 'compose.lab.yaml').read_bytes())):
-        raise LabError('EVIDENCE_IMAGE_PROVENANCE_INVALID')
+    validate_images(images, source, digest((ROOT / 'compose.lab.yaml').read_bytes()), instances)
     print('P09A evidence validated: F01=1/8, D02=1/24; full P09 remains INCOMPLETE.')
 
 
 if __name__ == '__main__':
     try: verify()
     except Exception as error:
-        print('P09A EVIDENCE FAILED: ' + (error.code if isinstance(error, LabError) else type(error).__name__), file=sys.stderr)
+        print('P09A EVIDENCE FAILED: ' + (error.code if isinstance(error, (LabError, EvidenceIntegrityError)) else type(error).__name__), file=sys.stderr)
         raise SystemExit(1)

@@ -2,8 +2,6 @@
 import json
 import re
 import time
-from core import LabError, Settings, Store
-from guardian import Driver
 
 
 def diagnostic(lease):
@@ -13,10 +11,12 @@ def diagnostic(lease):
     return {'guardianError': safe_code,
             'resetRequested': lease.get('desired') == 'NONE',
             'resetApplied': lease.get('applied') == 'NONE',
-            'generationAcknowledged': lease.get('generation') == lease.get('applied_generation')}
+            'generationAcknowledged': type(lease.get('generation')) is int and lease.get('generation') == lease.get('applied_generation')}
 
 
 def main():
+    from core import LabError, Settings, Store
+    from guardian import Driver
     settings = Settings.environment()
     store = Store(settings.state_dir)
     deadline = time.monotonic() + 25
