@@ -126,6 +126,9 @@ services:
 
   controller:
     <<: *security
+    # Docker needs a non-internal bridge to materialize the loopback publication.
+    # Only this authenticated HTTP controller joins it; fault targets stay internal.
+    networks: [lab, console]
     build:
       context: .
       dockerfile: lab-support/p09a/Dockerfile
@@ -171,3 +174,7 @@ volumes:
 networks:
   lab:
     internal: true
+  console:
+    driver: bridge
+    driver_opts:
+      com.docker.network.bridge.host_binding_ipv4: "127.0.0.1"
