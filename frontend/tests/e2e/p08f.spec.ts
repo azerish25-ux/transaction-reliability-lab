@@ -4,7 +4,7 @@ import { test, expect, command, read, signIn, accessible, screenshot, sql, type 
 import type { AdminDetail, ReconciliationReport } from '../../src/admin-api.js';
 
 // Administrator responses may include private investigation data. Capture only explicit, synthetic UI screenshots.
-test.use({ trace: 'off', video: 'off', screenshot: 'off' });
+test.use({ trace: 'off', video: 'off', screenshot: 'off', actionTimeout: 10_000, navigationTimeout: 20_000 });
 test.setTimeout(120_000);
 const uuid=(value:string)=>{if(!/^[0-9a-f-]{36}$/i.test(value))throw new Error('Invalid P08F fixture UUID');return value;};
 async function open(page:BrowserPage,label:string):Promise<void>{await page.getByRole('navigation',{name:'Administrator investigation',exact:true}).getByRole('link',{name:label,exact:true}).click();}
@@ -43,7 +43,7 @@ test('P08FE2E03 audit history links immutable operation identities without priva
   const f=await lab.settled(),admin=await lab.actor(true);const reason='P08F private synthetic adjustment reason';
   const refund=await command(f.recipient.api,`/payments/${f.payment.id}/refunds`,{amountMinor:'100',reason});expect(refund.status()).toBe(201);
   await signIn(page,admin);await page.goto(`/admin/transactions/${f.payment.id}`);await page.getByRole('link',{name:'View financial audit history',exact:true}).click();
-  await expect(page.getByRole('heading',{name:'Financial audit history',exact:true})).toBeVisible();const region=page.getByRole('region',{name:'Financial audit events',exact:true});await expect(region.getByText('Refund',{exact:true})).toBeVisible();
+  await expect(page.getByRole('heading',{name:'Financial audit history',exact:true})).toBeVisible();const region=page.getByRole('region',{name:'Financial audit events',exact:true});const refundId=(await refund.json()).id as string;const refundRow=region.getByRole('row').filter({hasText:refundId});await expect(refundRow).toHaveCount(1);await expect(refundRow.getByRole('cell').first()).toHaveText(/^Refund\s*Sequence \d+$/);
   const response=await admin.api.get(`/api/v1/admin/audit?aggregateId=${f.payment.id}`);expect(response.status()).toBe(200);const data=await response.json();expect(data.integrity).toBe('NOT_CHECKED');expect(JSON.stringify(data)).not.toContain(reason);expect(JSON.stringify(data)).not.toContain('canonical_body');
   expect(data.results.items.length).toBe(Number(sql(`SELECT count(*) FROM ledger.audit_records WHERE aggregate_id='${uuid(f.payment.id)}';`)));
   await expect(page.getByText('not checked in this list',{exact:true})).toBeVisible();await accessible(page);await screenshot(page,info,'p08f-audit');

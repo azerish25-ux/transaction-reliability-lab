@@ -1,5 +1,5 @@
 .admin-navigation{display:flex;gap:.5rem;flex-wrap:wrap;padding:1rem clamp(1rem,4vw,3rem);border-bottom:1px solid #dce3eb;background:#eef3f8}
-.admin-navigation a{color:#173753;text-decoration:none;padding:.55rem .85rem;border-radius:.45rem;font-weight:650}
+.admin-navigation a{display:inline-flex;align-items:center;min-height:44px;color:#173753;text-decoration:none;padding:.55rem .85rem;border-radius:.45rem;font-weight:650}
 .admin-navigation a:hover,.admin-navigation a[aria-current=page]{background:#dce8f3;color:#112c45;text-decoration:underline}
 .admin-workspace{max-width:1320px;margin:0 auto;padding:clamp(1rem,3vw,2.5rem);color:#192e43;min-width:0}
 .admin-heading{display:flex;justify-content:space-between;gap:1.5rem;align-items:start;margin-bottom:1.6rem;flex-wrap:wrap}
