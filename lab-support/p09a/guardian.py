@@ -13,6 +13,7 @@ from typing import Any
 
 from clients import FUNCTION, Oracle, request
 from core import FAULT_SECONDS, LabError, Settings, Store, canonical, digest
+from proxy_contract import is_lab_proxy
 
 CLAUSE = "IF prior.fingerprint<>fingerprint THEN"
 MUTANT = "IF FALSE AND prior.fingerprint<>fingerprint THEN"
@@ -40,7 +41,10 @@ class Driver:
                            headers={'Content-Type': 'application/json'}, timeout=3)
         if response.status not in {200, 201, 204}:
             raise LabError('PROXY_CONTROL_FAILED', 503)
-        return response.json()
+        value = response.json()
+        if method == 'GET' and suffix == '' and not is_lab_proxy(value):
+            raise LabError('PROXY_TARGET_CHANGED', 503)
+        return value
 
     def definition(self, mutate: bool) -> dict[str, Any]:
         with self.oracle.connection(owner=True) as conn:
@@ -65,7 +69,7 @@ class Driver:
     def reset(self) -> dict[str, Any]:
         # Reset network first even when schema validation subsequently fails.
         current = self.proxy()
-        if current.get('upstream') != 'postgres:5432' or current.get('listen') != '0.0.0.0:15432':
+        if not is_lab_proxy(current):
             raise LabError('PROXY_TARGET_CHANGED', 503)
         for toxic in current.get('toxics', []):
             if toxic.get('name') != TOXIC_NAME:
@@ -76,7 +80,7 @@ class Driver:
         proof = self.definition(False)
         observed = self.proxy()
         proof.update(proxyEnabled=observed.get('enabled'), toxics=observed.get('toxics', []), restored=True)
-        if proof['proxyEnabled'] is not True or proof['toxics']:
+        if not is_lab_proxy(observed) or proof['proxyEnabled'] is not True or proof['toxics']:
             raise LabError('PROXY_RESET_READBACK_FAILED', 503)
         return proof
 
