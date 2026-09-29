@@ -1,77 +1,148 @@
 #!/usr/bin/env python3
-"""Preserve every earlier gate and bind P08F requirements to executed evidence."""
+"""Preserve earlier gates and bind P08F requirements to actual executed evidence."""
 import hashlib
 import json
+import re
 import subprocess
+import sys
 import xml.etree.ElementTree as ET
 from datetime import datetime, timezone
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
-subprocess.run(['python3', 'scripts/assert-p08e-evidence'], cwd=ROOT, check=True)
+PROJECTS = {'chromium-desktop': 1440, 'chromium-tablet': 768, 'chromium-mobile': 390}
+NONPASSING = {'failure', 'error', 'skipped', 'flakyFailure', 'flakyError', 'rerunFailure', 'rerunError'}
 
-def suite(relative, minimum):
-    path = ROOT / relative
-    if not path.is_file(): raise SystemExit(f'Missing executed suite: {relative}')
+
+def require(condition, message):
+    if not condition:
+        raise ValueError(message)
+
+
+def suite(path, minimum):
+    require(path.is_file(), f'Missing executed suite: {path}')
     root = ET.parse(path).getroot()
+    require(root.tag in ('testsuite', 'testsuites'), f'Invalid JUnit root: {path}')
     cases = list(root.iter('testcase'))
     suites = [root] if root.tag == 'testsuite' else list(root.iter('testsuite'))
-    counts = {k: sum(int(s.get(k, '0')) for s in suites) for k in ('tests','failures','errors','skipped')}
-    if len(cases) < minimum or len(cases) != counts['tests'] or any(counts[k] for k in ('failures','errors','skipped')):
-        raise SystemExit(f'Incomplete or failed suite {relative}: {counts}')
-    if any(any(c.find(tag) is not None for tag in ('failure','error','skipped')) for c in cases):
-        raise SystemExit(f'Nonpassing testcase: {relative}')
+    counts = {k: sum(int(s.get(k, '0')) for s in suites) for k in ('tests', 'failures', 'errors', 'skipped')}
+    require(len(cases) >= minimum and len(cases) == counts['tests'], f'Incomplete suite {path}: {counts}')
+    require(all(int(s.get(k, '0')) >= 0 for s in suites for k in counts), f'Negative counts: {path}')
+    require(not any(counts[k] for k in ('failures', 'errors', 'skipped')), f'Nonpassing suite {path}: {counts}')
+    require(not any(int(s.get('flakes', '0')) for s in suites), f'Flaky suite: {path}')
+    require(not any(child.tag in NONPASSING for c in cases for child in c), f'Nonpassing or retried testcase: {path}')
+    for s in suites:
+        require(len(s.findall('testcase')) == int(s.get('tests', '0')), f'JUnit suite count mismatch: {path}')
+        identities = [(c.get('classname', ''), c.get('name', '')) for c in s.findall('testcase')]
+        require(len(identities) == len(set(identities)), f'Duplicate testcase in suite: {path}')
+    if root.tag == 'testsuites':
+        for key in counts:
+            if key in root.attrib:
+                require(int(root.get(key)) == counts[key], f'JUnit aggregate mismatch for {key}: {path}')
     return counts, cases, suites
 
-client_counts, client, _ = suite('.evidence/client/p08f-results.xml', 24)
-unit_counts, unit, _ = suite('backend/target/surefire-reports/TEST-lab.ledgerguard.admin.AdminFiltersTest.xml', 12)
-integration_counts, integration, _ = suite('backend/target/failsafe-reports/TEST-lab.ledgerguard.AdministratorInvestigationIT.xml', 12)
-browser_counts, browser, projects = suite('.evidence/playwright/junit.xml', 144)
-for prefix, total, cases in [('P08FTS',24,client),('P08FUT',12,unit),('P08FIT',12,integration)]:
-    for i in range(1,total+1):
-        if sum(f'{prefix}{i:02}' in c.get('name','') for c in cases) != 1:
-            raise SystemExit(f'Missing or duplicate {prefix}{i:02}')
-for project in ('chromium-desktop','chromium-tablet','chromium-mobile'):
-    matching = [s for s in projects if s.get('hostname','') == project]
-    for i in range(1,11):
-        if sum(f'P08FE2E{i:02}' in c.get('name','') for s in matching for c in s.findall('testcase')) != 1:
-            raise SystemExit(f'Missing or duplicate {project}/P08FE2E{i:02}')
-executed = {'p08f-client':client,'p08f-unit':unit,'p08f-browser':browser,'p08f-integration':integration}
-manifest=json.loads((ROOT/'docs/implementation/P08F_REQUIREMENTS.json').read_text())
-if not (ROOT/manifest['sourceContract']).is_file(): raise SystemExit('Missing original specification')
-requirements=[]; seen=set()
-for requirement in manifest['requirements']:
-    if requirement['id'] in seen: raise SystemExit('Duplicate requirement')
-    seen.add(requirement['id']); matches=[]
-    for kind,prefixes in requirement['tests'].items():
-        for prefix in prefixes:
-            found=[c.get('name','') for c in executed[kind] if prefix in c.get('name','')]
-            if not found: raise SystemExit(f"Missing executed mapping: {requirement['id']}/{prefix}")
-            matches.extend({'suite':kind,'test':name} for name in found)
-    requirements.append({**requirement,'status':'VERIFIED_PASS','executed':matches})
-screens=[]
-for project in ('chromium-desktop','chromium-tablet','chromium-mobile'):
-    for name in ('p08f-search','p08f-detail','p08f-audit','p08f-report','p08f-failed-work'):
-        path=ROOT/f'.evidence/playwright/screenshots/{project}-{name}.png'
-        if not path.is_file() or path.stat().st_size<1000: raise SystemExit(f'Missing screenshot {path.name}')
-        screens.append({'path':str(path.relative_to(ROOT)),'sha256':hashlib.sha256(path.read_bytes()).hexdigest()})
-if 'retries: 0' not in (ROOT/'frontend/playwright.config.ts').read_text(): raise SystemExit('Functional retries must stay zero')
-source=(ROOT/'frontend/tests/e2e/p08f.spec.ts').read_text()
-if "trace: 'off', video: 'off', screenshot: 'off'" not in source: raise SystemExit('Administrator investigation journeys must not automatically capture sensitive artifacts')
-contract=json.loads((ROOT/'backend/src/main/resources/openapi/p08f-ui.json').read_text())
-for path in ('/api/v1/admin/transactions','/api/v1/admin/transactions/{id}','/api/v1/admin/audit','/api/v1/admin/reconciliation','/api/v1/admin/reconciliation/{id}','/api/v1/admin/failed-work','/api/v1/admin/failed-work/{id}/replay'):
-    if path not in contract['paths']: raise SystemExit(f'Missing P08F contract path: {path}')
-for source in manifest['testSources'].values():
-    if not (ROOT/source).is_file(): raise SystemExit(f'Missing mapped test source: {source}')
-sha=subprocess.check_output(['git','rev-parse','HEAD'],cwd=ROOT,text=True).strip()
-if subprocess.check_output(['git','status','--porcelain','--untracked-files=no'],cwd=ROOT,text=True).strip(): raise SystemExit('Exact-SHA gate requires clean tracked sources')
-report={'phase':'P08F','status':'VERIFIED_PASS','fullProductStatus':'INCOMPLETE_NO_GO','sourceSha':sha,
-    'trackedTreeDirty':False,'timestamp':datetime.now(timezone.utc).isoformat(),
-    'suites':{'p08f-client':client_counts,'p08f-unit':unit_counts,'p08f-integration':integration_counts,'all-browser':browser_counts},
-    'p08fBrowserCases':sum('P08FE2E' in c.get('name','') for c in browser),'screenshots':screens,'requirements':requirements,
-    'scope':'P01-P08E preserved; ADMIN search, connected journal/audit/failed-work investigation, consistent read-only financial checks, saved report recovery and responsive accessibility. P09-P11 and final release remain open.'}
-out=ROOT/'.evidence/p08f'; out.mkdir(parents=True,exist_ok=True)
-(out/'test-summary.json').write_text(json.dumps(report,indent=2)+'\n')
-(out/'requirements-matrix.md').write_text('# Executed P08F requirements\n\nSource: `'+sha+'`; tracked tree clean.\n\n| Requirement | Executed cases | Status |\n|---|---:|---|\n'+'\n'.join(f"| {r['id']} | {len(r['executed'])} | VERIFIED_PASS |" for r in requirements)+'\n')
-print(json.dumps({k:v for k,v in report.items() if k!='requirements'},indent=2))
-print(f'Bound {len(requirements)} P08F requirements to executed evidence.')
+
+def matches(cases, test_id):
+    # Match a stable ID, not a substring such as P08FIT01 inside P08FIT010.
+    expression = re.compile(r'^' + re.escape(test_id) + r'(?:[_ -]|$)')
+    return [c for c in cases if expression.search(c.get('name', ''))]
+
+
+def require_ids(cases, prefix, total, label):
+    for number in range(1, total + 1):
+        test_id = f'{prefix}{number:02}'
+        require(len(matches(cases, test_id)) == 1, f'Missing or duplicate {label}/{test_id}')
+
+
+def executed_evidence(root, manifest):
+    """Validate generated results without issuing a source-SHA certification."""
+    client_counts, client, _ = suite(root / '.evidence/client/p08f-results.xml', 24)
+    unit_counts, unit, _ = suite(root / 'backend/target/surefire-reports/TEST-lab.ledgerguard.admin.AdminFiltersTest.xml', 12)
+    integration_counts, integration, _ = suite(root / 'backend/target/failsafe-reports/TEST-lab.ledgerguard.AdministratorInvestigationIT.xml', 13)
+    browser_counts, browser, projects = suite(root / '.evidence/playwright/junit.xml', 147)
+    for prefix, total, cases in [('P08FTS', 24, client), ('P08FUT', 12, unit), ('P08FIT', 13, integration)]:
+        require_ids(cases, prefix, total, 'P08F')
+    journeys, layout = [], []
+    for project in PROJECTS:
+        for filename, prefix, total, output in [('p08f.spec.ts', 'P08FE2E', 10, journeys),
+                                                ('p08f-table.spec.ts', 'P08FLAYOUT', 1, layout)]:
+            found = [s for s in projects if s.get('hostname') == project and s.get('name') == filename]
+            require(len(found) == 1, f'Missing or duplicate browser suite {project}/{filename}')
+            cases = found[0].findall('testcase')
+            require_ids(cases, prefix, total, project)
+            output.extend(cases)
+    executed = {'p08f-client': client, 'p08f-unit': unit, 'p08f-browser': journeys,
+                'p08f-integration': integration, 'p08f-layout': layout}
+    require(manifest['fullProductStatus'] == 'INCOMPLETE_NO_GO', 'Do not upgrade full-product status')
+    require({r['id'] for r in manifest['requirements']} == {f'P08F{i:02}' for i in range(1, 8)}, 'Missing P08F requirements')
+    requirements, seen = [], set()
+    for requirement in manifest['requirements']:
+        require(requirement['id'] not in seen, 'Duplicate requirement')
+        seen.add(requirement['id'])
+        evidence = []
+        require(bool(requirement['tests']), f'No tests mapped for {requirement["id"]}')
+        for kind, ids in requirement['tests'].items():
+            require(kind in executed and bool(ids), f'Unknown or empty evidence suite: {kind}')
+            for test_id in ids:
+                found = matches(executed[kind], test_id)
+                expected = 3 if kind in ('p08f-browser', 'p08f-layout') else 1
+                require(len(found) == expected, f'Missing executed mapping: {requirement["id"]}/{kind}/{test_id}')
+                evidence.extend({'suite': kind, 'test': c.get('name')} for c in found)
+        requirements.append({**requirement, 'status': 'VERIFIED_PASS', 'executed': evidence})
+    return {'suites': {'p08f-client': client_counts, 'p08f-unit': unit_counts,
+                       'p08f-integration': integration_counts, 'all-browser': browser_counts},
+            'p08fBrowserCases': len(journeys), 'p08fLayoutCases': len(layout), 'requirements': requirements}
+
+
+def recordings_disabled(source):
+    # Formatting must not affect the safeguard; require all three in one test.use object.
+    blocks = re.findall(r'\btest\.use\s*\(\s*\{([^{}]*)\}\s*\)', source, re.S)
+    return any(all(re.search(r'\b' + key + r'''\s*:\s*(['"])off\1''', block)
+                   for key in ('trace', 'video', 'screenshot')) for block in blocks)
+
+
+def main():
+    subprocess.run([sys.executable, 'tests/test_p08f_evidence.py'], cwd=ROOT, check=True)
+    subprocess.run([sys.executable, 'scripts/assert-p08e-evidence'], cwd=ROOT, check=True)
+    manifest = json.loads((ROOT / 'docs/implementation/P08F_REQUIREMENTS.json').read_text())
+    require((ROOT / manifest['sourceContract']).is_file(), 'Missing original specification')
+    report = executed_evidence(ROOT, manifest)
+    for source in manifest['testSources'].values():
+        require((ROOT / source).is_file(), f'Missing mapped test source: {source}')
+    for filename in ('p08f.spec.ts', 'p08f-table.spec.ts'):
+        require(recordings_disabled((ROOT / 'frontend/tests/e2e' / filename).read_text()),
+                f'Automatic administrator recordings must stay off: {filename}')
+    require(re.search(r'\bretries\s*:\s*0\b', (ROOT / 'frontend/playwright.config.ts').read_text()), 'Functional retries must stay zero')
+    screens = []
+    for project, width in PROJECTS.items():
+        for name in ('search', 'detail', 'audit', 'report', 'failed-work'):
+            path = ROOT / f'.evidence/playwright/screenshots/{project}-p08f-{name}.png'
+            require(path.is_file(), f'Missing screenshot: {path.name}')
+            image = path.read_bytes()
+            require(len(image) >= 1000 and image.startswith(b'\x89PNG\r\n\x1a\n') and image[12:16] == b'IHDR', f'Invalid screenshot: {path.name}')
+            require(int.from_bytes(image[16:20], 'big') == width, f'Wrong viewport screenshot: {path.name}')
+            screens.append({'path': str(path.relative_to(ROOT)), 'sha256': hashlib.sha256(image).hexdigest()})
+    contract = json.loads((ROOT / 'backend/src/main/resources/openapi/p08f-ui.json').read_text())
+    for path in ('/api/v1/admin/transactions', '/api/v1/admin/transactions/{id}', '/api/v1/admin/audit',
+                 '/api/v1/admin/reconciliation', '/api/v1/admin/reconciliation/{id}', '/api/v1/admin/failed-work', '/api/v1/admin/failed-work/{id}/replay'):
+        require(path in contract['paths'], f'Missing P08F contract path: {path}')
+    sha = subprocess.check_output(['git', 'rev-parse', 'HEAD'], cwd=ROOT, text=True).strip()
+    require(not subprocess.check_output(['git', 'status', '--porcelain', '--untracked-files=no'], cwd=ROOT, text=True).strip(), 'Exact-SHA gate requires clean tracked sources')
+    previous = json.loads((ROOT / '.evidence/p08e/test-summary.json').read_text())
+    require(previous['status'] == 'VERIFIED_PASS' and previous['sourceSha'] == sha and previous['trackedTreeDirty'] is False, 'Earlier evidence must certify this exact source')
+    report.update(phase='P08F', status='VERIFIED_PASS', fullProductStatus='INCOMPLETE_NO_GO', sourceSha=sha,
+                  trackedTreeDirty=False, timestamp=datetime.now(timezone.utc).isoformat(), screenshots=screens,
+                  scope='P01-P08E preserved; administrator investigation, consistent read-only financial checks, saved report recovery and responsive accessibility. P09-P11 and final release remain open.')
+    out = ROOT / '.evidence/p08f'
+    out.mkdir(parents=True, exist_ok=True)
+    (out / 'test-summary.json').write_text(json.dumps(report, indent=2) + '\n')
+    rows = '\n'.join(f"| {r['id']} | {len(r['executed'])} | VERIFIED_PASS |" for r in report['requirements'])
+    (out / 'requirements-matrix.md').write_text(f'# Executed P08F requirements\n\nSource: `{sha}`; tracked tree clean.\n\n| Requirement | Executed cases | Status |\n|---|---:|---|\n{rows}\n')
+    print(json.dumps({k: v for k, v in report.items() if k != 'requirements'}, indent=2))
+
+
+if __name__ == '__main__':
+    try:
+        main()
+    except (ValueError, KeyError, OSError, ET.ParseError) as error:
+        raise SystemExit(f'P08F evidence rejected: {error}') from error
