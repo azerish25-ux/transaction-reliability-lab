@@ -1,0 +1,203 @@
+name: P08F verified evidence handoff
+on:
+  workflow_run:
+    workflows: [LedgerGuard P08F verification]
+    types: [completed]
+permissions:
+  contents: write
+  actions: read
+jobs:
+  evidence:
+    if: github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.head_branch == 'main' && github.event.workflow_run.event == 'push' && github.event.workflow_run.head_repository.full_name == github.repository
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+        with:
+          ref: main
+          fetch-depth: 0
+      - name: Verify exact-source artifacts and retain immutable evidence
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERIFIED_RUN: ${{ github.event.workflow_run.id }}
+          VERIFIED_SHA: ${{ github.event.workflow_run.head_sha }}
+        run: |
+          python3 - <<'PY'
+          import hashlib, io, json, os, re, subprocess, time, zipfile
+          import xml.etree.ElementTree as ET
+          from pathlib import Path, PurePosixPath
+          repo = os.environ['GITHUB_REPOSITORY']
+          assert repo == 'azerish25-ux/transaction-reliability-lab'
+          run_id = int(os.environ['VERIFIED_RUN'])
+          sha = os.environ['VERIFIED_SHA']
+          assert re.fullmatch('[0-9a-f]{40}', sha)
+          def gh(path):
+              return json.loads(subprocess.check_output(['gh', 'api', f'repos/{repo}/{path}'], timeout=90))
+          def git(*args):
+              return subprocess.check_output(['git', *args], text=True, timeout=90).strip()
+          def skip(reason):
+              print('Evidence not promoted: ' + reason)
+              Path(os.environ['GITHUB_STEP_SUMMARY']).write_text('Evidence not promoted: ' + reason + '\n')
+              raise SystemExit(0)
+          run = gh(f'actions/runs/{run_id}')
+          assert run['head_sha'] == sha and run['head_branch'] == 'main' and run['event'] == 'push'
+          assert run['head_repository']['full_name'] == repo
+          assert run['path'] == '.github/workflows/pr.yml' and run['name'] == 'LedgerGuard P08F verification'
+          assert run['status'] == 'completed' and run['conclusion'] == 'success'
+          jobs_response = gh(f'actions/runs/{run_id}/jobs?per_page=100')
+          jobs = jobs_response['jobs']
+          assert jobs_response['total_count'] == len(jobs) and jobs
+          assert all(j['conclusion'] == 'success' and j['head_sha'] == sha for j in jobs)
+          assert any(j['name'] == 'Required P08F gate' for j in jobs)
+          head = git('rev-parse', 'HEAD')
+          if git('merge-base', sha, head) != sha: skip('tested source is not an ancestor of main')
+          allowed = lambda p: p == 'README.md' or p.startswith('docs/') or p == '.github/workflows/p08f-evidence-handoff.yml'
+          if not all(allowed(p) for p in git('diff', '--name-only', sha, head).splitlines()):
+              skip('production or verification source advanced; retain the older run without relabeling the new candidate')
+          stem = 'p08f-' + sha[:7]
+          provenance_path = Path(f'docs/evidence/{stem}.json')
+          if provenance_path.exists():
+              existing = json.loads(provenance_path.read_text())
+              if existing.get('sourceSha') == sha and existing.get('workflowRunId') == run_id:
+                  skip('this exact source/run already has durable evidence')
+          artifacts_response = gh(f'actions/runs/{run_id}/artifacts?per_page=100')
+          assert artifacts_response['total_count'] == len(artifacts_response['artifacts'])
+          artifacts = [a for a in artifacts_response['artifacts'] if a['name'] == f'ledgerguard-p08f-evidence-{sha}']
+          assert len(artifacts) == 1
+          artifact = artifacts[0]
+          assert not artifact['expired'] and artifact['workflow_run']['head_sha'] == sha
+          assert 0 < artifact['size_in_bytes'] < 300_000_000
+          raw = subprocess.check_output(['gh', 'api', f'repos/{repo}/actions/artifacts/{artifact["id"]}/zip'], timeout=120)
+          digest = hashlib.sha256(raw).hexdigest()
+          assert len(raw) == artifact['size_in_bytes'] and artifact['digest'] == 'sha256:' + digest
+          archive = zipfile.ZipFile(io.BytesIO(raw))
+          assert len(archive.namelist()) == len(set(archive.namelist()))
+          assert sum(item.file_size for item in archive.infolist()) < 600_000_000
+          assert all(not PurePosixPath(n).is_absolute() and '..' not in PurePosixPath(n).parts for n in archive.namelist())
+          report = json.loads(archive.read('.evidence/p08f/test-summary.json'))
+          assert report['status'] == 'VERIFIED_PASS' and report['sourceSha'] == sha and report['trackedTreeDirty'] is False
+          assert report['fullProductStatus'] == 'INCOMPLETE_NO_GO' and report['p08fBrowserCases'] == 30
+          assert len(report['requirements']) == 7 and all(r['status'] == 'VERIFIED_PASS' for r in report['requirements'])
+          assert len(report['screenshots']) == 15
+          def aggregate(names):
+              assert names
+              totals = dict(tests=0, failures=0, errors=0, skipped=0)
+              for name in names:
+                  root = ET.fromstring(archive.read(name))
+                  suites = [root] if root.tag == 'testsuite' else list(root.iter('testsuite'))
+                  cases = list(root.iter('testcase'))
+                  assert len(cases) == sum(int(s.get('tests', '0')) for s in suites)
+                  assert not any(any(c.find(t) is not None for t in ('failure', 'error', 'skipped')) for c in cases)
+                  for key in totals: totals[key] += sum(int(s.get(key, '0')) for s in suites)
+              assert totals['tests'] > 0 and not any(totals[k] for k in ('failures', 'errors', 'skipped'))
+              return totals
+          names = archive.namelist()
+          def junit(folder):
+              return aggregate([n for n in names if n.startswith(folder) and n.endswith('.xml') and PurePosixPath(n).name.startswith('TEST-')])
+          counts = {'JUnit unit': junit('backend/target/surefire-reports/'),
+                    'PostgreSQL/HTTP integration': junit('backend/target/failsafe-reports/'),
+                    'TypeScript client': aggregate([n for n in names if n.startswith('.evidence/client/') and n.endswith('.xml')]),
+                    'Browser': aggregate(['.evidence/playwright/junit.xml'])}
+          assert counts['Browser']['tests'] >= 144
+          folder = Path('docs/evidence') / stem
+          folder.mkdir(parents=True, exist_ok=True)
+          selected = {'chromium-desktop-p08f-search.png', 'chromium-desktop-p08f-detail.png',
+                      'chromium-tablet-p08f-report.png', 'chromium-mobile-p08f-audit.png'}
+          retained = []
+          for screenshot in report['screenshots']:
+              image = archive.read(screenshot['path'])
+              assert len(image) < 8_000_000 and image.startswith(b'\x89PNG\r\n\x1a\n')
+              assert hashlib.sha256(image).hexdigest() == screenshot['sha256']
+              name = PurePosixPath(screenshot['path']).name
+              if name in selected:
+                  (folder/name).write_bytes(image)
+                  retained.append({'path': str(folder/name), 'sha256': screenshot['sha256']})
+          assert len(retained) == 4
+          (folder/'requirements-matrix.md').write_bytes(archive.read('.evidence/p08f/requirements-matrix.md'))
+          limitations = ['Full product remains INCOMPLETE / NO_GO; P09-P11 and final release campaigns remain open.',
+                         'Raw CI artifacts have finite retention; the selected screenshots and summary are retained in Git.',
+                         'The tested source SHA is distinct from subsequent evidence-documentation commits.',
+                         'Administrator journeys disable automatic recordings; retained screenshots use synthetic fixtures.',
+                         'A read-only snapshot report is not current live health, financial readiness or security certification.']
+          provenance = {'sourceSha': sha, 'workflowRunId': run_id, 'workflowUrl': run['html_url'],
+                        'workflowConclusion': 'success', 'runAttempt': run['run_attempt'],
+                        'jobs': [{k: j[k] for k in ('id', 'name', 'conclusion', 'html_url')} for j in jobs],
+                        'artifact': {k: artifact[k] for k in ('id', 'name', 'digest', 'size_in_bytes', 'created_at', 'expires_at')},
+                        'downloadSha256': digest, 'downloadDigestVerified': True, 'suiteTotals': counts,
+                        'report': report, 'retainedScreenshots': retained, 'limitations': limitations}
+          provenance_path.write_text(json.dumps(provenance, indent=2) + '\n')
+          rows = '\n'.join(f'| {name} | {c["tests"]} | {c["failures"]} | {c["errors"]} | {c["skipped"]} |' for name, c in counts.items())
+          totals = ', '.join(f'{c["tests"]} {name}' for name, c in counts.items())
+          evidence = f'''# P08F administrator investigation — VERIFIED_PASS
+
+          Synthetic money only. Overall product: **INCOMPLETE / NO_GO**.
+
+          ## Exact-source verification
+
+          Tested implementation: `{sha}`. Permanent [run {run_id}]({run['html_url']}), attempt {run['run_attempt']}, completed successfully including **Required P08F gate**. The tracked source tree was clean. Functional browser retries were disabled. This report does not attribute that execution to a later documentation commit.
+
+          ## Executed results
+
+          | Suite | Tests | Failures | Errors | Skipped |
+          |---|---:|---:|---:|---:|
+          {rows}
+
+          Counts were independently aggregated from the generated XML. Thirty new administrator browser cases cover ten scenarios at desktop, tablet and mobile widths. Seven scoped requirements passed, and fifteen responsive screenshot hashes were verified. The full P01-P08E regression campaign and final reconciliation passed.
+
+          ## Delivered behavior
+
+          Server-authorized, bounded transaction filtering; connected immutable journal, adjustment, event and failed-work detail; safe financial audit history; eight independent read-only reconciliation categories in a repeatable-read database snapshot; immutable saved report history and same-ID response-loss recovery across reload and reauthentication; existing failed-work replay with explicit confirmation. No balance editor, audit edit API or automatic discrepancy repair was added.
+
+          Real PostgreSQL/HTTP checks cover ownership, CSRF, exact monetary strings, stable pagination, concurrent snapshot behavior, duplicate report identity, tamper detection/restoration and protected runtime roles. Browser/SQL oracles cover actual record relationships, historical report immutability, response loss and failed-work replay. Audit list/detail reads explicitly say NOT_CHECKED; hash verification occurs in the scoped reconciliation.
+
+          ## Review corrections
+
+          The source publication encountered a GitHub internal server error; candidate preservation and a bounded transient retry resolved delivery without a force push. Source review also found lexicographic version ordering: event and audit queries now order by qualified numeric columns, with an additional fourteen-version PostgreSQL/HTTP regression.
+
+          ## Retained responsive evidence
+
+          The following unmodified images came from the successful run and matched its recorded hashes. They contain synthetic fixtures. Hash validation is distinct from visual inspection.
+
+          ![Desktop search]({stem}/chromium-desktop-p08f-search.png)
+          ![Desktop detail]({stem}/chromium-desktop-p08f-detail.png)
+          ![Tablet reconciliation]({stem}/chromium-tablet-p08f-report.png)
+          ![Mobile audit]({stem}/chromium-mobile-p08f-audit.png)
+
+          ## Provenance and remaining work
+
+          Artifact `{artifact['id']}`: `{artifact['name']}`, {artifact['size_in_bytes']} bytes; digest `{artifact['digest']}`. The downloaded ZIP matched the digest. Reported expiry: `{artifact['expires_at']}`. [JSON provenance]({stem}.json) and [requirement matrix]({stem}/requirements-matrix.md) retain identifiers and scope.
+
+          P09 isolated faults and seeded defects are next. P10 contracts/security/performance/restore and complete CI lanes, and P11 final evidence/video/release work remain open. No public deployment, full-product release, whole-product accessibility conformance or production-financial certification is claimed.
+          '''
+          Path(f'docs/evidence/{stem}.md').write_text(evidence)
+          subprocess.run(['git', 'diff', '--check'], check=True)
+          subprocess.run(['git', 'add', 'docs/evidence'], check=True)
+          assert all(p.startswith(f'docs/evidence/{stem}') for p in git('diff', '--cached', '--name-only').splitlines())
+          assert git('ls-remote', 'origin', 'refs/heads/main').split()[0] == head, 'main advanced; refusing to overwrite concurrent work'
+          subprocess.run(['git', 'config', 'user.name', 'github-actions[bot]'], check=True)
+          subprocess.run(['git', 'config', 'user.email', '41898282+github-actions[bot]@users.noreply.github.com'], check=True)
+          subprocess.run(['git', 'commit', '-m', 'docs(p08f): retain exact-SHA verification and responsive evidence [skip ci]'], check=True)
+          candidate = git('rev-parse', 'HEAD')
+          for attempt in range(2):
+              remote = git('ls-remote', 'origin', 'refs/heads/main').split()[0]
+              if remote == candidate: break
+              assert remote == head, 'main advanced; no overwrite'
+              result = subprocess.run(['git', 'push', 'origin', 'HEAD:main'], text=True, capture_output=True)
+              print(result.stdout, result.stderr)
+              if result.returncode == 0: break
+              if attempt == 1 or 'Internal Server Error' not in result.stderr: raise RuntimeError('Evidence push failed')
+              time.sleep(5)
+          assert git('ls-remote', 'origin', 'refs/heads/main').split()[0] == candidate
+          out = Path('.evidence/p08f-handoff'); out.mkdir(parents=True, exist_ok=True)
+          (out/'delivery.json').write_text(json.dumps({'sourceSha': sha, 'workflowRunId': run_id, 'documentationCommit': candidate, 'artifactId': artifact['id'], 'suiteTotals': counts}, indent=2)+'\n')
+          subprocess.run(['git', 'bundle', 'create', str(out/'source.bundle'), 'HEAD'], check=True)
+          Path(os.environ['GITHUB_STEP_SUMMARY']).write_text(f'P08F verified source `{sha}`; documentation `{candidate}`; run {run_id}.\n\n{totals}.\n')
+          PY
+      - name: Preserve delivery receipt and source bundle
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: p08f-evidence-handoff-${{ github.run_id }}
+          path: .evidence/p08f-handoff/
+          include-hidden-files: true
+          if-no-files-found: ignore
+          retention-days: 7
