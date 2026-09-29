@@ -19,7 +19,7 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           python3 - <<'PY'
-          import base64, hashlib, json, lzma, os, subprocess
+          import base64, hashlib, json, lzma, os, subprocess, time
           from pathlib import Path, PurePosixPath
           repo=os.environ['GITHUB_REPOSITORY']
           assert repo=='azerish25-ux/transaction-reliability-lab'
@@ -70,11 +70,21 @@ jobs:
           subprocess.run(['git','config','user.name','github-actions[bot]'],check=True)
           subprocess.run(['git','config','user.email','41898282+github-actions[bot]@users.noreply.github.com'],check=True)
           subprocess.run(['git','commit','-m','feat(p08f): implement administrator investigation and snapshot reconciliation'],check=True)
-          subprocess.run(['git','push','origin','HEAD:main'],check=True)
           evidence=Path('.evidence/p08f-apply');evidence.mkdir(parents=True,exist_ok=True)
           (evidence/'source-sha.txt').write_text(git('rev-parse','HEAD')+'\n')
           subprocess.run(['git','bundle','create',str(evidence/'source.bundle'),'HEAD'],check=True)
-          print('Pushed P08F source:',git('rev-parse','HEAD'))
+          candidate=git('rev-parse','HEAD')
+          for attempt in range(2):
+              remote=git('ls-remote','origin','refs/heads/main').split()[0]
+              if remote==candidate: break
+              assert remote==os.environ['GITHUB_SHA'],'main advanced; no overwrite'
+              result=subprocess.run(['git','push','origin','HEAD:main'],capture_output=True,text=True)
+              print(result.stdout); print(result.stderr)
+              if result.returncode==0: break
+              if attempt==1 or 'Internal Server Error' not in result.stderr: raise RuntimeError('Source push failed; candidate bundle preserved')
+              time.sleep(5)
+          assert git('ls-remote','origin','refs/heads/main').split()[0]==candidate
+          print('Pushed P08F source:',candidate)
           PY
       - uses: actions/setup-java@b6effb05e454b25005698d916606bdc6ffcbf961
         with:
