@@ -1,0 +1,54 @@
+name: P08F browser diagnostic
+on:
+  push:
+    branches: [main]
+    paths: [.github/workflows/p08f-browser-diagnostic.yml]
+permissions:
+  contents: read
+jobs:
+  diagnose:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - name: Install locked browser tooling
+        run: |
+          npm ci --prefix frontend --ignore-scripts --no-audit --no-fund
+          npm exec --prefix frontend -- playwright install --with-deps chromium
+      - name: Start real scoped services
+        run: |
+          ./scripts/lab up
+          docker compose --env-file .ledgerguard/runtime.env -f compose.yaml -f compose.p07.yaml up -d --build --wait api scheduler-a scheduler-b receiver webhook-dispatcher-a webhook-dispatcher-b
+          docker compose --env-file .ledgerguard/runtime.env -f compose.yaml -f compose.p07.yaml -f compose.p08c-test.yaml up -d --no-deps --wait api
+          docker compose --env-file .ledgerguard/runtime.env -f compose.yaml restart web
+      - name: Run focused real administrator journeys and stop on first failure
+        run: |
+          set -o pipefail
+          mkdir -p .evidence/p08f-diagnostic
+          cd frontend
+          npx --no-install playwright test p08f.spec.ts --project=chromium-desktop --max-failures=1 2>&1 | tee ../.evidence/p08f-diagnostic/browser.log
+      - name: Collect diagnostic service logs
+        if: always()
+        run: |
+          mkdir -p .evidence/p08f-diagnostic
+          docker compose --env-file .ledgerguard/runtime.env -f compose.yaml -f compose.p07.yaml logs --no-color > .evidence/p08f-diagnostic/services.log 2>&1 || true
+      - name: Clean up scoped services
+        if: always()
+        run: docker compose --env-file .ledgerguard/runtime.env -f compose.yaml -f compose.p07.yaml down --remove-orphans || true
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: p08f-browser-diagnostic-${{ github.sha }}
+          include-hidden-files: true
+          retention-days: 7
+          if-no-files-found: error
+          path: |
+            .evidence/
+            frontend/playwright-report/
+            !.evidence/playwright/results/**/trace.zip
+            !frontend/playwright-report/data/*.zip
