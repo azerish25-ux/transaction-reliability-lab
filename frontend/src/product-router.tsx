@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useState, type MouseEvent } from 'react';
 import { createPortal } from 'react-dom';
 import App from './App.js';
+import { adminRoute } from './admin-api.js';
+import { P08FRoutes } from './p08f-ui.js';
 import { isP08BPath, normalizeProductPath } from './p08b-core.js';
 import { P08BRoutes, type ProductNavigate } from './p08b-ui.js';
 import { adjustmentRoute } from './p08c-core.js';
@@ -86,7 +88,9 @@ export default function ProductRouter(): JSX.Element {
   const session = useSession();
   const { location, path, navigate } = useProductLocation();
   let content: JSX.Element;
-  if (session.status === 'AUTHENTICATED' && (path === '/webhooks' || path.startsWith('/webhooks/'))) {
+  if (session.status === 'AUTHENTICATED' && adminRoute(path)) {
+    content = <P08FRoutes path={path} location={location} navigate={navigate} />;
+  } else if (session.status === 'AUTHENTICATED' && (path === '/webhooks' || path.startsWith('/webhooks/'))) {
     content = <P08ERoutes path={path} navigate={navigate} />;
   } else if (session.status === 'AUTHENTICATED' && (adjustmentRoute(path) || (path === '/' && session.user?.role === 'ADMIN'))) {
     content = <P08CRoutes path={path === '/' ? '/admin/adjustments' : path} navigate={navigate} />;

@@ -189,11 +189,15 @@ export function ProductShell({ navigate, children }: PropsWithChildren<{ navigat
           <button className="button button-quiet" type="button" onClick={() => void logout()} disabled={loggingOut}>{loggingOut ? 'Signing out…' : 'Sign out'}</button>
         </nav>
       </header>
+      {session.user?.role === 'ADMIN' && <nav className="admin-navigation" aria-label="Administrator investigation">
+        {([['transactions','Transactions'],['audit','Audit history'],['reconciliation','Reconciliation'],['failed-work','Failed work']] as const).map(([route,label]) =>
+          <Link key={route} href={`/admin/${route}`} navigate={navigate} className="nav-link">{label}</Link>)}
+      </nav>}
       {failure !== undefined && <div className="shell-problem"><ProblemPanel failure={failure} /></div>}
       {intentFailure !== undefined && <div className="shell-problem"><ProblemPanel failure={new Error("Saved instruction cannot be read. Financial actions are blocked; do not clear browser storage while an outcome is unresolved.")} /></div>}
       {showGlobalIntent && current && <div className="intent-banner-wrap"><UnresolvedBanner record={current} navigate={navigate} /></div>}
       <main id="main-content" tabIndex={-1}>{children}</main>
-      <footer className="site-footer"><span>Customer financial workflows</span><span>Receipts and states come from PostgreSQL through the protected API.</span></footer>
+      <footer className="site-footer"><span>{customer ? 'Customer financial workflows' : 'Administrator investigation'}</span><span>Receipts and states come from PostgreSQL through the protected API.</span></footer>
     </div>
   );
 }

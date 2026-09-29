@@ -80,3 +80,10 @@ Implementation `026dca3ec4c3c68696e87f8192872a4d2e45e157` passed permanent run `
 ## P08E exact-source delivery
 
 Implementation `644022340c0f3277297ed205610e4227584e720a` passed permanent run `36499192991` and Required P08E gate. Later evidence-documentation commits are separate from the tested source. See [report](../evidence/p08e-6440223.md) and [provenance](../evidence/p08e-6440223.json). Full product remains INCOMPLETE / NO_GO. Broader administrator interfaces are next.
+
+
+## P08F implementation checkpoint
+
+The connected azerish25-ux Git data API successfully created checkpoint `644022340c0f3277297ed205610e4227584e720a` on main, establishing requirements and a temporary source-workspace exporter. No new branch or force update was used. Source workspace run `36499193005` succeeded and its downloaded archive matched SHA-256 `c5bc6c65464cd108a0db904bdc54b3ffe1a2f3440c34ecfe69e2b93f814c8cac`. The exporter and obsolete P08E handoff are retired in the implementation. Historical evidence files remain preserved.
+
+P08F implementation and exact-source verification are distinct delivery states. Until the P08F required gate succeeds, the milestone is IMPLEMENTED_UNVERIFIED. Full product remains INCOMPLETE / NO_GO.

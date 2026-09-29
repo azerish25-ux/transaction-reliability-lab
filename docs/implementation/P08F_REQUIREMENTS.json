@@ -1,15 +1,238 @@
 {
   "milestone": "P08F",
-  "status": "NOT_STARTED",
+  "status": "IMPLEMENTED_UNVERIFIED",
   "fullProductStatus": "INCOMPLETE_NO_GO",
   "scope": "Administrator transaction search, journal detail, audit history, independent reconciliation and failed-work inspection",
   "requirements": [
-    {"id":"P08F01","description":"Server-authorized bounded transaction search with reference, kind, status, account/user, currency, amount and UTC time filters"},
-    {"id":"P08F02","description":"Authoritative transaction detail with immutable journal entries and linked payment adjustments"},
-    {"id":"P08F03","description":"Bounded redacted financial audit history, distinct from operational/security events"},
-    {"id":"P08F04","description":"Independent read-only reconciliation in one consistent snapshot, with scope, timestamp and explicit discrepancy results"},
-    {"id":"P08F05","description":"Administrator failed-work inspection using existing backend without a second replay implementation"},
-    {"id":"P08F06","description":"Real responsive administrator browser journeys, keyboard and axe checks; customer/anonymous direct API denial"},
-    {"id":"P08F07","description":"Preserve P01-P08E, execute named P08F tests and retain exact-source evidence without upgrading incomplete product status"}
-  ]
+    {
+      "id": "P08F01",
+      "description": "Server-authorized bounded transaction search with reference, kind, status, account/user, currency, amount and UTC time filters",
+      "tests": {
+        "p08f-unit": [
+          "P08FUT01",
+          "P08FUT02",
+          "P08FUT03",
+          "P08FUT04",
+          "P08FUT05",
+          "P08FUT06",
+          "P08FUT07",
+          "P08FUT08",
+          "P08FUT09",
+          "P08FUT10",
+          "P08FUT12"
+        ],
+        "p08f-integration": [
+          "P08FIT02",
+          "P08FIT03",
+          "P08FIT04"
+        ],
+        "p08f-client": [
+          "P08FTS01",
+          "P08FTS02",
+          "P08FTS03",
+          "P08FTS04",
+          "P08FTS05",
+          "P08FTS06",
+          "P08FTS07",
+          "P08FTS08",
+          "P08FTS09",
+          "P08FTS10",
+          "P08FTS11",
+          "P08FTS12"
+        ],
+        "p08f-browser": [
+          "P08FE2E01",
+          "P08FE2E08",
+          "P08FE2E09"
+        ]
+      }
+    },
+    {
+      "id": "P08F02",
+      "description": "Authoritative transaction detail with immutable journal entries and linked payment adjustments",
+      "tests": {
+        "p08f-integration": [
+          "P08FIT05",
+          "P08FIT12"
+        ],
+        "p08f-client": [
+          "P08FTS14"
+        ],
+        "p08f-browser": [
+          "P08FE2E01",
+          "P08FE2E03"
+        ]
+      }
+    },
+    {
+      "id": "P08F03",
+      "description": "Bounded redacted financial audit history, distinct from operational/security events",
+      "tests": {
+        "p08f-integration": [
+          "P08FIT06",
+          "P08FIT09"
+        ],
+        "p08f-client": [
+          "P08FTS13"
+        ],
+        "p08f-browser": [
+          "P08FE2E03",
+          "P08FE2E06"
+        ]
+      }
+    },
+    {
+      "id": "P08F04",
+      "description": "Independent read-only reconciliation in one consistent snapshot, with scope, timestamp and explicit discrepancy results",
+      "tests": {
+        "p08f-integration": [
+          "P08FIT07",
+          "P08FIT08",
+          "P08FIT09",
+          "P08FIT10",
+          "P08FIT11",
+          "P08FIT12"
+        ],
+        "p08f-client": [
+          "P08FTS15",
+          "P08FTS16",
+          "P08FTS17",
+          "P08FTS18",
+          "P08FTS19",
+          "P08FTS20",
+          "P08FTS21",
+          "P08FTS22",
+          "P08FTS23"
+        ],
+        "p08f-browser": [
+          "P08FE2E04",
+          "P08FE2E05",
+          "P08FE2E06",
+          "P08FE2E10"
+        ]
+      }
+    },
+    {
+      "id": "P08F05",
+      "description": "Administrator failed-work inspection using existing backend without a second replay implementation",
+      "tests": {
+        "p08f-integration": [
+          "P08FIT01"
+        ],
+        "p08f-client": [
+          "P08FTS24"
+        ],
+        "p08f-browser": [
+          "P08FE2E07"
+        ]
+      }
+    },
+    {
+      "id": "P08F06",
+      "description": "Real responsive administrator browser journeys, keyboard and axe checks; customer/anonymous direct API denial",
+      "tests": {
+        "p08f-unit": [
+          "P08FUT11"
+        ],
+        "p08f-integration": [
+          "P08FIT01"
+        ],
+        "p08f-client": [
+          "P08FTS08",
+          "P08FTS09"
+        ],
+        "p08f-browser": [
+          "P08FE2E01",
+          "P08FE2E02",
+          "P08FE2E03",
+          "P08FE2E04",
+          "P08FE2E05",
+          "P08FE2E06",
+          "P08FE2E07",
+          "P08FE2E08",
+          "P08FE2E09",
+          "P08FE2E10"
+        ]
+      }
+    },
+    {
+      "id": "P08F07",
+      "description": "Preserve P01-P08E, execute named P08F tests and retain exact-source evidence without upgrading incomplete product status",
+      "tests": {
+        "p08f-client": [
+          "P08FTS01",
+          "P08FTS02",
+          "P08FTS03",
+          "P08FTS04",
+          "P08FTS05",
+          "P08FTS06",
+          "P08FTS07",
+          "P08FTS08",
+          "P08FTS09",
+          "P08FTS10",
+          "P08FTS11",
+          "P08FTS12",
+          "P08FTS13",
+          "P08FTS14",
+          "P08FTS15",
+          "P08FTS16",
+          "P08FTS17",
+          "P08FTS18",
+          "P08FTS19",
+          "P08FTS20",
+          "P08FTS21",
+          "P08FTS22",
+          "P08FTS23",
+          "P08FTS24"
+        ],
+        "p08f-integration": [
+          "P08FIT01",
+          "P08FIT02",
+          "P08FIT03",
+          "P08FIT04",
+          "P08FIT05",
+          "P08FIT06",
+          "P08FIT07",
+          "P08FIT08",
+          "P08FIT09",
+          "P08FIT10",
+          "P08FIT11",
+          "P08FIT12"
+        ],
+        "p08f-unit": [
+          "P08FUT01",
+          "P08FUT02",
+          "P08FUT03",
+          "P08FUT04",
+          "P08FUT05",
+          "P08FUT06",
+          "P08FUT07",
+          "P08FUT08",
+          "P08FUT09",
+          "P08FUT10",
+          "P08FUT11",
+          "P08FUT12"
+        ],
+        "p08f-browser": [
+          "P08FE2E01",
+          "P08FE2E02",
+          "P08FE2E03",
+          "P08FE2E04",
+          "P08FE2E05",
+          "P08FE2E06",
+          "P08FE2E07",
+          "P08FE2E08",
+          "P08FE2E09",
+          "P08FE2E10"
+        ]
+      }
+    }
+  ],
+  "sourceContract": "docs/implementation/MASTER_SPEC.md",
+  "testSources": {
+    "p08f-client": "tests/contracts/p08f-client.test.cjs",
+    "p08f-unit": "backend/src/test/java/lab/ledgerguard/admin/AdminFiltersTest.java",
+    "p08f-integration": "backend/src/test/java/lab/ledgerguard/AdministratorInvestigationIT.java",
+    "p08f-browser": "frontend/tests/e2e/p08f.spec.ts"
+  }
 }

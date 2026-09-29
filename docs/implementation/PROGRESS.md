@@ -1,3 +1,25 @@
+# P08F administrator investigation — IMPLEMENTED_UNVERIFIED
+
+Overall product: **INCOMPLETE / NO_GO**. P01-P08E historical verification remains preserved below.
+
+## Implemented scope
+
+ADMIN-only transaction search with all required filters; consistent-snapshot journal/detail relationships; safe financial audit history; independent eight-category read-only reconciliation and durable report history; same-report UUID recovery across reload/reauthentication; existing failed-work inspection and explicitly confirmed replay; responsive navigation and accessible states.
+
+Protected financial commands and schema migrations are unchanged. New source contract: `P08F_REQUIREMENTS.json`; ADR 0023; `/api/v1/openapi/p08f-ui.json`.
+
+## Verification checkpoint
+
+Local strict frontend/app/browser-source compilation, 24 new production-client cases and the preserved client campaign/build have executed successfully in the implementation workspace. Local source was dirty during these checks; they are not attributed to a clean commit. Docker is unavailable locally. The new real PostgreSQL/HTTP integration and responsive browser campaign must run in authorized GitHub Actions.
+
+Do not mark P08F verified until the permanent P08F required gate passes on the exact implementation SHA and its actual reports/screenshots are inspected. Do not reuse old P08E success as P08F evidence.
+
+## Next executable action
+
+Execute the permanent P08F gate, fix actual failures without dropping requirements, inspect responsive artifacts and retain exact-source provenance. After verified P08F, continue with P09 isolated faults/defects/lab console. No individual milestone completes the original mandate.
+
+## Preserved P08E history
+
 # P08E customer webhook interface — VERIFIED_PASS
 
 Overall product remains **INCOMPLETE / NO_GO**. P01–P08E retain exact-source verification; broader administrator interfaces and P09–P11 remain incomplete.

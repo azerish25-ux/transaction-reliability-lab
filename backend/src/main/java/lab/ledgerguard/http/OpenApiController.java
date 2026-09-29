@@ -54,4 +54,8 @@ public class OpenApiController {
     public Resource p08eWebhookInterfaceSpecification() {
         return new ClassPathResource("openapi/p08e-ui.json");
     }
+    @GetMapping(value = "/api/v1/openapi/p08f-ui.json", produces = "application/json")
+    public Resource p08fAdministratorSpecification() {
+        return new ClassPathResource("openapi/p08f-ui.json");
+    }
 }

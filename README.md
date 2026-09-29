@@ -115,7 +115,13 @@ Durable provenance is in [the P08C report](docs/evidence/p08c-3b87e3a.md) and [J
 
 Historical P08B source `5d6d883444845bc5de3364d0c682c3df26005d8e` passed run `36355379901` on September 27, 2026; its [original evidence](docs/evidence/p08b-5d6d883.md) and [JSON provenance](docs/evidence/p08b-5d6d883.json) retain their original counts and scope.
 
-Next: broader administrator transaction/ledger/audit/reconciliation interfaces. These remain P08 work before P09.
+## P08F administrator investigation — IMPLEMENTED_UNVERIFIED
+
+Administrator navigation now includes **Transactions**, **Audit history**, **Reconciliation**, and **Failed work**, alongside existing **Adjustments**. Search actual operations with bounded filters; inspect both posting sides and linked financial history; run independent accounting/audit checks and inspect saved snapshot reports. Lost report responses retain their original owner-scoped UUID. Report reads never imply live health; failed checks do not trigger automatic money repair. Failed-work replay reuses the existing audited backend and requires explicit confirmation.
+
+This implementation is awaiting its exact-source permanent gate. The P01-P08E records above remain historical evidence, not automatic verification of new code. See `docs/implementation/P08F_REQUIREMENTS.json`, ADR 0023 and `/api/v1/openapi/p08f-ui.json`. All money remains synthetic and the overall product remains **INCOMPLETE / NO_GO**.
+
+Next: execute and retain P08F verification, then P09 isolated fault/defect laboratory.
 
 Useful commands:
 

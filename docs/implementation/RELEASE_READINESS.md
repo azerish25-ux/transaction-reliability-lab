@@ -24,3 +24,7 @@ Latest evidence: `644022340c0f3277297ed205610e4227584e720a`, permanent run `3649
 | G16 no release blockers | BLOCKED | Remaining P08 interfaces, P09–P11 and the other full-product gates are open. |
 
 These states apply to the complete original mandate. The secret scan is not a clean dependency audit or comprehensive security assurance. No certification, whole-product accessibility conformance, production-financial readiness or measured performance claim is made.
+
+## P08F candidate
+
+Administrator investigation/reconciliation interfaces and their verification campaign are implemented but not yet exact-SHA verified. This does not upgrade any full-product gate. P09-P11, comprehensive fault/defect, load/security/restore campaigns and final evidence remain open. See PROGRESS.md for the exact-source handoff state.

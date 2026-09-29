@@ -20,6 +20,7 @@
     "src/webhook-api.ts",
     "src/p08c-core.ts",
     "src/schedule-api.ts",
-    "src/p08e-core.ts"
+    "src/p08e-core.ts",
+    "src/admin-api.ts"
   ]
 }
