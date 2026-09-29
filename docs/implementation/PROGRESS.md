@@ -1,3 +1,38 @@
+# P09A hardening integration — IMPLEMENTED_UNVERIFIED
+
+Overall product: **INCOMPLETE / NO_GO**. This delivery recovers the saved local
+hardening commit `724b055067e53a06eaf7b16affda3131d324d0ac` onto remote parent
+`4acb6925fabc7f1f4d81f34563eb20d757931420`, preserving all intervening changes.
+The seven implementation/test files retain their saved blob identities. The
+README and progress records merge, rather than replace, concurrent documentation.
+
+The changes enforce cancellation and deadline checks under the store write lock,
+recheck leases before activation and after external IO, immediately restore
+rejected activations, bind recorded inputs and lifecycle reports to their actual
+artifacts, inspect bounded nested archives and validate proxy target read-back.
+There are 52 additional regression tests. Financial posting code, normal
+migrations, product UI, newer browser corrections and workflow configuration are
+unchanged by this delivery. See the [hardening review](../../lab-support/p09a/INTEGRATION_REVIEW.md).
+
+The saved source passed **215 component tests** (116 original + 47 concurrent +
+52 new). Its full P09A command stopped with `DOCKER_ENGINE_AND_COMPOSE_REQUIRED`.
+Neither that component result nor a successful GitHub ref update establishes a
+same-candidate product/lab pass. Historical evidence and integration observations
+below retain their original source identities; they are not relabelled as results
+for this new commit. Later retained observations are also available in
+[P09A_INTEGRATION.md](P09A_INTEGRATION.md) and
+[the source-bound live report](../evidence/p09a-b6d291a-live.md).
+
+Next: execute and fix the required product and lab campaigns on the delivered
+commit, retain exact-source results and complete remaining normal-release
+isolation. **G12 remains open.** Only after verification closure extend the lab
+with F02/D06. The remaining 30 P09 scenarios, P10 and P11 remain incomplete.
+
+## Preserved concurrent integration checkpoint
+
+The following checkpoint is historical; its “current implementation candidate”
+and verification statements apply to its recorded source, not this delivery.
+
 # P09A integration — IMPLEMENTED_UNVERIFIED
 
 Overall product: **INCOMPLETE / NO_GO**. The F01/D02 laboratory is delivered on `main`; its real-stack integration is being verified. Do not restart P09 from scratch or treat the earlier P08F pass as a pass for new code.

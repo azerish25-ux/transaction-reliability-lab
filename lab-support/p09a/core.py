@@ -5,6 +5,7 @@ from contextlib import contextmanager
 from dataclasses import dataclass
 from datetime import datetime, timezone
 import hashlib
+import ipaddress
 import json
 import os
 from pathlib import Path
@@ -103,6 +104,13 @@ class Settings:
     @property
     def database(self) -> str:
         return 'ledgerguard_lab_' + self.instance[:12]
+
+
+def lease_is_safe(lease: Any, run: Any, now: float) -> bool:
+    """A fault lease is permission to act now, not just when a request was queued."""
+    return bool(run and run['status'] == 'RUNNING' and not run['cancelled']
+                and now < run['deadline'] and 0 < lease['expires'] - now <= FAULT_SECONDS
+                and 0 <= now - lease['worker'] <= 8)
 
 
 class Store:
@@ -225,20 +233,28 @@ class Store:
             result = self._view(row); result['status'] = 'RUNNING'
             return result
 
-    def check_run(self, run_id: str) -> None:
-        row = self.get(run_id)
-        if row['cancelled'] or time.time() > row['deadline'] or row['status'] != 'RUNNING':
+    @staticmethod
+    def _require_running(row: Any, now: float) -> None:
+        if row is None:
+            raise LabError('RUN_NOT_FOUND', 404)
+        if row['cancelled'] or now >= row['deadline'] or row['status'] != 'RUNNING':
             raise LabError('EXPERIMENT_CANCELLED_OR_EXPIRED', 409)
 
+    def check_run(self, run_id: str) -> None:
+        self._require_running(self.get(run_id), time.time())
+
     def request_fault(self, run_id: str, mode: str, seconds: int = FAULT_SECONDS) -> int:
+        valid_uuid(run_id)
         if mode not in MODES - {'NONE'} or type(seconds) is not int or not 1 <= seconds <= FAULT_SECONDS:
             raise LabError('INVALID_FAULT')
-        self.check_run(run_id)
-        row = self.get(run_id)
-        if (mode.startswith('F01') and row['scenario'] != 'F01') or (mode == 'D02' and row['scenario'] != 'D02'):
-            raise LabError('FAULT_SCOPE_MISMATCH')
-        now = time.time()
         with self.db(write=True) as db:
+            # Cancellation, deadline and scope are checked AFTER obtaining the
+            # write lock. A previously read run cannot authorize a later fault.
+            now = time.time()
+            row = db.execute('SELECT * FROM runs WHERE id=?', (run_id,)).fetchone()
+            self._require_running(row, now)
+            if (mode.startswith('F01') and row['scenario'] != 'F01') or (mode == 'D02' and row['scenario'] != 'D02'):
+                raise LabError('FAULT_SCOPE_MISMATCH')
             lease = db.execute('SELECT * FROM lease WHERE id=1').fetchone()
             if (lease['desired'] != 'NONE' or lease['applied'] != 'NONE'
                     or lease['generation'] != lease['applied_generation'] or lease['error']
@@ -247,6 +263,20 @@ class Store:
             db.execute("UPDATE lease SET run_id=?,desired=?,expires=?,generation=generation+1,proof=NULL WHERE id=1",
                        (run_id, mode, min(now + seconds, row['deadline'])))
             return int(db.execute('SELECT generation FROM lease WHERE id=1').fetchone()[0])
+
+    @staticmethod
+    def _fault_is_current(db: sqlite3.Connection, generation: int, mode: str, now: float) -> bool:
+        lease = db.execute('SELECT * FROM lease WHERE id=1').fetchone()
+        if lease['generation'] != generation or lease['desired'] != mode or lease['error']:
+            return False
+        run = db.execute('SELECT * FROM runs WHERE id=?', (lease['run_id'],)).fetchone()
+        return mode in MODES - {'NONE'} and lease_is_safe(lease, run, now)
+
+    def fault_is_current(self, generation: int, mode: str, now: float | None = None) -> bool:
+        # Use the same short SQLite transaction for lease and run reads. Never
+        # retain this lock over PostgreSQL/network IO.
+        with self.db(write=True) as db:
+            return self._fault_is_current(db, generation, mode, time.time() if now is None else now)
 
     def reset(self, run_id: str | None = None, cancel: bool = False) -> int:
         if run_id is not None:
@@ -261,10 +291,17 @@ class Store:
             return int(db.execute('SELECT generation FROM lease WHERE id=1').fetchone()[0])
 
     def acknowledge(self, generation: int, mode: str, proof: dict[str, Any]) -> bool:
+        if mode not in MODES:
+            raise ValueError('Unknown fault mode')
         with self.db(write=True) as db:
+            now = time.time()
+            # The generation CAS alone is insufficient: IO can outlast a lease
+            # without another process incrementing its generation.
+            if mode != 'NONE' and not self._fault_is_current(db, generation, mode, now):
+                return False
             cursor = db.execute('UPDATE lease SET applied=?,applied_generation=?,proof=?,error=NULL,guardian=? '
-                                'WHERE id=1 AND generation=?',
-                                (mode, generation, canonical(proof), time.time(), generation))
+                                'WHERE id=1 AND generation=? AND desired=?',
+                                (mode, generation, canonical(proof), now, generation, mode))
             return cursor.rowcount == 1
 
     def guardian_error(self, code: str) -> None:
@@ -354,6 +391,16 @@ def junit(result: dict[str, Any]) -> bytes:
     return ET.tostring(suite, encoding='utf-8', xml_declaration=True)
 
 
+def validate_restoration(cleanup: dict[str, Any]) -> None:
+    if cleanup.get('restored') is not True:
+        raise LabError('EVIDENCE_CLEANUP_MISSING')
+    original = cleanup.get('originalFunctionSha256')
+    if (not isinstance(original, str) or not re.fullmatch(r'[0-9a-f]{64}', original)
+            or original != cleanup.get('currentFunctionSha256')
+            or cleanup.get('proxyEnabled') is not True or cleanup.get('toxics') != []):
+        raise LabError('EVIDENCE_RESTORATION_INVALID')
+
+
 def validate_result(result: dict[str, Any], source: str | None = None) -> None:
     if not re.fullmatch(r'[0-9a-f]{40}', result.get('sourceSha', '')):
         raise LabError('EVIDENCE_SOURCE_MISSING')
@@ -364,13 +411,8 @@ def validate_result(result: dict[str, Any], source: str | None = None) -> None:
     valid_uuid(result.get('runId'))
     if result.get('testCheckpointHoldMs', 0) != 0:
         raise LabError('EVIDENCE_TEST_CHECKPOINT_NOT_QUALIFIED')
-    if not result.get('cleanup', {}).get('restored'):
-        raise LabError('EVIDENCE_CLEANUP_MISSING')
-    cleanup = result['cleanup']
-    if (not re.fullmatch(r'[0-9a-f]{64}', cleanup.get('originalFunctionSha256', ''))
-            or cleanup['originalFunctionSha256'] != cleanup.get('currentFunctionSha256')
-            or cleanup.get('proxyEnabled') is not True or cleanup.get('toxics') != []):
-        raise LabError('EVIDENCE_RESTORATION_INVALID')
+    cleanup = result.get('cleanup', {})
+    validate_restoration(cleanup)
     phases = result.get('phases', {})
     if result.get('scenario') == 'D02':
         if set(phases) != {'baseline', 'mutant', 'restored'} or classify_defect(phases, cleanup) != 'DETECTED':
@@ -401,3 +443,32 @@ def validate_result(result: dict[str, Any], source: str | None = None) -> None:
         raise LabError('EVIDENCE_UNKNOWN_SCENARIO')
     if any(not re.fullmatch(r'[0-9a-f]{64}', p.get('inputSha256', '')) for p in phases.values()):
         raise LabError('EVIDENCE_INPUT_MISSING')
+    instance = result.get('instanceId', '')
+    inputs = result.get('input')
+    if (result.get('schemaVersion') != 1 or not re.fullmatch(r'[0-9a-f]{32}', instance)
+            or type(result.get('seed')) is not int or result['seed'] != SEED):
+        raise LabError('EVIDENCE_INSTANCE_OR_SEED_INVALID')
+    if (not isinstance(inputs, dict) or set(inputs) != {'seed', 'key', 'original', 'changed'}
+            or type(inputs['seed']) is not int or inputs['seed'] != result['seed']
+            or inputs['key'] != 'p09a:' + result['runId']
+            or not isinstance(inputs['original'], dict) or not inputs['original']
+            or not isinstance(inputs['changed'], dict) or not inputs['changed']):
+        raise LabError('EVIDENCE_RECORDED_INPUT_INVALID')
+    input_hash = digest(canonical(inputs).encode())
+    if any(p['inputSha256'] != input_hash for p in phases.values()):
+        raise LabError('EVIDENCE_INPUT_HASH_MISMATCH')
+    if result['scenario'] == 'F01':
+        route = result['routeProof']
+        if route.get('database') != 'ledgerguard_lab_' + instance[:12]:
+            raise LabError('EVIDENCE_PROXY_DATABASE_MISMATCH')
+        try:
+            proxies = {ipaddress.ip_address(address) for address in route['proxyAddresses']}
+            connections = route['targetConnections']
+            valid_connections = all(isinstance(row, list) and len(row) == 3
+                                    and type(row[0]) is int and row[0] > 0
+                                    and ipaddress.ip_address(row[1]) in proxies
+                                    and row[2] == 'LedgerGuard-P09A-Target' for row in connections)
+        except (TypeError, ValueError):
+            valid_connections = False
+        if not valid_connections:
+            raise LabError('EVIDENCE_PROXY_CONNECTION_MISMATCH')

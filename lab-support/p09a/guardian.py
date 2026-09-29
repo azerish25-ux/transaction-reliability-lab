@@ -12,13 +12,18 @@ import time
 from typing import Any
 
 from clients import FUNCTION, Oracle, request
-from core import FAULT_SECONDS, LabError, Settings, Store, canonical, digest
+from core import LabError, Settings, Store, canonical, digest, lease_is_safe
 from proxy_contract import is_lab_proxy
 
 CLAUSE = "IF prior.fingerprint<>fingerprint THEN"
 MUTANT = "IF FALSE AND prior.fingerprint<>fingerprint THEN"
 PROXY_PATH = '/proxies/p09a-postgres'
 TOXIC_NAME = 'p09a-latency'
+def validate_proxy_target(value: Any) -> None:
+    if not is_lab_proxy(value):
+        raise LabError('PROXY_TARGET_CHANGED', 503)
+    if any(not isinstance(toxic, dict) for toxic in value['toxics']):
+        raise LabError('PROXY_STATE_INVALID', 503)
 
 
 def mutate_definition(original: str) -> str:
@@ -42,8 +47,8 @@ class Driver:
         if response.status not in {200, 201, 204}:
             raise LabError('PROXY_CONTROL_FAILED', 503)
         value = response.json()
-        if method == 'GET' and suffix == '' and not is_lab_proxy(value):
-            raise LabError('PROXY_TARGET_CHANGED', 503)
+        if not suffix:
+            validate_proxy_target(value)
         return value
 
     def definition(self, mutate: bool) -> dict[str, Any]:
@@ -69,8 +74,7 @@ class Driver:
     def reset(self) -> dict[str, Any]:
         # Reset network first even when schema validation subsequently fails.
         current = self.proxy()
-        if not is_lab_proxy(current):
-            raise LabError('PROXY_TARGET_CHANGED', 503)
+        validate_proxy_target(current)
         for toxic in current.get('toxics', []):
             if toxic.get('name') != TOXIC_NAME:
                 raise LabError('UNRECOGNIZED_TOXIC', 503)
@@ -85,6 +89,10 @@ class Driver:
         return proof
 
     def activate(self, mode: str) -> dict[str, Any]:
+        if mode not in {'D02', 'F01_LATENCY', 'F01_DISCONNECT'}:
+            raise LabError('INVALID_FAULT')
+        # Recheck the actual target immediately before any external change.
+        validate_proxy_target(self.proxy())
         if mode == 'D02':
             proof = self.definition(True)
         elif mode == 'F01_LATENCY':
@@ -104,11 +112,6 @@ class Driver:
         return proof
 
 
-def lease_is_safe(lease: dict[str, Any], run: dict[str, Any] | None, now: float) -> bool:
-    return bool(run and run['status'] == 'RUNNING' and not run['cancelled']
-                and now < run['deadline'] and 0 < lease['expires'] - now <= FAULT_SECONDS
-                and 0 <= now - lease['worker'] <= 8)
-
 
 class Guardian:
     def __init__(self, store: Store, driver: Driver):
@@ -123,11 +126,23 @@ class Guardian:
         self.store.acknowledge(generation, 'NONE', proof)
         self.last_mode, self.last_generation = 'NONE', generation
 
+    def restore_current(self) -> None:
+        """Invalidate pending intent and require physical read-back before NONE."""
+        generation = self.store.reset()
+        proof = self.driver.reset()
+        if self.store.acknowledge(generation, 'NONE', proof):
+            self.last_mode, self.last_generation = 'NONE', generation
+        else:
+            # Another reset raced with read-back. Do not report it acknowledged.
+            self.last_mode, self.last_generation = 'UNKNOWN', -1
+
     def tick(self, now: float | None = None) -> None:
-        now = time.time() if now is None else now
+        # Production always reads the live clock at each boundary. An explicit
+        # time is only used by deterministic component tests.
+        current_time = lambda: time.time() if now is None else now
         lease = self.store.lease()
         run = self.store.get(lease['run_id']) if lease['run_id'] else None
-        if lease['desired'] != 'NONE' and not lease_is_safe(lease, run, now):
+        if lease['desired'] != 'NONE' and not lease_is_safe(lease, run, current_time()):
             self.store.reset()
             lease = self.store.lease()
         mode, generation = lease['desired'], lease['generation']
@@ -135,16 +150,19 @@ class Guardian:
             if mode == 'NONE':
                 proof = self.driver.reset()
             else:
-                # Every activation starts from a verified corrected baseline.
+                # Every activation starts from a verified corrected baseline,
+                # but baseline restoration itself can outlast the fault lease.
                 self.driver.reset()
+                if not self.store.fault_is_current(generation, mode, current_time()):
+                    self.restore_current()
+                    return
                 proof = self.driver.activate(mode)
+            # Atomically recheck run, deadline, liveness and generation after IO.
             if not self.store.acknowledge(generation, mode, proof):
-                # A reset raced with activation: undo it before the next loop.
-                self.driver.reset()
-                self.last_mode, self.last_generation = 'UNKNOWN', -1
+                self.restore_current()
                 return
             self.last_mode, self.last_generation = mode, generation
-        self.store.heartbeat('guardian', now)
+        self.store.heartbeat('guardian', current_time())
 
 
 def main() -> int:

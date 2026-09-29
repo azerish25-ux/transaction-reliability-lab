@@ -11,6 +11,19 @@ P09A's isolated F01/D02 laboratory is now delivered and undergoing real-stack in
 
 Verified P08F source: `8802f8b20c9bf3996d19ba90e7be26fd123b7580`; permanent **LedgerGuard P08F verification** run `36511855593`, including **Required P08F gate**. [Executed evidence](docs/evidence/p08f-8802f8b.md), [machine-readable provenance](docs/evidence/p08f-8802f8b.json), [progress](docs/implementation/PROGRESS.md), [full-product release gates](docs/implementation/RELEASE_READINESS.md).
 
+## P09A hardening delivery
+
+The recovered hardening adds live-lease checks around fault activation and
+acknowledgement, recorded-input and JUnit consistency checks, lifecycle artifact
+validation, bounded nested-archive inspection, and stricter proxy target read-back.
+The saved source `724b055067e53a06eaf7b16affda3131d324d0ac` passed **215 component
+tests** (116 original, 47 concurrent, 52 new). Those results are historical
+component evidence, not a live-stack or same-candidate pass for this integration.
+Newer browser fixes, workflow configuration and retained CI evidence on `main`
+are preserved. See the [runbook](lab-support/p09a/README.md),
+[hardening review](lab-support/p09a/INTEGRATION_REVIEW.md) and
+[current progress](docs/implementation/PROGRESS.md). Global G12 remains open.
+
 ## Run the base topology
 
 From a clean clone with Docker Engine and Docker Compose:

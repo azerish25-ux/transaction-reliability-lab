@@ -39,11 +39,17 @@ def phase(status='PASS'):
 def evidence():
     mutant = phase('ASSERTION_FAILURE')
     mutant['assertion'] = {'id': 'D02_CHANGED_RECIPIENT_REJECTED', 'expected': 409, 'actual': 201}
-    return {'scenario': 'D02', 'runId': str(uuid.uuid4()), 'sourceSha': SOURCE, 'dirtySource': False,
+    run_id = str(uuid.uuid4())
+    inputs = {'seed': 74021, 'key': 'p09a:' + run_id,
+              'original': {'recipientRef': 'first'}, 'changed': {'recipientRef': 'second'}}
+    phases = {'baseline': phase(), 'mutant': mutant, 'restored': phase()}
+    for item in phases.values(): item['inputSha256'] = digest(canonical(inputs).encode())
+    return {'schemaVersion': 1, 'instanceId': INSTANCE, 'seed': 74021, 'input': inputs,
+            'scenario': 'D02', 'runId': run_id, 'sourceSha': SOURCE, 'dirtySource': False,
             'verdict': 'DETECTED', 'cleanup': copy.deepcopy(CLEAN),
             'activation': {'mode': 'D02', 'originalFunctionSha256': HASH,
                            'currentFunctionSha256': 'b' * 64, 'mutantFunctionSha256': 'b' * 64},
-            'phases': {'baseline': phase(), 'mutant': mutant, 'restored': phase()}}
+            'phases': phases}
 
 
 class StateTests(unittest.TestCase):

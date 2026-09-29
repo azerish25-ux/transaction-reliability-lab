@@ -7,7 +7,22 @@ This change adds the first executable slice of P09, not the entire eight-fault,
 and browser/lifecycle tests. A passing component suite is not proof that either
 experiment has executed against PostgreSQL or the browser.
 
-## Current verification and limitations
+## Integration-hardening checkpoint
+
+A follow-up audit against `b4185db03f72df97c77d82f0b18f25bc42af518a` adds atomic
+lease admission, pre/post-IO activation checks, canonical JSON/JUnit correspondence,
+recorded-input/route validation, lifecycle artifact integrity, bounded nested
+archive scanning and frontend artifact hashes. The changes are integrated on
+`b6d291a57eaeb35aae3d48fff0319552dcfae6c7`, retaining its 47 tests, shared
+evidence validators and parallel product/lab jobs with a combined required gate.
+The guardian also handles the two fixed wildcard listener representations that
+Go can report, without permitting arbitrary targets. The saved source
+`724b055067e53a06eaf7b16affda3131d324d0ac` passed **215 component tests**, but
+its live P09A command was blocked by missing Docker/Compose in that session.
+These tests do not qualify as G06/G07 or built-image G12 evidence. See
+[INTEGRATION_REVIEW.md](INTEGRATION_REVIEW.md) for corrections and unresolved risks.
+
+## Original implementation handoff — historical verification and limitations
 
 The implementation was prepared against `24b6fc29d043627c9e10f09f85bc345dcfc11f2f`.
 The development session executed **116 component tests**, Python compilation,
@@ -195,10 +210,10 @@ that the broken implementation passed.
 
 `assert-p09a-evidence` rejects missing/dirty/wrong-source evidence, invalid phase
 classification, absent restoration, incomplete browser/lifecycle coverage and
-missing normal-artifact evidence. CI's new P09A job requires the existing P08F
-product campaign to pass first, then builds the same candidate, runs the live
-lab, and publishes curated artifacts with 14-day retention. No green run exists
-for this candidate merely because that workflow file has been written.
+missing normal-artifact evidence. The product and isolated-lab CI jobs run on
+the same candidate, and the combined required gate requires both to pass. The
+lab job publishes curated artifacts with 14-day retention. Neither a written
+workflow nor a successful source delivery establishes a green verification run.
 
 Normal backend/frontend artefacts are checked for **P09A-specific** control and
 mutation material, and the actual normal backend image is inspected for lab
@@ -208,9 +223,9 @@ still require the original full-release isolation review.
 
 ## Remaining acceptance gates
 
-| Gate | State in this implementation handoff |
+| Gate | Recorded hardening-session scope; not a new-candidate pass |
 |---|---|
-| Component state, authorization, verdict and orchestration tests | 116 passed locally |
+| Component state, authorization, verdict, orchestration and hardening tests | 215 passed on saved source; 116 original + 47 concurrent + 52 new |
 | Python/JavaScript syntax and YAML parse | Passed locally; not a container build |
 | Same-candidate P01-P08F full regression | Not executed |
 | Live F01 routing, activation, recovery and reconciliation | Implemented, unverified |

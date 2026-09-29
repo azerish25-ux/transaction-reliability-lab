@@ -6,7 +6,7 @@ import subprocess
 import sys
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / 'lab-support/p09a'))
-from core import LabError, digest, junit, validate_result, valid_uuid
+from core import LabError, digest, junit, validate_result, validate_restoration, valid_uuid
 from evidence_integrity import (EvidenceIntegrityError, MAX_XML, frontend_manifest,
                                 read_artifact, validate_images, validate_junit, validate_png)
 BASE = ROOT / '.evidence/p09a'
@@ -14,6 +14,30 @@ BASE = ROOT / '.evidence/p09a'
 
 def load(path):
     return json.loads(read_artifact(BASE, path, maximum=MAX_XML))
+
+
+def run_artifacts(run: dict, source: str) -> dict:
+    """Validate manifest, source identity and verdict-derived JUnit for any run.
+
+    This applies equally to qualified experiments and unqualified lifecycle runs.
+    Canonical XML allows formatting/attribute ordering without accepting changed
+    assertions, observations, properties or testcase identities.
+    """
+    directory = BASE / valid_uuid(run['id'])
+    manifest = load(directory / 'manifest.json')
+    if manifest['sourceSha'] != source or manifest['runId'] != run['id']:
+        raise LabError('EVIDENCE_MANIFEST_IDENTITY_MISMATCH')
+    if set(manifest['files']) != {'verdict.json', 'results.xml'}:
+        raise LabError('EVIDENCE_MANIFEST_FILES_INVALID')
+    for name, expected in manifest['files'].items():
+        if digest(read_artifact(BASE, directory / name, maximum=MAX_XML)) != expected:
+            raise LabError('EVIDENCE_ARTIFACT_HASH_MISMATCH')
+    value = load(directory / 'verdict.json')
+    if (value['sourceSha'] != source or value['runId'] != run['id']
+            or value['scenario'] != run['scenario'] or value['verdict'] != run['verdict']):
+        raise LabError('EVIDENCE_RUN_IDENTITY_MISMATCH')
+    validate_junit(read_artifact(BASE, directory / 'results.xml', maximum=MAX_XML), junit(value))
+    return value
 
 
 def verify():
@@ -29,21 +53,9 @@ def verify():
         raise LabError('EVIDENCE_SUMMARY_INVALID')
     instances = set()
     for run in summary['runs']:
-        directory = BASE / valid_uuid(run['id'])
-        manifest = load(directory / 'manifest.json')
-        if manifest['sourceSha'] != source or manifest['runId'] != run['id']:
-            raise LabError('EVIDENCE_MANIFEST_IDENTITY_MISMATCH')
-        if set(manifest['files']) != {'verdict.json', 'results.xml'}:
-            raise LabError('EVIDENCE_MANIFEST_FILES_INVALID')
-        for name, expected in manifest['files'].items():
-            if digest(read_artifact(BASE, directory / name, maximum=MAX_XML)) != expected:
-                raise LabError('EVIDENCE_ARTIFACT_HASH_MISMATCH')
-        value = load(directory / 'verdict.json'); validate_result(value, source)
-        if value['runId'] != run['id'] or value['scenario'] != run['scenario'] or value['verdict'] != run['verdict']:
-            raise LabError('EVIDENCE_RUN_IDENTITY_MISMATCH')
+        value = run_artifacts(run, source)
+        validate_result(value, source)
         instances.add(value['instanceId'])
-        # Counts alone cannot establish which business assertion actually failed.
-        validate_junit(read_artifact(BASE, directory / 'results.xml', maximum=MAX_XML), junit(value))
     browser = load(BASE / 'browser/results.json')
     expected_browser = {'UNAUTHENTICATED_LAB_DENIED', 'ADMIN_COMMAND_REQUIRES_CSRF',
                         'ADMIN_BROWSER_EXECUTES_REAL_F01', 'ADMIN_BROWSER_EXECUTES_REAL_D02',
@@ -62,10 +74,11 @@ def verify():
             or any(t['status'] != 'PASS' for t in lifecycle['tests'])):
         raise LabError('EVIDENCE_LIFECYCLE_INCOMPLETE')
     for test in lifecycle['tests']:
-        run = load(BASE / valid_uuid(test['runId']) / 'verdict.json')
         expected = 'CANCELLED' if test['id'] == 'CONTROLLER_SIGKILL_GUARDIAN_RECOVERY' else 'SURVIVED'
-        if run['sourceSha'] != source or run['verdict'] != expected or run['cleanup'].get('restored') is not True:
+        run = run_artifacts({'id': test['runId'], 'scenario': 'D02', 'verdict': expected}, source)
+        if run.get('dirtySource') is not False or run.get('instanceId') not in instances:
             raise LabError('EVIDENCE_LIFECYCLE_VERDICT_INVALID')
+        validate_restoration(run.get('cleanup', {}))
     packaging = load(BASE / 'packaging.json')
     frontend = frontend_manifest(ROOT / 'frontend/dist')
     if (packaging['scope'] != 'P09A_SPECIFIC_EXCLUSION_ONLY' or packaging['excluded'] is not True
