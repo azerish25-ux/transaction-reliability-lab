@@ -1,3 +1,43 @@
+# P09A recovery evidence repair — IMPLEMENTED_UNVERIFIED
+
+Overall product: **INCOMPLETE / NO_GO**. This change addresses the confirmed
+`EVIDENCE_LIFECYCLE_VERDICT_INVALID` failure on parent
+`ea4cd5e582b1d82bd335bcffeb3c70119bd90833`, Actions run `36566324545`.
+`Runner.recover()` omitted `instanceId` from interrupted-run reports, while the
+artifact gate correctly required the same instance as the F01/D02 experiments.
+
+Execution and recovery now use one small result-identity builder for source SHA,
+clean/dirty status, instance, durable run ID, scenario, seed and schema version.
+Recovery still records `CANCELLED` only after acknowledged restoration, retains
+empty phases rather than invented experiment results, and leaves failed cleanup
+as `CLEANUP_FAILED`. The artifact validator is unchanged; historical artifacts
+are not repaired, relabelled or counted as a new candidate pass.
+
+Thirteen new tests in `tests/test_p09a_recovery_evidence.py` exercise the actual
+recovery producer, SQLite store, `collect_result` serializer, JUnit/manifest
+writer and complete artifact gate. They reuse explicitly synthetic surrounding
+campaign fixtures and guardian acknowledgements; these do not count as real
+controller-death, F01 or D02 evidence. Negative cases retain rejection of absent
+or wrong instance/source identity, dirty source, bad restoration and JUnit
+modification even after rehashing. Additional cases cover queued interruption,
+cleanup timeout, missing acknowledgement, terminal-report preservation and
+cancellation not qualifying as a defect detection.
+
+Local Python syntax checks and isolated recovery-method probes passed, including
+reproducing the missing-instance defect against the exact original runner blob.
+The full component suite and real-stack verification must execute on this new
+candidate in the existing GitHub Actions workflow. No product code, workflow,
+financial assertion, evidence gate or normal-build isolation rule is weakened.
+
+Next: require both product and isolated-lab jobs, plus `Required P09A gate`, to
+pass on the same immutable candidate and retain the actual source-bound report.
+Until then P09A remains **IMPLEMENTED_UNVERIFIED**. Global G12 release isolation,
+F02–F08, the other 23 Dxx variants, P10 and P11 remain open.
+
+## Preserved hardening checkpoint
+
+The records below retain their original source identities and verification scope.
+
 # P09A hardening integration — IMPLEMENTED_UNVERIFIED
 
 Overall product: **INCOMPLETE / NO_GO**. This delivery recovers the saved local

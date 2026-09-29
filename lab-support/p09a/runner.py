@@ -43,12 +43,20 @@ class Runner:
         generation = self.store.reset(run_id)
         return self.wait(generation, 'NONE')
 
+    def result_identity(self, run: dict[str, Any]) -> dict[str, Any]:
+        """Bind every terminal report to the same source, instance and durable run.
+
+        Recovery must not invent executed phases or reuse a previous verdict, but
+        its cancellation report still needs the identity checked by the evidence gate.
+        """
+        return {'schemaVersion': 1, 'sourceSha': self.settings.source,
+                'dirtySource': self.settings.dirty, 'instanceId': self.settings.instance,
+                'runId': run['id'], 'scenario': run['scenario'], 'seed': run['seed']}
+
     def execute(self, run: dict[str, Any]) -> dict[str, Any]:
         run_id, scenario = run['id'], run['scenario']
         result: dict[str, Any] = {
-            'schemaVersion': 1, 'scenario': scenario, 'runId': run_id,
-            'sourceSha': self.settings.source, 'dirtySource': self.settings.dirty,
-            'instanceId': self.settings.instance, 'seed': run['seed'],
+            **self.result_identity(run),
             'scope': 'REAL_HTTP_POSTGRES_TOXIPROXY' if scenario == 'F01' else 'REAL_HTTP_POSTGRES',
             'startedAt': timestamp(), 'testCheckpointHoldMs': self.checkpoint_ms,
             'phases': {}, 'cleanup': {'restored': False},
@@ -193,8 +201,7 @@ class Runner:
             cleanup = {'restored': False}
         for run in self.store.recent():
             if run['status'] in {'QUEUED', 'RUNNING', 'CLEANING'}:
-                result = {'schemaVersion': 1, 'sourceSha': self.settings.source, 'dirtySource': self.settings.dirty,
-                          'runId': run['id'], 'scenario': run['scenario'], 'phases': {}, 'cleanup': cleanup,
+                result = {**self.result_identity(run), 'phases': {}, 'cleanup': cleanup,
                           'verdict': 'CANCELLED' if cleanup.get('restored') else 'CLEANUP_FAILED',
                           'reason': 'CONTROLLER_RESTART_INTERRUPTED_EXPERIMENT', 'finishedAt': timestamp()}
                 self.store.finish(run['id'], result)
