@@ -1,0 +1,74 @@
+{
+  "schemaVersion": 1,
+  "scope": "CURATED_REAL_EXPERIMENT_EVIDENCE_NOT_FULL_P09A_PASS",
+  "sourceSha": "b6d291a57eaeb35aae3d48fff0319552dcfae6c7",
+  "workflowRunId": 36560099620,
+  "labJobId": 109378622364,
+  "labJobConclusion": "failure",
+  "artifactId": 11028329219,
+  "archiveSha256": "d3007b00d7ab6a55c866a6f7327e381798575c48e932288e7357fa1c09e3c80e",
+  "instanceId": "d2a10623ac9f4381aa95eebc49712806",
+  "seed": 74021,
+  "remainingFailure": "Browser campaign stopped after two passing authorization tests. Complete browser, lifecycle and required-gate verification was not established on this source.",
+  "F01": {
+    "runId": "e0b8aa3b-8239-4005-82b9-b15674bd6b13",
+    "scope": "REAL_HTTP_POSTGRES_TOXIPROXY",
+    "verdict": "PASSED",
+    "startedAt": "2026-09-29T11:14:07.723324+00:00",
+    "finishedAt": "2026-09-29T11:14:14.750539+00:00",
+    "routeProof": {
+      "database": "ledgerguard_lab_d2a10623ac9f",
+      "proved": true,
+      "proxyAddresses": ["172.18.0.3"],
+      "targetConnections": [[158, "172.18.0.3", "LedgerGuard-P09A-Target"]]
+    },
+    "phaseStatuses": {"baseline": "PASS", "latency": "PASS", "disruption": "PASS", "restored": "PASS"},
+    "inputSha256": "62ecbce622ca7d42ff6cf6cae5d60354dcdad359fa3a3ec97132cacd34dc33be",
+    "latency": {"httpStatus": 200, "elapsedSeconds": 0.518498},
+    "disruption": {"httpStatus": 503, "controlStatus": 200, "elapsedSeconds": 3.012144},
+    "operationId": "2b28761c-1352-4250-af0d-88afce1895ca",
+    "journalId": "36edbc0b-6ee8-44df-b637-448f159b221b",
+    "durableReplayCount": 1,
+    "reconciliationSha256InEveryPhase": "f8d62272ed0288741d4da8d6dae23865593f915b50bb1135f9b0725566f185d0",
+    "balanceDiscrepanciesInEveryPhase": 0,
+    "journalDiscrepanciesInEveryPhase": 0,
+    "artifactsSha256": {
+      "verdict.json": "d4c8154189436511b5d4c5daf867e7e6e3a5b0b6860d0007ea2f5a725e192c76",
+      "results.xml": "2ab89bd395dc136fe9abb00a9e21fafae85d8829999ae07b3ee536b15918f619"
+    }
+  },
+  "D02": {
+    "runId": "38163c9e-2871-4e95-8fb7-ffb334a5e2ab",
+    "scope": "REAL_HTTP_POSTGRES",
+    "verdict": "DETECTED",
+    "startedAt": "2026-09-29T11:14:15.366456+00:00",
+    "finishedAt": "2026-09-29T11:14:16.788619+00:00",
+    "inputSha256InEveryPhase": "e1d0d6dcca8e89823274681d902f99c1d8b390bb22850ff5575b841c5f97019c",
+    "baseline": {"status": "PASS", "changedRecipientStatus": 409},
+    "mutant": {
+      "status": "ASSERTION_FAILURE",
+      "assertion": {"id": "D02_CHANGED_RECIPIENT_REJECTED", "expected": 409, "actual": 201}
+    },
+    "restored": {"status": "PASS", "changedRecipientStatus": 409},
+    "operationId": "91fe93f8-a3e6-4295-a4e5-3dc75dd8d97f",
+    "journalId": "7c50c098-4b3a-45a6-8518-84a049c57213",
+    "durableReplayCount": 1,
+    "financialStateUnchangedInEveryPhase": true,
+    "reconciliationSha256InEveryPhase": "057c6ceecdb7ddbbed6e18f7c42bd162e685689b59e503b64a7512238148fa64",
+    "balanceDiscrepanciesInEveryPhase": 0,
+    "journalDiscrepanciesInEveryPhase": 0,
+    "interpretation": "Detected replay-contract defect; no duplicate money posting was observed.",
+    "artifactsSha256": {
+      "verdict.json": "32c00757d4fb7ccc9daf7347653a2cc8f437991988943f03c6fca365bc35f396",
+      "results.xml": "cc0fbf5415452c08802e3b42d477d747db589635f6f9bf901dce0a020dabb87b"
+    }
+  },
+  "cleanupForBothExperiments": {
+    "currentFunctionSha256": "52afdd5287a88fd6074188c69b399cd17088ba78079cb6b9a019edab512ff50d",
+    "originalFunctionSha256": "52afdd5287a88fd6074188c69b399cd17088ba78079cb6b9a019edab512ff50d",
+    "mutantFunctionSha256": "ef542f3007c6168d006420f566f7349fa46c469c2a854758b7dc589c894c872e",
+    "proxyEnabled": true,
+    "restored": true,
+    "toxics": []
+  }
+}
