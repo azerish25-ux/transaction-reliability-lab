@@ -47,6 +47,7 @@ jobs:
               if path.suffix.lower() not in {'.md', '.markdown', '.rst', '.adoc'}:
                   continue
               text = brand.sub('Bad Penny', campaign.sub('', data.decode('utf-8')))
+              text = text.replace(' verification`  ' + chr(10), ' verification`' + chr(92) + chr(10))
               if name == 'README.md':
                   text += '\n## Naming and compatibility\n\nBad Penny is the project name. Existing Java package paths, database names,\nDocker volumes, webhook headers and `.ledgerguard/` runtime paths remain\nunchanged so documented commands keep working. Historical artifact names, raw\nresults and screenshots are preserved exactly as recorded. Verification labels\nin the narrative describe the campaign scope, not a rename of past GitHub runs.\nThis branding change does not attribute historical test results to a new source.\n'
               path.write_bytes(text.encode('utf-8'))
@@ -100,7 +101,7 @@ jobs:
               assert a == b and lines[a - 1].strip() == item['requirement'], ('requirement traceability changed', item['id'])
           assert Path('README.md').read_text().startswith('# Bad Penny\n')
           actual = sha(json.dumps({item['path']: item['afterSha256'] for item in changed}, sort_keys=True, separators=(',', ':')).encode())
-          assert actual == '6ca21f984e2acd256883f7d28f2622e40e46d510856ee3f83fd5bc8a51145326', 'Output differs from locally reviewed documentation changes'
+          assert actual == 'fb82fefaf1efda73a4dc3aedb9d1333ba86c58da66faf606716ae8baa3ca64e4', 'Output differs from locally reviewed documentation changes'
           post = evidence_check()
           assert baseline['errors'] == post['errors'], 'Documentation change introduced evidence or link regression'
           (OUT / 'validation-after.json').write_text(json.dumps(post, indent=2) + '\n')
