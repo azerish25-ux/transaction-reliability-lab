@@ -1,0 +1,110 @@
+name: Apply P08F implementation
+on:
+  push:
+    branches: [main]
+    paths: [.github/workflows/p08f-apply.yml]
+permissions:
+  contents: write
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 0
+      - name: Apply the hash-verified P08F source snapshot without overwriting concurrent work
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          python3 - <<'PY'
+          import base64, hashlib, json, lzma, os, subprocess
+          from pathlib import Path, PurePosixPath
+          repo=os.environ['GITHUB_REPOSITORY']
+          assert repo=='azerish25-ux/transaction-reliability-lab'
+          chunks=['1628675dd07873039fbe292ab11f0ad5f25cbe51','ef478eb9228f22547ce8ca1332d753cafc42dc62','f71f36ed01a918e3d3a3a7583bde04928bd9e684','98f0c284031d011f53afedbade9a09ba7a1966aa','44644eebda805afd6f320fd06d0861f760b04a21','464f9fb9f488901c46680a24e1f293a05710fd93','fb454ed4d7da6d63a31a37df001917eadac44e4b']
+          data=b''
+          for sha in chunks:
+              blob=json.loads(subprocess.check_output(['gh','api',f'repos/{repo}/git/blobs/{sha}']))
+              chunk=base64.b64decode(blob['content'])
+              assert hashlib.sha1(b'blob '+str(len(chunk)).encode()+b'\0'+chunk).hexdigest()==sha
+              data+=chunk
+          assert len(data)==53504 and hashlib.sha256(data).hexdigest()=='7ac843a780f035ea6bb4824b26f6bb8366c4c57c5108ce550dc4e449a9425e53'
+          decoder=lzma.LZMADecompressor(memlimit=134217728)
+          raw=decoder.decompress(data,max_length=1000000)
+          assert decoder.eof and not decoder.unused_data and len(raw)==276655
+          payload=json.loads(raw)
+          assert payload['repository']==repo and len(payload['entries'])==29
+          def git(*args): return subprocess.check_output(['git',*args],text=True).strip()
+          base=payload['inspectedBase']
+          assert base=='644022340c0f3277297ed205610e4227584e720a' and git('merge-base',base,'HEAD')==base
+          names=[]
+          for entry in payload['entries']:
+              name=entry['path']; relative=PurePosixPath(name)
+              assert not relative.is_absolute() and '..' not in relative.parts and relative.parts[0] in {'backend','frontend','docs','scripts','tests','README.md'}
+              path=Path(name)
+              assert not path.is_symlink() and not any(parent.is_symlink() for parent in path.parents)
+              assert name not in names and len(entry['content'].encode())<100000
+              before=path.read_bytes() if path.exists() else None
+              action=entry['action']; text=entry['content']
+              if action=='write':
+                  assert (hashlib.sha256(before).hexdigest() if before is not None else None)==entry['beforeSha256'],name+' changed since inspection'
+                  assert hashlib.sha256(text.encode()).hexdigest()==entry['afterSha256']
+                  assert entry['mode'] in (420,493)
+              elif action in ('prepend','append'):
+                  assert name in {'docs/implementation/PROGRESS.md','docs/implementation/DELIVERY.md','docs/implementation/RELEASE_READINESS.md'} and before is not None
+                  text=text+before.decode() if action=='prepend' else before.decode()+text
+              elif action=='replace_once':
+                  assert name=='README.md' and before is not None and before.decode().count(entry['needle'])==1
+                  text=before.decode().replace(entry['needle'],text,1)
+              else: raise AssertionError('Unknown source action')
+              path.parent.mkdir(parents=True,exist_ok=True)
+              path.write_text(text)
+              if action=='write': path.chmod(entry['mode'])
+              names.append(name)
+          subprocess.run(['git','diff','--check'],check=True)
+          subprocess.run(['git','add','--',*names],check=True)
+          assert set(git('diff','--cached','--name-only').splitlines())==set(names)
+          assert git('ls-remote','origin','refs/heads/main').split()[0]==os.environ['GITHUB_SHA'],'main advanced; no overwrite'
+          subprocess.run(['git','config','user.name','github-actions[bot]'],check=True)
+          subprocess.run(['git','config','user.email','41898282+github-actions[bot]@users.noreply.github.com'],check=True)
+          subprocess.run(['git','commit','-m','feat(p08f): implement administrator investigation and snapshot reconciliation'],check=True)
+          subprocess.run(['git','push','origin','HEAD:main'],check=True)
+          evidence=Path('.evidence/p08f-apply');evidence.mkdir(parents=True,exist_ok=True)
+          (evidence/'source-sha.txt').write_text(git('rev-parse','HEAD')+'\n')
+          subprocess.run(['git','bundle','create',str(evidence/'source.bundle'),'HEAD'],check=True)
+          print('Pushed P08F source:',git('rev-parse','HEAD'))
+          PY
+      - uses: actions/setup-java@b6effb05e454b25005698d916606bdc6ffcbf961
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: maven
+          cache-dependency-path: backend/pom.xml
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - name: Verify frontend and all production-client contracts
+        run: |
+          npm ci --prefix frontend --ignore-scripts --no-audit --no-fund
+          npm run verify --prefix frontend
+      - name: Execute the new administrator HTTP and PostgreSQL tests
+        run: |
+          set -o pipefail
+          ./mvnw -B -ntp -f backend/pom.xml -Dtest=AdminFiltersTest -Dit.test=AdministratorInvestigationIT verify 2>&1 | tee .evidence/p08f-apply/maven.log
+      - name: Preserve source and actual test diagnostics
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: p08f-apply-${{ github.run_id }}
+          include-hidden-files: true
+          if-no-files-found: error
+          retention-days: 7
+          path: |
+            .evidence/p08f-apply/
+            backend/target/surefire-reports/
+            backend/target/failsafe-reports/
+            backend/target/admin-http-evidence/
