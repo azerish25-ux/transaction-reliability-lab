@@ -30,14 +30,14 @@ jobs:
               ('<label htmlFor="admin-limit">Results per page<select id="admin-limit" name="limit"','<label htmlFor="admin-limit"><span id="admin-limit-label">Results per page</span><select id="admin-limit" aria-labelledby="admin-limit-label" name="limit"')]),
             ('frontend/src/p08f.css','2bab05e9ca5fdebf07b7a148218d50cd6a73c2c7c982360795bcfbc554f7b949','a73f83b7ba8ebe994293376984cd1477fcefbf90e9e854b8ce9785cb2f2f1cff',[
               ('.admin-navigation a{','.admin-navigation a{display:inline-flex;align-items:center;min-height:44px;')]),
-            ('frontend/tests/e2e/p08f.spec.ts','5398d13708940da730d3bc5003d0834ee59c37044eee78b97e90f2bae42294ff','9e261a8c89cb21af5ccf47caadad187e4a02fd864bf3149c4ac301c67ef49e5c',[
-              ("test.use({trace:'off',video:'off',screenshot:'off'});","test.use({trace:'off',video:'off',screenshot:'off',actionTimeout:10_000,navigationTimeout:20_000});"),
+            ('frontend/tests/e2e/p08f.spec.ts','5398d13708940da730d3bc5003d0834ee59c37044eee78b97e90f2bae42294ff','7c58b87664831d7bf9e5d6dc41a22c5cf2687bec10ff4eb6e7a757373b4349ea',[
+              ("test.use({ trace: 'off', video: 'off', screenshot: 'off' });","test.use({ trace: 'off', video: 'off', screenshot: 'off', actionTimeout: 10_000, navigationTimeout: 20_000 });"),
               ("await expect(region.getByText('Refund',{exact:true})).toBeVisible();","const refundId=(await refund.json()).id as string;const refundRow=region.getByRole('row').filter({hasText:refundId});await expect(refundRow).toHaveCount(1);await expect(refundRow.getByRole('cell').first()).toHaveText(/^Refund\\s*Sequence \\d+$/);")])]
           names=[]
           for name,before,after,replacements in changes:
               p=Path(name);text=p.read_text();assert hashlib.sha256(text.encode()).hexdigest()==before,name+' changed'
               for old,new in replacements:
-                  assert old in text
+                  assert old in text,name+' replacement not found'
                   text=text.replace(old,new,1)
               assert hashlib.sha256(text.encode()).hexdigest()==after,name+' unexpected patch result'
               p.write_text(text);names.append(name)
@@ -60,12 +60,15 @@ jobs:
               if attempt==1 or 'Internal Server Error' not in result.stderr:raise RuntimeError('Push failed; candidate bundle retained')
               time.sleep(5)
           assert git('ls-remote','origin','refs/heads/main').split()[0]==candidate
-          # Only retire the redundant full run on this publisher's now-superseded source.
-          # The corrected candidate is verified separately by the permanent required gate.
-          runs=json.loads(subprocess.check_output(['gh','api',f'repos/{repo}/actions/runs?head_sha={head}&per_page=100']))['workflow_runs']
-          for run in runs:
-              if run['path']=='.github/workflows/pr.yml' and run['head_sha']==head and run['status'] in ('queued','in_progress'):
-                  subprocess.run(['gh','api','--method','POST',f'repos/{repo}/actions/runs/{run["id"]}/cancel'],check=True)
+          # Cancel only redundant full runs on explicitly known, superseded pre-fix source.
+          for old_head in [head,'1c6c947793e44f34fa714bf886cd6b0a0a90fa4f','2f1926641ad5baf2ab2487e0878d8595401154d9']:
+              runs=json.loads(subprocess.check_output(['gh','api',f'repos/{repo}/actions/runs?head_sha={old_head}&per_page=100']))['workflow_runs']
+              for run in runs:
+                  if run['path']=='.github/workflows/pr.yml' and run['head_sha']==old_head and run['status'] in ('queued','in_progress'):
+                      result=subprocess.run(['gh','api','--method','POST',f'repos/{repo}/actions/runs/{run["id"]}/cancel'],capture_output=True,text=True)
+                      if result.returncode:
+                          current=json.loads(subprocess.check_output(['gh','api',f'repos/{repo}/actions/runs/{run["id"]}']))
+                          assert current['status']=='completed',result.stderr
           print('Corrected source pushed:',candidate)
           PY
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
