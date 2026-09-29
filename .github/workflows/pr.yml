@@ -77,7 +77,8 @@ jobs:
 
   p09a:
     name: Isolated P09A lab, live faults, defect detection and restoration
-    needs: [verify]
+    # Independent runners may verify the same candidate concurrently. The required
+    # P09A gate below still rejects a failed, skipped or cancelled product campaign.
     runs-on: ubuntu-latest
     timeout-minutes: 60
     steps:
@@ -96,7 +97,7 @@ jobs:
           node-version: '22'
           cache: npm
           cache-dependency-path: frontend/package-lock.json
-      - name: Execute the lab component after the product campaign passed
+      - name: Execute isolated lab verification on the same candidate
         run: python3 lab-support/p09a/cli.py verify-lab
       - name: Ensure scoped lab teardown, including cancelled jobs
         if: always()
