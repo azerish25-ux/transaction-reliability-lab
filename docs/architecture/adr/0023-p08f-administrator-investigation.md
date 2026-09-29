@@ -1,6 +1,6 @@
 # ADR 0023: Administrator investigation and snapshot reconciliation
 
-Status: accepted implementation; exact-source verification remains pending until the permanent P08F gate passes.
+Status: accepted and verified at `8802f8b20c9bf3996d19ba90e7be26fd123b7580`, permanent run `36511855593`. See [evidence](../../evidence/p08f-8802f8b.md).
 
 ## Scope and authority
 
@@ -40,7 +40,7 @@ Reuse the existing protected, audited replay command and original broker event i
 
 ## Verification and delivery
 
-12 unit cases, 12 real PostgreSQL/HTTP integration cases, 24 production-client cases and 10 browser scenarios per desktop/tablet/mobile project are required by the P08F manifest/gate. Integration tests create actual disposable PostgreSQL and API processes. Snapshot isolation is tested against a concurrent independent commit. Real discrepancies are injected only with the isolated test orchestrator, then restored; tests prove the UI/service does not repair money. No privileged test controller or defect implementation is added to the release artifact.
+12 unit cases, 13 real PostgreSQL/HTTP integration cases, 24 production-client cases and 10 browser scenarios plus one table/keyboard case per desktop/tablet/mobile project are required by the P08F manifest/gate. Integration tests create actual disposable PostgreSQL and API processes. Snapshot isolation is tested against a concurrent independent commit. Real discrepancies are injected only with the isolated test orchestrator, then restored; tests prove the UI/service does not repair money. No privileged test controller or defect implementation is added to the release artifact.
 
 The P08F gate chains the entire P01-P08E campaign, requires all new mapped tests and fifteen responsive screenshots, rejects failures/errors/skips, preserves zero functional retries, and records the exact clean source SHA. Evidence handoff remains separate from tested implementation commits.
 

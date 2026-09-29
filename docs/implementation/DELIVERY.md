@@ -1,3 +1,13 @@
+# Delivery record — P08F verified
+
+## P08F verified delivery
+
+Tested source `8802f8b20c9bf3996d19ba90e7be26fd123b7580` passed permanent run `36511855593` and **Required P08F gate**. Results: 159 JUnit unit, 140 PostgreSQL/HTTP integration, 186 TypeScript client, 147 Browser; zero required failures/errors/skips and zero functional browser retries. Nine validator regressions also passed. [Report](../evidence/p08f-8802f8b.md) and [provenance](../evidence/p08f-8802f8b.json) retain tested source, job/artifact identities, hashes and limitations. Later documentation commits preserve that result without relabeling the tested SHA. Only `main` is used; no force push or additional delivery branch was needed. Full product remains INCOMPLETE / NO_GO. P09 is next.
+
+## Historical delivery records
+
+The entries below preserve their original tested sources and limitations. Their former next-action statements are historical and superseded by the verified P08F checkpoint above.
+
 # Delivery record — P08D verified
 
 Repository: `azerish25-ux/transaction-reliability-lab`. Branch: `main`.
@@ -87,3 +97,4 @@ Implementation `644022340c0f3277297ed205610e4227584e720a` passed permanent run `
 The connected azerish25-ux Git data API successfully created checkpoint `644022340c0f3277297ed205610e4227584e720a` on main, establishing requirements and a temporary source-workspace exporter. No new branch or force update was used. Source workspace run `36499193005` succeeded and its downloaded archive matched SHA-256 `c5bc6c65464cd108a0db904bdc54b3ffe1a2f3440c34ecfe69e2b93f814c8cac`. The exporter and obsolete P08E handoff are retired in the implementation. Historical evidence files remain preserved.
 
 P08F implementation and exact-source verification are distinct delivery states. Until the P08F required gate succeeds, the milestone is IMPLEMENTED_UNVERIFIED. Full product remains INCOMPLETE / NO_GO.
+

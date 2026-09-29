@@ -1,11 +1,17 @@
-# P08D verified checkpoint
+# LedgerGuard evidence index
 
-## Latest verified milestone: P08E
+## Latest verified milestone: P08F
+
+Implementation `8802f8b20c9bf3996d19ba90e7be26fd123b7580`; successful permanent run `36511855593`, including Required P08F gate. [Report](p08f-8802f8b.md), [JSON provenance](p08f-8802f8b.json), [requirements matrix](p08f-8802f8b/requirements-matrix.md). Thirty new administrator journeys, three table/keyboard checks and fifteen responsive screenshots are included. Full product remains INCOMPLETE / NO_GO. Entries below retain their historical scope.
+
+[Final agent-driven responsive review](p08f-8802f8b-visual-review.md).
+
+## Historical P08E checkpoint
 
 Implementation `644022340c0f3277297ed205610e4227584e720a`, successful permanent run `36499192991`. [Report](p08e-6440223.md), [JSON provenance](p08e-6440223.json), [requirements](p08e-6440223/requirements-matrix.md). Overall product remains INCOMPLETE / NO_GO. Earlier entries retain their historical scope.
 
 
-## Latest verified milestone: P08E
+## Historical P08E checkpoint
 
 Implementation `026dca3ec4c3c68696e87f8192872a4d2e45e157`, successful permanent run `36485630387`. [Report](p08e-026dca3.md), [JSON provenance](p08e-026dca3.json), [requirements](p08e-026dca3/requirements-matrix.md). Overall product remains INCOMPLETE / NO_GO. Earlier entries retain their historical scope.
 
@@ -70,6 +76,6 @@ P08A's initial browser run had exposed a native-fetch receiver defect. The next 
 
 ## Remaining evidence
 
-Customer webhook interfaces, the broader administrator interface, P09 complete F01–F08 and D01–D24 campaigns, P10 Pact/ZAP/k6/backup-restore/nightly/release lanes, and P11 final exploratory package/video remain incomplete.
+Customer webhook and administrator investigation interfaces are verified through P08F. P09 complete F01–F08 and D01–D24 campaigns, P10 Pact/ZAP/k6/backup-restore/nightly/release lanes, and P11 final exploratory package/video remain incomplete.
 
 This milestone is not a public-deployment, release-tag, security-certification, whole-product-accessibility or measured-performance claim. GitHub Actions results remain the authority for the executed Docker/PostgreSQL/RabbitMQ/Compose/browser campaign.

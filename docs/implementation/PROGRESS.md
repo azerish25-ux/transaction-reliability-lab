@@ -1,22 +1,32 @@
-# P08F administrator investigation — IMPLEMENTED_UNVERIFIED
+# P08F administrator investigation — VERIFIED_PASS
 
-Overall product: **INCOMPLETE / NO_GO**. P01-P08E historical verification remains preserved below.
+Overall product: **INCOMPLETE / NO_GO**. P08F is a verified development milestone, not a complete product release.
 
-## Implemented scope
+## Exact-source verification
 
-ADMIN-only transaction search with all required filters; consistent-snapshot journal/detail relationships; safe financial audit history; independent eight-category read-only reconciliation and durable report history; same-report UUID recovery across reload/reauthentication; existing failed-work inspection and explicitly confirmed replay; responsive navigation and accessible states.
+Implementation `8802f8b20c9bf3996d19ba90e7be26fd123b7580` passed permanent **LedgerGuard P08F verification** run `36511855593`, including **Required P08F gate**. Executed totals: 159 JUnit unit, 140 PostgreSQL/HTTP integration, 186 TypeScript client, 147 Browser. Required failures, errors and skips were zero; functional browser retries were zero. The gate also executed nine evidence-validator regression tests.
 
-Protected financial commands and schema migrations are unchanged. New source contract: `P08F_REQUIREMENTS.json`; ADR 0023; `/api/v1/openapi/p08f-ui.json`.
+P08F contributes 12 Java validation/authorization unit cases, 13 real PostgreSQL/HTTP integration cases, 24 production-client cases, 30 administrator browser journeys and three additional responsive table/keyboard cases. Seven requirements and fifteen responsive screenshots are bound to the clean tested source. [Durable report](../evidence/p08f-8802f8b.md), [JSON provenance](../evidence/p08f-8802f8b.json), and [requirements matrix](../evidence/p08f-8802f8b/requirements-matrix.md).
 
-## Verification checkpoint
+## Delivered scope
 
-Local strict frontend/app/browser-source compilation, 24 new production-client cases and the preserved client campaign/build have executed successfully in the implementation workspace. Local source was dirty during these checks; they are not attributed to a clean commit. Docker is unavailable locally. The new real PostgreSQL/HTTP integration and responsive browser campaign must run in authorized GitHub Actions.
+ADMIN-only transaction search with reference, kind, status, account/user, currency, exact amount and UTC filters; immutable journal and linked adjustment/event/failed-work detail; separately labelled redacted financial audit history; independent eight-category read-only reconciliation with saved immutable snapshot reports; same-report UUID recovery across reload and reauthentication; existing failed-work inspection and explicitly confirmed replay.
 
-Do not mark P08F verified until the permanent P08F required gate passes on the exact implementation SHA and its actual reports/screenshots are inspected. Do not reuse old P08E success as P08F evidence.
+The financial command path and migrations are unchanged. Investigation is not a balance editor. Reconciliation never silently repairs money, and an old report never represents current live health. Ordinary audit reads state NOT_CHECKED; the scoped reconciliation executes hash-chain verification.
+
+## Corrections and evidence discipline
+
+The implementation cycle corrected numeric event/audit ordering, accessible filter names and narrow-screen table/navigation behavior. Final evidence validation now accounts for the separate layout suite and all thirteen integration identities. Its own regression tests reject missing, duplicate, failed, skipped, retried and wrong-project evidence. No product assertion was removed to obtain a passing gate.
+
+GitHub verified the full campaign on the implementation SHA above. Later documentation commits only retain and describe that result; they are not substituted for the tested SHA. Raw CI artifacts have finite retention. Curated evidence and representative screenshots are retained in Git.
 
 ## Next executable action
 
-Execute the permanent P08F gate, fix actual failures without dropping requirements, inspect responsive artifacts and retain exact-source provenance. After verified P08F, continue with P09 isolated faults/defects/lab console. No individual milestone completes the original mandate.
+Begin **P09**: isolated F01-F08 resilience faults, D01-D24 seeded defects, the lab-only console and the baseline/mutant/restoration runner. Preserve the P01-P08F campaign. P10 contracts/security/performance/restore and complete CI lanes, and P11 final exploratory/evidence/video/release work remain open.
+
+## Historical checkpoints
+
+Historical records below retain their own tested source and scope; their old next-action statements are superseded by this checkpoint.
 
 ## Preserved P08E history
 

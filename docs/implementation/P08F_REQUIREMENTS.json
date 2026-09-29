@@ -1,6 +1,6 @@
 {
   "milestone": "P08F",
-  "status": "IMPLEMENTED_UNVERIFIED",
+  "status": "VERIFIED_PASS",
   "fullProductStatus": "INCOMPLETE_NO_GO",
   "scope": "Administrator transaction search, journal detail, audit history, independent reconciliation and failed-work inspection",
   "requirements": [
@@ -80,5 +80,11 @@
     "p08f-integration": "backend/src/test/java/lab/ledgerguard/AdministratorInvestigationIT.java",
     "p08f-browser": "frontend/tests/e2e/p08f.spec.ts",
     "p08f-layout": "frontend/tests/e2e/p08f-table.spec.ts"
+  },
+  "verification": {
+    "sourceSha": "8802f8b20c9bf3996d19ba90e7be26fd123b7580",
+    "workflowRunId": 36511855593,
+    "requiredGate": "Required P08F gate",
+    "report": "docs/evidence/p08f-8802f8b.json"
   }
 }
