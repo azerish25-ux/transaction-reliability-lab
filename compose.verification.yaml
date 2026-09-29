@@ -1,0 +1,14 @@
+# Only the legacy process-death proofs need the lab artifact. Normal api/web remain fault-free.
+services:
+  api:
+    environment:
+      LEDGER_LAB_ENABLED: "true"
+  outbox-publisher:
+    build:
+      dockerfile: infra/docker/Dockerfile.lab
+  payment-worker-a:
+    build:
+      dockerfile: infra/docker/Dockerfile.lab
+  payment-worker-b:
+    build:
+      dockerfile: infra/docker/Dockerfile.lab
