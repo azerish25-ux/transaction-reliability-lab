@@ -1,159 +1,93 @@
 name: Bad Penny documentation rename
-
 on:
   push:
     branches: [main]
     paths: ['.github/workflows/bad-penny-rebrand.yml']
-
 permissions:
   contents: write
-
+  actions: read
 jobs:
   prepare:
     if: github.repository_id == '1388407800'
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
-      - name: Check out the exact documentation-edit candidate
+      - name: Check out candidate
         uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
         with:
           persist-credentials: false
-      - name: Apply reviewed documentation edits and prepare an unreferenced commit
+      - name: Verify reviewed documentation and stage content blobs only
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           python3 - <<'PY'
           from pathlib import Path
-          import hashlib, json, os, re, subprocess, urllib.request, zipfile
-          ROOT = Path.cwd()
-          OUT = Path(os.environ['RUNNER_TEMP']) / 'bad-penny-rebrand'
-          OUT.mkdir()
+          import hashlib, io, json, os, subprocess, urllib.request, zipfile
+          repo = os.environ['GITHUB_REPOSITORY']
+          assert os.environ['GITHUB_REPOSITORY_ID'] == '1388407800'
           base = subprocess.check_output(['git', 'rev-parse', 'HEAD'], text=True).strip()
           assert base == os.environ['GITHUB_SHA']
-          assert os.environ['GITHUB_REPOSITORY_ID'] == '1388407800'
-          def evidence_check():
-              result = subprocess.run(['python3', 'scripts/validate-evidence'], text=True, capture_output=True)
-              return json.loads(result.stdout)
-          def sha(data):
-              return hashlib.sha256(data).hexdigest()
-          baseline = evidence_check()
-          (OUT / 'validation-before.json').write_text(json.dumps(baseline, indent=2) + '\n')
-          tracked = subprocess.check_output(['git', 'ls-files', '-z']).decode().rstrip('\0').split('\0')
-          before = {name: Path(name).read_bytes() for name in tracked}
-          brand = re.compile(r'(?<![\w.-])(?:LedgerGuard|Ledger Guard|LEDGERGUARD|LEDGER GUARD)(?![\w.-])')
-          campaign = re.compile(r'LedgerGuard (?=(?:P\d+[A-Z]*|fast) verification)')
-          for name, data in before.items():
-              path = Path(name)
-              if path.suffix.lower() not in {'.md', '.markdown', '.rst', '.adoc'}:
-                  continue
-              text = brand.sub('Bad Penny', campaign.sub('', data.decode('utf-8')))
-              text = text.replace(' verification`  ' + chr(10), ' verification`' + chr(92) + chr(10))
-              if name == 'README.md':
-                  text += '\n## Naming and compatibility\n\nBad Penny is the project name. Existing Java package paths, database names,\nDocker volumes, webhook headers and `.ledgerguard/` runtime paths remain\nunchanged so documented commands keep working. Historical artifact names, raw\nresults and screenshots are preserved exactly as recorded. Verification labels\nin the narrative describe the campaign scope, not a rename of past GitHub runs.\nThis branding change does not attribute historical test results to a new source.\n'
-              path.write_bytes(text.encode('utf-8'))
-          requirements = Path('docs/implementation/REQUIREMENTS.yaml')
-          requirements.write_bytes(brand.sub('Bad Penny', requirements.read_text()).encode('utf-8'))
-          api_titles = 0
-          for name in tracked:
-              if not name.startswith('backend/src/main/resources/openapi/') or not name.endswith('.json'):
-                  continue
-              original = json.loads(before[name])
-              text, count = re.subn(r'("title"\s*:\s*")LedgerGuard(?=\s|\")', r'\1Bad Penny', before[name].decode('utf-8'))
-              assert count == 1, (name, 'expected exactly one API documentation title')
-              modified = json.loads(text)
-              assert modified['info']['title'] == original['info']['title'].replace('LedgerGuard', 'Bad Penny', 1)
-              modified['info']['title'] = original['info']['title']
-              assert modified == original, (name, 'API contract changed beyond its title')
-              Path(name).write_bytes(text.encode('utf-8'))
-              api_titles += 1
-          workflow = Path('.github/workflows/pr.yml')
-          text = workflow.read_text()
-          assert text.count('name: LedgerGuard P08F verification') == 1
-          workflow.write_bytes(text.replace('name: LedgerGuard P08F verification', 'name: Bad Penny P08F verification', 1).encode('utf-8'))
-          handoff = Path('.github/workflows/p08f-evidence-handoff.yml')
-          text = handoff.read_text()
-          old = "assert repo == 'azerish25-ux/transaction-reliability-lab'"
-          assert text.count(old) == 1
-          text = text.replace(old, "assert os.environ['GITHUB_REPOSITORY_ID'] == '1388407800'")
-          text = text.replace('workflows: [LedgerGuard P08F verification]', 'workflows: [Bad Penny P08F verification, LedgerGuard P08F verification]')
-          text = text.replace("run['name'] == 'LedgerGuard P08F verification'", "run['name'] in {'Bad Penny P08F verification', 'LedgerGuard P08F verification'}")
-          handoff.write_bytes(text.encode('utf-8'))
+          out = Path(os.environ['RUNNER_TEMP']) / 'bad-penny-rebrand'
+          out.mkdir()
+          package = out / 'reviewed.zip'
+          with package.open('wb') as target:
+              subprocess.run(['gh', 'api', f'repos/{repo}/actions/artifacts/11043051711/zip'], stdout=target, check=True)
+          def sha(data): return hashlib.sha256(data).hexdigest()
+          assert sha(package.read_bytes()) == 'efc5e94d698eb3499dd7a862954776f3b1de027a7d054865319a92d523c76119'
+          with zipfile.ZipFile(package) as archive:
+              plan = json.loads(archive.read('plan.json'))
+              updated = archive.read('updated-files.zip')
+          changes = plan['changedFiles']
+          expected = {item['path']: item['afterSha256'] for item in changes}
+          assert sha(json.dumps(expected, sort_keys=True, separators=(',', ':')).encode()) == 'fb82fefaf1efda73a4dc3aedb9d1333ba86c58da66faf606716ae8baa3ca64e4'
           temporary = '.github/workflows/bad-penny-rebrand.yml'
-          Path(temporary).unlink()
-          allowed = lambda n: (Path(n).suffix.lower() in {'.md', '.markdown', '.rst', '.adoc'}
-                                or n == 'docs/implementation/REQUIREMENTS.yaml'
-                                or n.startswith('backend/src/main/resources/openapi/') and n.endswith('.json')
-                                or n in {'.github/workflows/pr.yml', '.github/workflows/p08f-evidence-handoff.yml', temporary})
-          changed = []
-          for name, data in before.items():
-              current = Path(name).read_bytes() if Path(name).is_file() else None
-              if current != data:
-                  assert allowed(name), ('unexpected mutation', name)
-                  changed.append({'path': name, 'beforeSha256': sha(data), 'afterSha256': sha(current) if current is not None else None})
-              if name.startswith('docs/evidence/') and not name.endswith('.md'):
-                  assert current == data, ('historical evidence was modified', name)
-              if Path(name).suffix.lower() in {'.md', '.markdown', '.rst', '.adoc'}:
-                  assert not brand.search(current.decode()), ('old documentation branding', name)
-          items = json.loads(requirements.read_text())['requirements']
-          for item in items:
-              lines = Path(item['source_file']).read_text().splitlines()
-              a, b = item['source_lines']
-              assert a == b and lines[a - 1].strip() == item['requirement'], ('requirement traceability changed', item['id'])
-          assert Path('README.md').read_text().startswith('# Bad Penny\n')
-          actual = sha(json.dumps({item['path']: item['afterSha256'] for item in changed}, sort_keys=True, separators=(',', ':')).encode())
-          assert actual == 'fb82fefaf1efda73a4dc3aedb9d1333ba86c58da66faf606716ae8baa3ca64e4', 'Output differs from locally reviewed documentation changes'
-          post = evidence_check()
-          assert baseline['errors'] == post['errors'], 'Documentation change introduced evidence or link regression'
-          (OUT / 'validation-after.json').write_text(json.dumps(post, indent=2) + '\n')
-          report = {'changedFiles': changed, 'markdownFilesScanned': sum(n.endswith('.md') for n in tracked),
-                    'requirementsChecked': len(items), 'apiDocumentationTitlesChanged': api_titles,
-                    'historicalEvidenceBytesPreserved': True, 'runtimeIdentifiersPreserved': True,
-                    'repositoryRenameStatus': 'NOT_PERFORMED_ADMINISTRATION_PERMISSION_DENIED',
-                    'preExistingValidationErrors': post['errors'], 'newValidationErrors': []}
-          (OUT / 'plan.json').write_text(json.dumps(report, indent=2) + '\n')
-          with (OUT / 'component-tests.log').open('w') as log:
-              subprocess.run(['python3', '-m', 'unittest', 'discover', '-s', 'tests', '-p', 'test_p09a*.py', '-v'], stdout=log, stderr=subprocess.STDOUT, check=True)
-          assert 'Ran 228 tests' in (OUT / 'component-tests.log').read_text()
+          with zipfile.ZipFile(io.BytesIO(updated)) as archive:
+              assert set(archive.namelist()) == {name for name, value in expected.items() if value is not None}
+              for item in changes:
+                  name = item['path']
+                  path = Path(name)
+                  assert not path.is_absolute() and '..' not in path.parts and not path.is_symlink()
+                  if name == temporary:
+                      assert item['afterSha256'] is None
+                      path.unlink()
+                      continue
+                  assert sha(path.read_bytes()) == item['beforeSha256'], ('source changed', name)
+                  data = archive.read(name)
+                  assert sha(data) == item['afterSha256']
+                  path.write_bytes(data)
           subprocess.run(['git', 'diff', '--check'], check=True)
-          (OUT / 'documentation.patch').write_bytes(subprocess.check_output(['git', 'diff', '--binary']))
-          with zipfile.ZipFile(OUT / 'updated-files.zip', 'w', zipfile.ZIP_DEFLATED) as archive:
-              for item in changed:
-                  if item['afterSha256'] is not None:
-                      archive.write(item['path'], item['path'])
-          repo = os.environ['GITHUB_REPOSITORY']
-          assert repo.startswith('azerish25-ux/')
-          headers = {'Authorization': 'Bearer ' + os.environ['GH_TOKEN'], 'Accept': 'application/vnd.github+json', 'X-GitHub-Api-Version': '2022-11-28'}
-          def api(path, payload=None):
-              request = urllib.request.Request('https://api.github.com/repos/' + repo + '/' + path, headers=headers,
-                                               data=json.dumps(payload).encode() if payload is not None else None,
-                                               method='POST' if payload is not None else 'GET')
-              with urllib.request.urlopen(request, timeout=90) as response:
-                  return json.load(response)
-          assert api('git/ref/heads/main')['object']['sha'] == base, 'main advanced; refusing to publish stale changes'
-          modes = {}
-          for entry in subprocess.check_output(['git', 'ls-files', '--stage', '-z']).decode().rstrip('\0').split('\0'):
-              metadata, name = entry.split('\t', 1)
-              modes[name] = metadata.split()[0]
-          elements = []
-          for item in changed:
+          with (out / 'component-tests.log').open('w') as log:
+              subprocess.run(['python3', '-m', 'unittest', 'discover', '-s', 'tests', '-p', 'test_p09a*.py', '-v'], stdout=log, stderr=subprocess.STDOUT, check=True)
+          assert 'Ran 228 tests' in (out / 'component-tests.log').read_text()
+          entries = []
+          for item in changes:
               name = item['path']
-              entry = {'path': name, 'mode': modes[name], 'type': 'blob'}
+              entry = {'path': name, 'mode': '100644', 'type': 'blob'}
               if item['afterSha256'] is None:
                   entry['sha'] = None
               else:
-                  entry['content'] = Path(name).read_text()
-              elements.append(entry)
-          tree = api('git/trees', {'base_tree': subprocess.check_output(['git', 'rev-parse', 'HEAD^{tree}'], text=True).strip(), 'tree': elements})
-          commit = api('git/commits', {'message': 'docs: rebrand project documentation as Bad Penny\n\nUpdate human-readable documentation and 12 OpenAPI titles; preserve runtime identifiers, raw evidence and historical artifact identities. Keep master-spec requirement traceability aligned. Rename the current verification display name and bind evidence retention to the stable repository ID. Remove the one-use editing workflow.\n\nReviewed 75 Markdown files and 591 requirement mappings. All 228 P09A component tests pass. No new evidence/link validation errors; seven historical stale-source reports remain unchanged.\n\nRepository settings rename was denied by GitHub with HTTP 403; the repository slug remains unchanged.', 'tree': tree['sha'], 'parents': [base]})
-          receipt = {'base': base, 'commit': commit['sha'], 'tree': tree['sha'], 'repository': repo, 'changedFiles': len(changed), 'refUpdated': False}
-          (OUT / 'receipt.json').write_text(json.dumps(receipt, indent=2) + '\n')
+                  data = Path(name).read_bytes()
+                  wanted = hashlib.sha1(b'blob ' + str(len(data)).encode() + b'\0' + data).hexdigest()
+                  payload = json.dumps({'content': data.decode('utf-8'), 'encoding': 'utf-8'}).encode()
+                  request = urllib.request.Request(f'https://api.github.com/repos/{repo}/git/blobs', data=payload, method='POST', headers={'Authorization': 'Bearer ' + os.environ['GH_TOKEN'], 'Accept': 'application/vnd.github+json'})
+                  with urllib.request.urlopen(request, timeout=30) as response:
+                      actual = json.load(response)['sha']
+                  assert actual == wanted, ('blob mismatch', name)
+                  entry['sha'] = actual
+              entries.append(entry)
+          receipt = {'base': base, 'baseTree': subprocess.check_output(['git', 'rev-parse', 'HEAD^{tree}'], text=True).strip(), 'repository': repo, 'treeElements': entries, 'refUpdated': False, 'componentTestsPassed': 228}
+          (out / 'receipt.json').write_text(json.dumps(receipt, indent=2) + '\n')
+          (out / 'plan.json').write_text(json.dumps(plan, indent=2) + '\n')
           print(json.dumps(receipt))
           PY
-      - name: Publish review and delivery evidence
+      - name: Publish receipt and tests
         if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
-          name: bad-penny-rebrand-prepared-${{ github.sha }}
+          name: bad-penny-staged-blobs-${{ github.sha }}
           retention-days: 7
           if-no-files-found: error
-          path: ${{ runner.temp }}/bad-penny-rebrand/
+          path: |
+            ${{ runner.temp }}/bad-penny-rebrand/receipt.json
+            ${{ runner.temp }}/bad-penny-rebrand/plan.json
+            ${{ runner.temp }}/bad-penny-rebrand/component-tests.log
