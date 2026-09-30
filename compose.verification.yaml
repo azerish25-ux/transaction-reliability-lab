@@ -1,14 +1,14 @@
-# Only the legacy process-death proofs need the lab artifact. Normal api/web remain fault-free.
+# Explicitly selected process-death proof artifacts; normal services are unchanged.
 services:
-  api:
-    environment:
-      LEDGER_LAB_ENABLED: "true"
   outbox-publisher:
+    image: ${COMPOSE_PROJECT_NAME:-ledgerguard}-verification-outbox-publisher
     build:
       dockerfile: infra/docker/Dockerfile.lab
   payment-worker-a:
+    image: ${COMPOSE_PROJECT_NAME:-ledgerguard}-verification-payment-worker-a
     build:
       dockerfile: infra/docker/Dockerfile.lab
   payment-worker-b:
+    image: ${COMPOSE_PROJECT_NAME:-ledgerguard}-verification-payment-worker-b
     build:
       dockerfile: infra/docker/Dockerfile.lab

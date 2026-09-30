@@ -354,6 +354,15 @@ class PackagingBoundaryTests(unittest.TestCase):
         self.jar({'BOOT-INF/classes/Product.class': b'normal product'})
         self.assertFalse(self.inspect()['globalG12Complete'])
 
+    def test_process_death_class_cannot_ship_in_normal_artifact(self):
+        self.jar({'BOOT-INF/classes/lab/ledgerguard/verification/ProcessDeathFaults.class': b'bytecode'})
+        with self.assertRaises(LabError): self.inspect()
+
+    def test_verification_service_registration_cannot_ship_in_normal_artifact(self):
+        self.jar({'BOOT-INF/classes/META-INF/services/lab.ledgerguard.messaging.WorkerFaultActions':
+                  b'lab.ledgerguard.verification.ProcessDeathFaults'})
+        with self.assertRaises(LabError): self.inspect()
+
     def test_lab_code_in_nested_jar_cannot_escape_scan(self):
         nested = io.BytesIO()
         with zipfile.ZipFile(nested, 'w') as archive: archive.writestr('payload.py', b'LAB_ONLY_BUILD')

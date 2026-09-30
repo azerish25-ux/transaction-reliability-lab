@@ -148,4 +148,30 @@
       </plugin>
     </plugins>
   </build>
+  <profiles>
+    <profile>
+      <id>verification</id>
+      <build>
+        <directory>${project.basedir}/target-verification</directory>
+        <plugins>
+          <plugin>
+            <groupId>org.codehaus.mojo</groupId>
+            <artifactId>build-helper-maven-plugin</artifactId>
+            <version>3.6.1</version>
+            <executions>
+              <execution>
+                <id>explicit-verification-artifact</id>
+                <phase>generate-sources</phase>
+                <goals><goal>add-source</goal><goal>add-resource</goal></goals>
+                <configuration>
+                  <sources><source>src/verification/java</source></sources>
+                  <resources><resource><directory>src/verification/resources</directory></resource></resources>
+                </configuration>
+              </execution>
+            </executions>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+  </profiles>
 </project>

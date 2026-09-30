@@ -1,3 +1,19 @@
+# G12 process-death artifact separation — IMPLEMENTED_UNVERIFIED
+
+Active JVM termination code now lives only in the explicit Maven `verification`
+profile, with separate source/resource directories, build output and Docker
+image names. Normal `WorkerFaults` has no provider and fails startup if either
+crash property is requested, even with sandbox enabled. The normal-artifact
+scanner rejects verification classes and service registrations, including nested
+archives. Existing real publisher/consumer death-and-recovery proofs remain,
+using the explicit verification image. The smoke campaign additionally attempts
+both forbidden flags against normal images before building verification images.
+
+Local checks and exact-source CI remain required before G12 can close. Do not
+confuse these implemented checks with an executed Docker pass. P09A's historical
+verified evidence remains source-bound below. Remaining 30 P09 scenarios and
+P10/P11 are open. Continue F02/D06 after validating this separation.
+
 # P09A exact-source verification — VERIFIED_PASS
 
 Synthetic money only. Full product remains **INCOMPLETE / NO_GO**.

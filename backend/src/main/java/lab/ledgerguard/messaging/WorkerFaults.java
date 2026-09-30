@@ -1,23 +1,24 @@
 package lab.ledgerguard.messaging;
 
-import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.ServiceLoader;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
-/** Explicit sandbox-only process-death hooks used to prove recovery across real JVM restarts. */
+/** Normal builds cannot activate process-death behavior, even in sandbox mode. */
 @Component
 public class WorkerFaults {
-    private final boolean sandbox;
-    private final boolean publisherDeath;
-    private final boolean workerDeath;
-    private final AtomicBoolean publisherArmed=new AtomicBoolean(true);
-    private final AtomicBoolean workerArmed=new AtomicBoolean(true);
+    private final WorkerFaultActions actions;
     public WorkerFaults(@Value("${ledgerguard.sandbox-http:false}") boolean sandbox,
             @Value("${ledgerguard.test.crash-after-publish-confirm:false}") boolean publisherDeath,
             @Value("${ledgerguard.test.crash-after-settlement-commit:false}") boolean workerDeath) {
-        if((publisherDeath||workerDeath)&&!sandbox) throw new IllegalStateException("FAULT_HOOK_REQUIRES_SANDBOX");
-        this.sandbox=sandbox;this.publisherDeath=publisherDeath;this.workerDeath=workerDeath;
+        var providers = ServiceLoader.load(WorkerFaultActions.class).stream().toList();
+        if (providers.size() > 1) throw new IllegalStateException("AMBIGUOUS_VERIFICATION_PROVIDER");
+        actions = providers.isEmpty() ? null : providers.get(0).get();
+        if (actions == null && (publisherDeath || workerDeath)) {
+            throw new IllegalStateException("FAULT_HOOK_NOT_PACKAGED_IN_NORMAL_ARTIFACT");
+        }
+        if (actions != null) actions.configure(sandbox, publisherDeath, workerDeath);
     }
-    public void afterPublisherConfirm(){if(sandbox&&publisherDeath&&publisherArmed.compareAndSet(true,false))Runtime.getRuntime().halt(86);}
-    public void afterSettlementCommit(){if(sandbox&&workerDeath&&workerArmed.compareAndSet(true,false))Runtime.getRuntime().halt(87);}
+    public void afterPublisherConfirm() { if (actions != null) actions.afterPublisherConfirm(); }
+    public void afterSettlementCommit() { if (actions != null) actions.afterSettlementCommit(); }
 }

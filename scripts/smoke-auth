@@ -148,12 +148,21 @@ compose("up","-d","rabbitmq");wait_rabbit();compose("up","-d","outbox-publisher"
 wait_payment(alice,outage_payment["id"],"SETTLED","SETTLED")
 check("broker-recovery-drains-backlog",sql(f"SELECT count(*) FROM ledger.journals WHERE operation_id='{outage_payment['id']}'")=="1")
 
+# Normal release images reject attempted activation rather than acquiring test powers.
+for variable, service in [("LEDGER_TEST_CRASH_AFTER_PUBLISH_CONFIRM", "outbox-publisher"),
+                          ("LEDGER_TEST_CRASH_AFTER_SETTLEMENT_COMMIT", "payment-worker-a")]:
+    denied=compose("run","--rm","--no-deps","-e",variable+"=true",service,check=False,capture=True)
+    check("normal-artifact-denies-"+service,denied.returncode not in (0,86,87) and
+          "FAULT_HOOK_NOT_PACKAGED_IN_NORMAL_ARTIFACT" in denied.stdout+denied.stderr)
+subprocess.run([*COMPOSE,"-f",str(ROOT/"compose.verification.yaml"),"build",
+                "outbox-publisher","payment-worker-a"],cwd=ROOT,check=True)
+
 # Publisher dies after broker confirm but before marking the outbox row. Lease expiry must republish the same event ID safely.
 wait_sql("SELECT count(*) FROM ledger.outbox_events WHERE published_at IS NULL AND failed_at IS NULL","0",60)
 compose("stop","outbox-publisher")
 publisher_body={"sourceId":source,"recipientRef":recipient,"amountMinor":"500","currency":"CAD"}
 status,publisher_payment,_=alice.call("/payments",publisher_body,headers={"Idempotency-Key":unique("publisher-crash")});check("publisher-crash-payment-accepted",status==202)
-fault=compose("run","--rm","--no-deps","-e","LEDGER_TEST_CRASH_AFTER_PUBLISH_CONFIRM=true","-e","LEDGER_OUTBOX_LEASE_SECONDS=5","outbox-publisher",check=False,capture=True)
+fault=subprocess.run([*COMPOSE,"-f",str(ROOT/"compose.verification.yaml"),"run","--rm","--no-deps","-e","LEDGER_TEST_CRASH_AFTER_PUBLISH_CONFIRM=true","-e","LEDGER_OUTBOX_LEASE_SECONDS=5","outbox-publisher"],cwd=ROOT,check=False,capture_output=True,text=True)
 check("publisher-process-died-after-confirm",fault.returncode==86)
 wait_payment(alice,publisher_payment["id"],"SETTLED",None)
 time.sleep(6);compose("up","-d","outbox-publisher")
@@ -165,7 +174,7 @@ compose("stop","payment-worker-a","payment-worker-b")
 worker_body={"sourceId":source,"recipientRef":recipient,"amountMinor":"600","currency":"CAD"}
 status,worker_payment,_=alice.call("/payments",worker_body,headers={"Idempotency-Key":unique("worker-crash")});check("worker-crash-payment-accepted",status==202)
 wait_sql(f"SELECT CASE WHEN published_at IS NOT NULL THEN 1 ELSE 0 END FROM ledger.outbox_events WHERE aggregate_id='{worker_payment['id']}' AND event_type='payment.requested'","1",45)
-fault=compose("run","--rm","--no-deps","-e","LEDGER_TEST_CRASH_AFTER_SETTLEMENT_COMMIT=true","payment-worker-a",check=False,capture=True)
+fault=subprocess.run([*COMPOSE,"-f",str(ROOT/"compose.verification.yaml"),"run","--rm","--no-deps","-e","LEDGER_TEST_CRASH_AFTER_SETTLEMENT_COMMIT=true","payment-worker-a"],cwd=ROOT,check=False,capture_output=True,text=True)
 check("worker-process-died-after-commit",fault.returncode==87)
 compose("up","-d","payment-worker-a","payment-worker-b")
 wait_payment(alice,worker_payment["id"],"SETTLED","SETTLED")

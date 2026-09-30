@@ -13,3 +13,4 @@ docs/evidence/raw
 # Generated Python caches are never source or lab build inputs.
 **/__pycache__/
 *.py[cod]
+**/target-verification
