@@ -8,6 +8,7 @@ const root = path.resolve(__dirname, '../..');
 const frontendRequire = createRequire(path.join(root, 'frontend/package.json'));
 const {chromium} = frontendRequire('playwright');
 const {expect} = frontendRequire('@playwright/test');
+const {waitForAcceptedRun} = require('../../tests/browser/run-identity.cjs');
 const values = Object.fromEntries(fs.readFileSync(path.join(root, '.ledgerguard/p09a/runtime.env'), 'utf8').trim().split('\n').map(line => [line.slice(0, line.indexOf('=')), line.slice(line.indexOf('=') + 1)]));
 const base = `http://127.0.0.1:${values.LEDGER_LAB_PORT}`;
 const output = path.join(root, '.evidence/p09a/browser');
@@ -18,6 +19,21 @@ fs.mkdirSync(output, {recursive: true});
   const context = await browser.newContext({viewport: {width: 1280, height: 900}});
   const page = await context.newPage();
   const consoleErrors = [];
+  async function confirmAcceptedRun(dialog, scenario) {
+    const [response] = await Promise.all([
+      page.waitForResponse(response => {
+        const request = response.request();
+        return new URL(response.url()).pathname === '/lab/api/runs'
+          && request.method() === 'POST' && response.status() === 202
+          && request.postDataJSON()?.scenario === scenario;
+      }),
+      dialog.getByRole('button', {name: 'Confirm', exact: true}).click(),
+    ]);
+    const receipt = await response.json();
+    assert.equal(receipt.scenario, scenario);
+    return receipt;
+  }
+
   page.on('pageerror', error => consoleErrors.push(error.name));
   const tests = [];
   let stage = 'UNAUTHENTICATED_LAB_DENIED';
@@ -45,12 +61,11 @@ fs.mkdirSync(output, {recursive: true});
     stage = 'F01_CONFIRMATION_FOCUS';
     assert.equal(await page.evaluate(() => document.getElementById('confirmation').contains(document.activeElement)), true);
     stage = 'F01_CONFIRM';
-    await dialog.getByRole('button', {name: 'Confirm', exact: true}).click();
+    const receiptF01 = await confirmAcceptedRun(dialog, 'F01');
     stage = 'F01_AWAIT_REAL_VERDICT';
     // Locator assertions use Playwright's utility world. Do not bypass or relax
     // the application's CSP to run waitForFunction's main-world eval loop.
-    await expect(page.locator('#verdict')).toHaveText(/^PASSED · /, {timeout: 180000});
-    const actual = JSON.parse(await page.locator('#evidence').textContent());
+    const actual = await waitForAcceptedRun(page, expect, receiptF01, 'F01', 'PASSED');
     assert.equal(actual.scenario, 'F01');
     assert.equal(actual.verdict, 'PASSED');
     tests.push({id: 'ADMIN_BROWSER_EXECUTES_REAL_F01', status: 'PASS'});
@@ -59,10 +74,9 @@ fs.mkdirSync(output, {recursive: true});
     await page.getByRole('button', {name: 'Run D02', exact: true}).click();
     await expect(dialog).toBeVisible();
     stage = 'D02_CONFIRM';
-    await dialog.getByRole('button', {name: 'Confirm', exact: true}).click();
+    const receiptD02 = await confirmAcceptedRun(dialog, 'D02');
     stage = 'D02_AWAIT_REAL_VERDICT';
-    await expect(page.locator('#verdict')).toHaveText(/^DETECTED · /, {timeout: 180000});
-    const detected = JSON.parse(await page.locator('#evidence').textContent());
+    const detected = await waitForAcceptedRun(page, expect, receiptD02, 'D02', 'DETECTED');
     assert.equal(detected.scenario, 'D02');
     assert.equal(detected.verdict, 'DETECTED');
     tests.push({id: 'ADMIN_BROWSER_EXECUTES_REAL_D02', status: 'PASS'});
@@ -70,10 +84,9 @@ fs.mkdirSync(output, {recursive: true});
     stage = 'F02_OPEN_CONFIRMATION';
     await page.getByRole('button', {name: 'Run F02', exact: true}).click();
     await expect(dialog).toBeVisible();
-    await dialog.getByRole('button', {name: 'Confirm', exact: true}).click();
+    const receiptF02 = await confirmAcceptedRun(dialog, 'F02');
     stage = 'F02_AWAIT_REAL_VERDICT';
-    await expect(page.locator('#verdict')).toHaveText(/^PASSED · /, {timeout: 180000});
-    const duplicate = JSON.parse(await page.locator('#evidence').textContent());
+    const duplicate = await waitForAcceptedRun(page, expect, receiptF02, 'F02', 'PASSED');
     assert.equal(duplicate.scenario, 'F02');
     assert.equal(duplicate.verdict, 'PASSED');
     assert.equal(duplicate.phases.duplicate.observations.routedPublications, 2);
@@ -82,10 +95,9 @@ fs.mkdirSync(output, {recursive: true});
     stage = 'D06_OPEN_CONFIRMATION';
     await page.getByRole('button', {name: 'Run D06', exact: true}).click();
     await expect(dialog).toBeVisible();
-    await dialog.getByRole('button', {name: 'Confirm', exact: true}).click();
+    const receiptD06 = await confirmAcceptedRun(dialog, 'D06');
     stage = 'D06_AWAIT_REAL_VERDICT';
-    await expect(page.locator('#verdict')).toHaveText(/^DETECTED · /, {timeout: 180000});
-    const duplicateDefect = JSON.parse(await page.locator('#evidence').textContent());
+    const duplicateDefect = await waitForAcceptedRun(page, expect, receiptD06, 'D06', 'DETECTED');
     assert.equal(duplicateDefect.scenario, 'D06');
     assert.equal(duplicateDefect.phases.mutant.assertion.id, 'D06_DUPLICATE_FINANCIAL_EFFECT');
     tests.push({id: 'ADMIN_BROWSER_EXECUTES_REAL_D06', status: 'PASS'});
@@ -93,10 +105,9 @@ fs.mkdirSync(output, {recursive: true});
     stage = 'D01_OPEN_CONFIRMATION';
     await page.getByRole('button', {name: 'Run D01', exact: true}).click();
     await expect(dialog).toBeVisible();
-    await dialog.getByRole('button', {name: 'Confirm', exact: true}).click();
+    const receiptD01 = await confirmAcceptedRun(dialog, 'D01');
     stage = 'D01_AWAIT_REAL_VERDICT';
-    await expect(page.locator('#verdict')).toHaveText(/^DETECTED · /, {timeout: 180000});
-    const replayDefect = JSON.parse(await page.locator('#evidence').textContent());
+    const replayDefect = await waitForAcceptedRun(page, expect, receiptD01, 'D01', 'DETECTED');
     assert.equal(replayDefect.scenario, 'D01');
     assert.equal(replayDefect.phases.mutant.assertion.id, 'D01_REPLAY_ONE_OPERATION');
     tests.push({id: 'ADMIN_BROWSER_EXECUTES_REAL_D01', status: 'PASS'});

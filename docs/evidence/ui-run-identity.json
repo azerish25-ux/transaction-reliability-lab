@@ -1,0 +1,31 @@
+{
+  "scope": "UI_SYNCHRONIZATION_REGRESSION_ONLY",
+  "baseSourceSha": "d8d365690d961580d22105feb15ddec3267185ae",
+  "trackedTreeDirty": true,
+  "testedFiles": {
+    "lab-support/p09a/browser.cjs": "3e93b0e97e31382b5776a373b26159dc38715f6d74353018662df832a80f1d5e",
+    "tests/browser/run-identity.cjs": "92a78ca5634f80eea4a38fa68fc01f192ac90075ed322a17acac0577ab232ad8",
+    "tests/browser/run-identity.unit.cjs": "c9f8d08970a007a562a46a19cc7a9f2769e52164c85684c3e4566a933e9f0ee1",
+    "tests/browser/run-identity.test.cjs": "6a00acf3c7235c761a2f77caf53a0036edb3e9622d508bf67a09796ba7ad89ce"
+  },
+  "commands": [
+    {
+      "command": "node --test tests/browser/run-identity.unit.cjs",
+      "result": "PASS",
+      "tests": 8,
+      "failures": 0,
+      "skips": 0
+    },
+    {
+      "command": "npm --prefix frontend run verify",
+      "result": "PASS"
+    },
+    {
+      "command": "CHROMIUM_EXECUTABLE=/usr/bin/chromium node tests/browser/run-identity.test.cjs",
+      "result": "BLOCKED",
+      "reason": "Chromium process_singleton socket() Operation not permitted; supported escalation did not change runtime restriction"
+    }
+  ],
+  "fullProductStatus": "INCOMPLETE_NO_GO",
+  "liveLabRerun": "NOT_RUN"
+}
