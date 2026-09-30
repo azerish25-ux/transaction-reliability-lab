@@ -185,7 +185,7 @@ function Workspace({ path, navigate }: { path: string; navigate: ProductNavigate
     window.addEventListener('storage', update); window.addEventListener(CHANGED, update);
     return () => { alive.current = false; window.removeEventListener('storage', update); window.removeEventListener(CHANGED, update); };
   }, [store]);
-  useEffect(() => { setSecret(undefined); setReceipt(undefined); setLostSecret(false); setCopied(false); setPending(undefined); setFailure(undefined); document.title = 'Webhooks · LedgerGuard'; }, [path]);
+  useEffect(() => { setSecret(undefined); setReceipt(undefined); setLostSecret(false); setCopied(false); setPending(undefined); setFailure(undefined); document.title = 'Webhooks · Bad Penny'; }, [path]);
   useEffect(() => {
     const clear = () => setSecret(undefined), hidden = () => { if (document.hidden) clear(); };
     window.addEventListener('pagehide', clear); document.addEventListener('visibilitychange', hidden);

@@ -63,7 +63,7 @@ function Link({ to, navigate, className, children, ariaLabel }: PropsWithChildre
 
 function usePageTitle(title: string): void {
   useEffect(() => {
-    document.title = `${title} · LedgerGuard`;
+    document.title = `${title} · Bad Penny`;
   }, [title]);
 }
 
@@ -101,7 +101,7 @@ function toUiProblem(failure: unknown): UiProblem {
     };
   }
   if (failure instanceof TypeError) {
-    return { title: 'Connection problem', message: 'LedgerGuard could not reach the application service. Check that the laboratory is running, then retry.' };
+    return { title: 'Connection problem', message: 'Bad Penny could not reach the application service. Check that the laboratory is running, then retry.' };
   }
   return { title: 'Unexpected problem', message: 'The request could not be completed. No financial result should be inferred until the authoritative record is refreshed.' };
 }
@@ -153,9 +153,9 @@ function SyntheticNotice(): JSX.Element {
 
 function Brand({ navigate }: { navigate: Navigate }): JSX.Element {
   return (
-    <Link to="/" navigate={navigate} className="brand" ariaLabel="LedgerGuard dashboard">
-      <span className="brand-mark" aria-hidden="true">LG</span>
-      <span><strong>LedgerGuard</strong><small>Reliability laboratory</small></span>
+    <Link to="/" navigate={navigate} className="brand" ariaLabel="Bad Penny dashboard">
+      <span className="brand-mark" aria-hidden="true">BP</span>
+      <span><strong>Bad Penny</strong><small>Reliability laboratory</small></span>
     </Link>
   );
 }
@@ -210,7 +210,7 @@ function AnonymousFrame({ navigate, children }: PropsWithChildren<{ navigate: Na
         <section className="auth-story" aria-labelledby="auth-story-title">
           <p className="eyebrow">Financial correctness, made inspectable</p>
           <h1 id="auth-story-title">Every balance should have an explanation.</h1>
-          <p>LedgerGuard exposes the records behind each synthetic transaction: posted money, active reservations, immutable operation references and independently reconciled journals.</p>
+          <p>Bad Penny exposes the records behind each synthetic transaction: posted money, active reservations, immutable operation references and independently reconciled journals.</p>
           <dl className="trust-list">
             <div><dt>Exact</dt><dd>Integer minor units, never floating point.</dd></div>
             <div><dt>Durable</dt><dd>Replay-safe commands and crash recovery.</dd></div>
@@ -239,7 +239,7 @@ function SessionExpiredDialog({ navigate }: { navigate: Navigate }): JSX.Element
       <section className="dialog" role="dialog" aria-modal="true" aria-labelledby="expired-title" aria-describedby="expired-description" onKeyDown={event => { if (event.key === 'Tab') { event.preventDefault(); button.current?.focus(); } }}>
         <p className="eyebrow">Session protection</p>
         <h2 id="expired-title">Your session ended</h2>
-        <p id="expired-description">LedgerGuard stopped using the expired session. Sign in again before viewing protected financial records.</p>
+        <p id="expired-description">Bad Penny stopped using the expired session. Sign in again before viewing protected financial records.</p>
         <button ref={button} className="button button-primary" type="button" onClick={continueToLogin}>Continue to sign in</button>
       </section>
     </div>
@@ -250,7 +250,7 @@ function BootstrapScreen({ failure, retry }: { failure?: unknown; retry?: () => 
   usePageTitle(failure ? 'Service unavailable' : 'Starting');
   return (
     <div className="bootstrap-screen">
-      <span className="brand-mark large" aria-hidden="true">LG</span>
+      <span className="brand-mark large" aria-hidden="true">BP</span>
       {failure ? (
         <>
           <ProblemPanel failure={failure} />
@@ -295,7 +295,7 @@ function LoginPage({ navigate }: { navigate: Navigate }): JSX.Element {
     <AnonymousFrame navigate={navigate}>
       <p className="eyebrow">Protected customer access</p>
       <h1>Sign in</h1>
-      <p className="auth-intro">Use a synthetic LedgerGuard identity. Credentials are sent only to the same-origin laboratory API.</p>
+      <p className="auth-intro">Use a synthetic Bad Penny identity. Credentials are sent only to the same-origin laboratory API.</p>
       {failure !== undefined && <ProblemPanel failure={failure} headingRef={errorHeading} />}
       <form onSubmit={event => void submit(event)} noValidate>
         <div className="field">

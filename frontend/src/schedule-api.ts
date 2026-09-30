@@ -67,7 +67,7 @@ export function normalizeScheduleDefinition(input: ScheduleDefinition): Schedule
   const amount = minor(input.amountMinor, MAX_TRANSACTION);
   if (amount === 0n) throw new TypeError('Enter a positive schedule amount');
   const ref = typeof input.recipientRef === 'string' ? input.recipientRef.trim() : '';
-  if (!/^LG-[0-9a-f]{32}$/i.test(ref)) throw new TypeError('Enter a valid LedgerGuard recipient reference');
+  if (!/^LG-[0-9a-f]{32}$/i.test(ref)) throw new TypeError('Enter a valid Bad Penny recipient reference');
   return Object.freeze({ sourceId, recipientRef: `LG-${ref.slice(3).toLowerCase()}`, amountMinor: amount.toString(),
     currency: currency(input.currency), intendedLocal: normalizeLocal(input.intendedLocal),
     zoneId: normalizeZone(input.zoneId), recurrence: normalizeRecurrence(input.recurrence) });

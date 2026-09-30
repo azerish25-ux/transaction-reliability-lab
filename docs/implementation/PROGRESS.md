@@ -1,3 +1,7 @@
+## 2026-09-30 — Product display branding
+
+Updated the customer/admin display name, document titles and synthetic-identity copy to Bad Penny, with BP brand marks. Existing LG public references, session-cookie names and API compatibility remain unchanged. `npm --prefix frontend run verify` passed (type checks, all 186 existing client cases and production build). Fresh live browser acceptance remains outstanding; this commit does not change the overall NO_GO verdict. Publication uses `[skip ci]` to avoid starting the restricted coupled lab workflow.
+
 # Reviewer guide and durable product evidence
 
 Added seven source-controlled rendered diagrams (runtime, financial ER, payment

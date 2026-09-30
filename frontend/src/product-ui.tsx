@@ -26,7 +26,7 @@ const CODE_MESSAGES: Record<string, string> = {
   TRANSFER_CONFLICT: 'The transfer conflicts with the current authoritative state.',
   PAYMENT_CONFLICT: 'The payment conflicts with the current authoritative state.',
   IDEMPOTENCY_CONFLICT: 'This retry key belongs to a different economic instruction. The original instruction was preserved.',
-  INVALID_RECIPIENT: 'Enter a valid LedgerGuard recipient reference.',
+  INVALID_RECIPIENT: 'Enter a valid Bad Penny recipient reference.',
   INVALID_AMOUNT: 'Enter a valid positive amount for the selected currency.',
   INVALID_SOURCE_ACCOUNT: 'Select a valid source wallet.',
   FORBIDDEN: 'This customer is not permitted to perform that action.',
@@ -97,7 +97,7 @@ export function Link({ href, navigate, className, children, ariaLabel }: PropsWi
 }
 
 export function usePageTitle(title: string): void {
-  useEffect(() => { document.title = `${title} · LedgerGuard`; }, [title]);
+  useEffect(() => { document.title = `${title} · Bad Penny`; }, [title]);
 }
 
 function readIntent(store: IntentStore): { current?: StoredIntent; failure?: unknown } {
@@ -142,7 +142,7 @@ function SyntheticNotice(): JSX.Element {
 }
 
 function Brand({ navigate }: { navigate: ProductNavigate }): JSX.Element {
-  return <Link href="/" navigate={navigate} className="brand" ariaLabel="LedgerGuard dashboard"><span className="brand-mark" aria-hidden="true">LG</span><span><strong>LedgerGuard</strong><small>Reliability laboratory</small></span></Link>;
+  return <Link href="/" navigate={navigate} className="brand" ariaLabel="Bad Penny dashboard"><span className="brand-mark" aria-hidden="true">BP</span><span><strong>Bad Penny</strong><small>Reliability laboratory</small></span></Link>;
 }
 
 export function UnresolvedBanner({ record, navigate }: { record: StoredIntent; navigate: ProductNavigate }): JSX.Element {
@@ -248,7 +248,7 @@ export function OutcomeUnknownPanel({ kind, retrying, onRetry }: { kind: Command
       <div>
         <p className="eyebrow">Commit uncertainty</p>
         <h2 id={`uncertain-${kind}`}>Outcome not yet confirmed</h2>
-        <p>LedgerGuard preserved the exact normalized {kind} and its idempotency key. Retrying this same request cannot create a second economic instruction.</p>
+        <p>Bad Penny preserved the exact normalized {kind} and its idempotency key. Retrying this same request cannot create a second economic instruction.</p>
         <button className="button button-primary" type="button" onClick={onRetry} disabled={retrying}>{retrying ? 'Resolving…' : `Retry same ${kind}`}</button>
       </div>
     </section>
