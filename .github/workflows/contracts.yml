@@ -33,7 +33,6 @@ jobs:
           npm --prefix frontend ci
           npm --prefix frontend run verify
           npm --prefix frontend run test:pact
-          npm --prefix frontend run test:pact:sensitivity
       - name: Verify contracts against ordinary Spring API and PostgreSQL
         run: ./mvnw -B -ntp -f backend/pom.xml -Pcontracts -Dit.test=PactProviderIT,PaymentMessageProviderIT verify
       - name: Retain source-bound contract evidence
@@ -46,7 +45,6 @@ jobs:
           retention-days: 14
           path: |
             .evidence/pact/
-            .evidence/pact-sensitivity/
             backend/target/failsafe-reports/
             backend/target/surefire-reports/
             backend/target/pact-evidence/

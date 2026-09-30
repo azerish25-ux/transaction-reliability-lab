@@ -21,7 +21,7 @@ project status remains **INCOMPLETE / NO_GO**.
   requests. No controller, database or auth mock is used; no auth limits are raised.
 - The `contracts` Maven profile adds contract test sources/dependencies only. It
   does not enable verification-only application sources or fault modes.
-- `compatibility.cjs` is a separate engine-sensitivity check: an in-memory synthetic
+- `PactSchemaSensitivityTest` is a separate engine-sensitivity check: an in-memory synthetic
   compatible response must pass and numeric money in place of a string must fail
   genuine Pact verification. This does not count as Spring provider acceptance.
 
@@ -33,7 +33,6 @@ From the repository root, with Java 21, Node 22 and Docker available:
 npm --prefix frontend ci
 npm --prefix frontend run verify
 PACT_DO_NOT_TRACK=true npm --prefix frontend run test:pact
-PACT_DO_NOT_TRACK=true npm --prefix frontend run test:pact:sensitivity
 pact_do_not_track=true ./mvnw -B -ntp -f backend/pom.xml -Pcontracts -Dit.test=PactProviderIT,PaymentMessageProviderIT verify
 ```
 
@@ -53,13 +52,17 @@ Local results on 2026-09-30:
 
 - Actual Pact JS consumer generation: passed, five interactions.
 - Contract-profile Java compilation/package: passed.
-- Java unit suite with the contract profile: 165 passed, zero failures/skips.
+- Final Java unit suite with all contract additions: 168 passed, zero failures/skips.
 - Frontend verify: all type checks, 186 client cases and production build passed.
 - Live provider run: not run; Docker is unavailable in this execution environment.
-- Synthetic sensitivity script: started but blocked by Pact JS's internal proxy
-  adapter (socket reset). Its implementation unconditionally selects the process
-  proxy and does not honor `NO_PROXY` for the local provider. No network safeguards
-  were changed. The normal GitHub runner must establish this result.
+- Genuine Pact JVM schema-sensitivity check: passed. The generated consumer's
+  compatible response passes; changing `postedMinor` from string to JSON number
+  produces a Pact mismatch at that field. This replaces the proxy-dependent JS
+  diagnostic with a deterministic in-memory comparison using the same Pact JVM
+  matcher used for provider verification. No network settings were changed.
+- Real sender-wire-builder to real webhook-receiver contract: passed. Exact payload
+  bytes, signature headers, correlation, successful receipt hash and HTTP 204 are
+  verified with fixed synthetic inputs and a mocked persistence collaborator.
 - Hosted run: not triggered. The connected GitHub tools have no workflow-dispatch
   action and the cloud browser is signed out. The owner run button above is the
   smallest remaining action for this particular acceptance loop.
@@ -67,7 +70,7 @@ Local results on 2026-09-30:
 ## Scope still missing
 
 These five HTTP interactions are an initial slice, not full P10 completion.
-Payment/transfer/schedule/webhook HTTP contracts, sender/receiver signature contract, live
+Payment/transfer/schedule/webhook HTTP contracts, live
 provider results, performance/migration/restore evidence and other P10 requirements
 remain open. Existing integration tests do not substitute for those claims.
 
@@ -100,3 +103,14 @@ pact_do_not_track=true ./mvnw -B -ntp -f backend/pom.xml -Pcontracts -Dtest=Paym
 The manual workflow includes generation in its unit-test phase and provider
 verification in its selected integration phase. Its archive also includes
 `backend/target/pacts/`.
+
+## Webhook wire contract
+
+`WebhookWireContractTest` invokes the sender's extracted package-private
+`signedRequest` builder, consumes its actual body publisher, and supplies its
+headers/body to `WebhookReceiverController.receive`. The receiver verifies the
+signature with the actual secret box/signature code, checks NORMAL mode, and
+records the expected payload hash. Persistence is mocked; no network endpoint is
+contacted. Destination allowlist and resolved-address checks remain in the sender's
+unchanged delivery path before wire construction. This focused contract does not
+prove live delivery/retry behavior.

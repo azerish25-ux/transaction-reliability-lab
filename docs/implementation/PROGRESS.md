@@ -1,3 +1,7 @@
+## 2026-09-30 — Webhook wire and incompatible-schema contracts
+
+Verified the real sender wire builder against the real receiver signature/body boundary with deterministic synthetic fixtures. Extracted only wire construction; destination validation, delivery and persistence behavior remain intact. Replaced the proxy-dependent sensitivity diagnostic with genuine in-memory Pact JVM matching of the actual generated consumer contract. It accepts the compatible response and rejects numeric money in place of a decimal string. Both focused tests passed; the final combined run passed 168 Java unit/contract cases, one real message-provider interaction, five Pact JS interactions, 186 existing client cases, type checks and the frontend build. Live PostgreSQL provider and hosted acceptance remain pending; no full-project GO claim.
+
 ## 2026-09-30 — Actual publisher/worker Pact message boundary
 
 Added a genuine Pact JVM asynchronous consumer through the real Rabbit listener method and message-provider verification through the real outbox serializer. Both focused local interactions passed without skips. SQL and broker transport are isolated collaborators, so this proves message compatibility only, not live settlement/reliability. The ordinary manual workflow now includes this contract pair. Full project and live HTTP provider acceptance remain pending; see [CONTRACTS.md](CONTRACTS.md).

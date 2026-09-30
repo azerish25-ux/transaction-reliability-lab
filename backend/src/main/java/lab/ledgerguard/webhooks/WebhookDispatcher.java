@@ -74,20 +74,8 @@ public class WebhookDispatcher {
             WebhookDestination.validateResolved(destination,
                 InetAddress.getAllByName(destination.getHost()), settings.sandbox());
             secret = settings.secretBox().open(claimed.endpointId(), claimed.encryptedSecret());
-            signature = WebhookSignature.sign(secret, timestamp, claimed.eventId(), claimed.payload());
-            HttpRequest request = HttpRequest.newBuilder(destination)
-                .timeout(settings.requestTimeout())
-                .header("Content-Type", "application/json")
-                .header("Accept", "application/json")
-                .header("User-Agent", "LedgerGuard-Webhook/1")
-                .header("X-LedgerGuard-Endpoint-Id", claimed.endpointId().toString())
-                .header("X-LedgerGuard-Event-Id", claimed.eventId().toString())
-                .header("X-LedgerGuard-Correlation-Id", claimed.correlationId().toString())
-                .header("X-LedgerGuard-Timestamp", Long.toString(timestamp))
-                .header("X-LedgerGuard-Key-Version", Integer.toString(claimed.secretKeyVersion()))
-                .header("X-LedgerGuard-Signature", signature)
-                .POST(HttpRequest.BodyPublishers.ofByteArray(claimed.payload()))
-                .build();
+            HttpRequest request = signedRequest(claimed, secret, timestamp, settings.requestTimeout());
+            signature = request.headers().firstValue("X-LedgerGuard-Signature").orElseThrow();
             HttpResponse<byte[]> response = http.send(request, HttpResponse.BodyHandlers.ofByteArray());
             int status = response.statusCode();
             WebhookPolicy.Outcome policy = WebhookPolicy.classify(status);
@@ -128,6 +116,24 @@ public class WebhookDispatcher {
             complete(claimed, "RETRY_SCHEDULED", status, started, timestamp, signature, response, error,
                 next.get());
         }
+    }
+
+    /** Pure wire construction shared by delivery and compatibility checks; destination validation remains in deliverAttempt. */
+    static HttpRequest signedRequest(WebhookRepository.Claimed claimed, byte[] secret, long timestamp, Duration timeout) {
+        String signature = WebhookSignature.sign(secret, timestamp, claimed.eventId(), claimed.payload());
+        return HttpRequest.newBuilder(URI.create(claimed.destinationUrl()))
+            .timeout(timeout)
+            .header("Content-Type", "application/json")
+            .header("Accept", "application/json")
+            .header("User-Agent", "LedgerGuard-Webhook/1")
+            .header("X-LedgerGuard-Endpoint-Id", claimed.endpointId().toString())
+            .header("X-LedgerGuard-Event-Id", claimed.eventId().toString())
+            .header("X-LedgerGuard-Correlation-Id", claimed.correlationId().toString())
+            .header("X-LedgerGuard-Timestamp", Long.toString(timestamp))
+            .header("X-LedgerGuard-Key-Version", Integer.toString(claimed.secretKeyVersion()))
+            .header("X-LedgerGuard-Signature", signature)
+            .POST(HttpRequest.BodyPublishers.ofByteArray(claimed.payload()))
+            .build();
     }
 
     private void complete(WebhookRepository.Claimed claimed, String outcome, Integer status, long started,
