@@ -11,7 +11,7 @@ from core import LabError, digest
 from evidence_integrity import frontend_manifest, read_artifact
 
 ROOT = Path(__file__).resolve().parents[2]
-TOKENS = (b'ProcessDeathFaults', b'lab/ledgerguard/verification/', b'LAB_ONLY_BUILD', b'p09a_guard', b'F01_DISCONNECT', b'X-P09A-CSRF',
+TOKENS = (b'ReceiverFaultBehaviorProvider', b'ProcessDeathFaults', b'lab/ledgerguard/verification/', b'LAB_ONLY_BUILD', b'p09a_guard', b'F01_DISCONNECT', b'X-P09A-CSRF',
           b'IF FALSE AND prior.fingerprint<>fingerprint')
 MAX_ENTRY_BYTES = 64 * 1024 * 1024
 MAX_TOTAL_BYTES = 512 * 1024 * 1024

@@ -2,6 +2,8 @@
 """Live P07B Compose smoke for durable signed webhook delivery and recovery."""
 from __future__ import annotations
 import base64
+import hashlib
+import hmac
 import http.cookiejar
 import json
 import secrets
@@ -121,18 +123,20 @@ def detail(browser,delivery):
 def set_mode(mode):
     sql(f"UPDATE ledger.webhook_receiver_control SET mode='{mode}',updated_at=clock_timestamp() WHERE singleton")
 
-def receiver_invalid_signature(endpoint,event,delivery):
+def receiver_invalid_signature(endpoint,event,delivery,secret=None):
     encoded=sql(f"SELECT encode(payload,'base64') FROM ledger.webhook_deliveries WHERE id='{delivery}'")
     payload=base64.b64decode(encoded)
     key_version=sql(f"SELECT secret_key_version FROM ledger.webhook_deliveries WHERE id='{delivery}'")
     timestamp=str(int(time.time()))
+    signature="v1="+"0"*64 if secret is None else "v1="+hmac.new(
+        base64.urlsafe_b64decode(secret+"="), (timestamp+"."+event+".").encode()+payload, hashlib.sha256).hexdigest()
     result=compose("exec","-T","receiver","curl","-sS","-o","/dev/null","-w","%{http_code}",
         "-H","Content-Type: application/json",
         "-H",f"X-LedgerGuard-Endpoint-Id: {endpoint}",
         "-H",f"X-LedgerGuard-Event-Id: {event}",
         "-H",f"X-LedgerGuard-Timestamp: {timestamp}",
         "-H",f"X-LedgerGuard-Key-Version: {key_version}",
-        "-H","X-LedgerGuard-Signature: v1="+"0"*64,
+        "-H","X-LedgerGuard-Signature: "+signature,
         "--data-binary","@-","http://localhost:8081/events",capture=True,input_bytes=payload)
     return result.stdout.decode().strip()
 
@@ -180,6 +184,15 @@ status,hidden_delivery,_=outsider.call("/webhook-deliveries/"+delivery1)
 check("p07b-owner-delivery-scope",status==404,hidden_delivery)
 status,admin_detail,_=admin.call("/admin/webhook-deliveries/"+delivery1)
 check("p07b-admin-inspection",status==200 and admin_detail["delivery"]["id"]==delivery1)
+
+# A valid signature cannot turn a normal release receiver into a fault service.
+for mode in ("STATUS_429", "STATUS_503", "STATUS_400", "DELAY", "ACCEPT_THEN_503"):
+    set_mode(mode)
+    check("normal-receiver-denies-"+mode, receiver_invalid_signature(endpoint_id,event1,delivery1,first_secret)=="403")
+check("normal-receiver-fault-denial-no-receipt",sql(f"SELECT receive_count FROM ledger.webhook_receiver_receipts WHERE endpoint_id='{endpoint_id}' AND event_id='{event1}'")=="1")
+set_mode("NORMAL")
+# Explicit, separately named image only for the following existing fault/recovery proofs.
+subprocess.run([*COMPOSE,"-f",str(ROOT/"compose.verification.yaml"),"up","-d","--build","--no-deps","--wait","receiver"],cwd=ROOT,check=True)
 
 # Rotation returns a second one-time secret while the old delivery remains bound to v1.
 status,rotated,_=payer.call(f"/webhook-endpoints/{endpoint_id}/rotate-secret",{"expectedVersion":1})

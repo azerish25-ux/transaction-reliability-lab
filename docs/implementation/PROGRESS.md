@@ -1,3 +1,20 @@
+# G12 receiver isolation repair — IMPLEMENTED_UNVERIFIED
+
+A further release review found active delay/status/accept-then-fail webhook modes
+in the normal receiver. They now live exclusively in a verification-only provider.
+The normal receiver fails closed with 403 for every non-NORMAL mode, even in the
+sandbox. The product smoke campaign sends validly signed requests under all five
+forbidden modes against the normal image and requires no receipt side effect,
+then explicitly switches to a separately named verification image for the
+existing failure/recovery tests. Browser fault tests retain that explicit image.
+Normal and verification Maven outputs remain separate.
+
+165 Java unit tests and both Maven package variants passed locally; 258 Python
+component tests passed. Full exact-source product/lab CI remains required.
+The prior process-death isolation source f1c8235 passed both required CI gates in
+run 36653129350. Global G12 is not yet declared closed. D06 source 7424a1b is being
+verified independently; six fault scenarios, 22 mutants and P10/P11 remain open.
+
 # D06 duplicate-message protection cut — IMPLEMENTED_UNVERIFIED
 
 D06 is now an explicitly guarded mutation of the disposable settlement function.

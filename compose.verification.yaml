@@ -12,3 +12,7 @@ services:
     image: ${COMPOSE_PROJECT_NAME:-ledgerguard}-verification-payment-worker-b
     build:
       dockerfile: infra/docker/Dockerfile.lab
+  receiver:
+    image: ${COMPOSE_PROJECT_NAME:-ledgerguard}-verification-receiver
+    build:
+      dockerfile: infra/docker/Dockerfile.lab

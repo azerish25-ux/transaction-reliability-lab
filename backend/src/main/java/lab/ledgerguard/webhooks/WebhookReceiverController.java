@@ -21,11 +21,13 @@ public class WebhookReceiverController {
     private final WebhookRepository repository;
     private final WebhookSettings settings;
     private final Clock clock;
+    private final ReceiverFaults faults;
 
     public WebhookReceiverController(WebhookRepository repository, WebhookSettings settings, Clock clock) {
         this.repository = repository;
         this.settings = settings;
         this.clock = clock;
+        this.faults = new ReceiverFaults(settings.sandbox());
     }
 
     @PostMapping(value = "/events", consumes = "application/json")
@@ -63,17 +65,11 @@ public class WebhookReceiverController {
             Arrays.fill(secret, (byte) 0);
         }
         String mode = repository.receiverMode();
-        if ("STATUS_429".equals(mode)) {
-            return ResponseEntity.status(429).header("Retry-After", "1").build();
-        }
-        if ("STATUS_503".equals(mode)) return ResponseEntity.status(503).build();
-        if ("STATUS_400".equals(mode)) return ResponseEntity.badRequest().build();
-        if ("DELAY".equals(mode)) {
-            try { Thread.sleep(4_000); }
-            catch (InterruptedException interrupted) { Thread.currentThread().interrupt(); }
-        }
+        ResponseEntity<Void> before = faults.beforeReceipt(mode);
+        if (before != null) return before;
         boolean first = repository.recordReceipt(endpoint, event, sha256(body), signature, timestamp);
-        if ("ACCEPT_THEN_503".equals(mode) && first) return ResponseEntity.status(503).build();
+        ResponseEntity<Void> after = faults.afterReceipt(mode, first);
+        if (after != null) return after;
         return ResponseEntity.noContent()
             .header("X-LedgerGuard-Duplicate", Boolean.toString(!first)).build();
     }
