@@ -1,0 +1,16 @@
+digraph Payment {
+ graph [rankdir=LR, bgcolor="#f7f5ef", pad="0.35", label="Payment lifecycle and accounting effects\nRefund totals and reversal are attributes, not new lifecycle states", labelloc=t, fontsize=20, fontname="DejaVu Sans", fontcolor="#17324a"];
+ node [shape=box, style="rounded,filled", fillcolor=white, color="#bed0d8", fontname="DejaVu Sans", fontsize=12, margin="0.25,0.15"];
+ edge [color="#347080", fontname="DejaVu Sans", fontsize=11];
+ accepted [label="Command accepted\n202 after durable commit"];
+ pending [label="PENDING\nACTIVE hold reserves funds", fillcolor="#fff4dd"];
+ settled [label="SETTLED\nCONSUMED hold + immutable journal", fillcolor="#e1efea"];
+ failed [label="FAILED\nRELEASED hold\nNo settlement journal"];
+ cancelled [label="CANCELLED\nRELEASED hold\nNo settlement journal"];
+ refunds [label="Optional compensation\nNew REFUND journal(s) up to total\nor ADMIN full REVERSAL before refund", shape=note];
+ accepted -> pending;
+ pending -> settled [label="worker commits posting"];
+ pending -> failed [label="controlled settlement rejection"];
+ pending -> cancelled [label="eligible cancellation wins lock"];
+ settled -> refunds [style=dashed, label="original journal preserved"];
+}

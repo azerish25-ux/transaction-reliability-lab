@@ -1,3 +1,22 @@
+# Reviewer guide and durable product evidence
+
+Added seven source-controlled rendered diagrams (runtime, financial ER, payment
+state and four transaction sequences), a current chart-of-accounts/lock-boundary
+explanation and a concise reviewer guide. Stale architecture prose claiming the
+API, consumer and reconciliation did not exist has been replaced with source-bound
+current facts. Diagram previews and two unmodified CI screenshots were inspected.
+
+Product source d8d3656: 165 Java unit, 140 PostgreSQL/HTTP, 186 TypeScript client and
+147 browser cases passed with zero failures/errors/skips. The downloaded artifact
+matched GitHub's digest. Selected screenshots and readable provenance now survive
+artifact expiry. The same workflow's laboratory gate failed, and later UI repair
+514552d is not relabelled as a live pass. Reviewer links, SVG safety/structure,
+sequence definitions and retained screenshot hashes pass the local checker.
+
+Full product remains INCOMPLETE / NO_GO. No new lab execution, exploratory session,
+performance/security certification or four-minute demo video is claimed. Those
+remaining deliverables are not replaced by this documentation batch.
+
 # Accepted-run UI synchronization repair
 
 Status: **IMPLEMENTED_UNVERIFIED** for live browser integration. Full product: **INCOMPLETE / NO_GO**.

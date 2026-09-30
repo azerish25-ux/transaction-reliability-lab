@@ -1,0 +1,43 @@
+#!/usr/bin/env python3
+"""Validate local reviewer assets and provenance without starting the application."""
+from pathlib import Path
+import hashlib
+import json
+import re
+import urllib.parse
+import xml.etree.ElementTree as ET
+ROOT=Path(__file__).resolve().parents[1]
+DIAGRAMS=ROOT/'docs/architecture/diagrams'
+expected={'architecture','financial-er','payment-state','normal-settlement','commit-response-loss','commit-before-ack','refund-race'}
+assert {p.stem for p in DIAGRAMS.glob('*.svg')}==expected
+for path in DIAGRAMS.glob('*.svg'):
+    raw=path.read_bytes();assert 1000<len(raw)<500000
+    root=ET.fromstring(raw);assert root.tag.endswith('svg') and 'viewBox' in root.attrib
+    for element in root.iter():
+        assert not element.tag.endswith('script')
+        for key,value in element.attrib.items():
+            if key.endswith('href'): assert value.startswith('#'), 'External diagram reference'
+sequence=json.loads((DIAGRAMS/'sequences.json').read_text())
+assert {s['id'] for s in sequence}==expected-{'architecture','financial-er','payment-state'}
+for item in sequence:
+    assert 2<=len(item['actors'])<=6 and item['messages']
+    for start,end,label in item['messages']:
+        assert 0<=start<len(item['actors']) and 0<=end<len(item['actors']) and label
+pages=['docs/PORTFOLIO.md','docs/architecture/DIAGRAMS.md','docs/architecture/FINANCIAL_BOUNDARY.md','docs/evidence/product-d8d3656.md']
+for name in pages:
+    page=ROOT/name
+    for destination in re.findall(r'\]\(([^)]+)\)',page.read_text()):
+        if destination.startswith(('http://','https://','#')):continue
+        target=(page.parent/urllib.parse.unquote(destination.split('#')[0])).resolve()
+        assert target.is_relative_to(ROOT) and target.exists(),f'Broken link: {name}: {destination}'
+base=ROOT/'docs/evidence/product-d8d3656'
+proof=json.loads((base/'provenance.json').read_text())
+assert proof['sourceSha']=='d8d365690d961580d22105feb15ddec3267185ae'
+assert proof['productJobConclusion']=='success' and proof['overallWorkflowConclusion']=='failure'
+assert proof['archiveDigestVerified'] is True and proof['scope']=='PRODUCT_P01_P08F_ONLY'
+for totals in proof['suites'].values():
+    assert totals['tests']>0 and all(totals[k]==0 for k in ('failures','errors','skipped'))
+reported={Path(s['path']).name:s['sha256'] for s in proof['report']['screenshots']}
+for image in base.glob('*.png'):
+    assert hashlib.sha256(image.read_bytes()).hexdigest()==reported[image.name]
+print('PASS: 7 diagram artifacts, 4 sequence definitions, reviewer links and exact-source product provenance')

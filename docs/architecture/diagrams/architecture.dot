@@ -1,0 +1,28 @@
+digraph Architecture {
+ graph [rankdir=TB, bgcolor="#f7f5ef", pad="0.35", nodesep="0.4", ranksep="0.8", label="Bad Penny • runtime boundaries\nSynthetic money only · source-derived architecture", labelloc=t, fontsize=22, fontname="DejaVu Sans", fontcolor="#17324a"];
+ node [shape=box, style="rounded,filled", fillcolor="#ffffff", color="#bed0d8", fontname="DejaVu Sans", fontsize=12, fontcolor="#17324a", margin="0.2,0.14"];
+ edge [color="#347080", fontname="DejaVu Sans", fontsize=10, fontcolor="#17324a"];
+ browser [label="Customer / administrator\nReact + TypeScript browser"];
+ web [label="Same-origin frontend proxy\nLoopback :3000"];
+ api [label="Spring Boot API\nSession + CSRF + role/owner checks"];
+ db [label="PostgreSQL\nAuthoritative ledger + durable work", shape=cylinder, fillcolor="#e1efea"];
+ publisher [label="Outbox publisher\nConfirm before published marker"];
+ broker [label="RabbitMQ\nDurable queues + redelivery", fillcolor="#e1efea"];
+ worker [label="Competing payment workers\nCommit before ACK"];
+ scheduler [label="Two schedule workers\nOne durable occurrence"];
+ dispatch [label="Two webhook dispatchers\nSigned bytes + durable attempts"];
+ receiver [label="Allowlisted sandbox receiver\nDurable receipt deduplication"];
+ browser -> web [label="local sandbox HTTP"];
+ web -> api [label="same-origin /api"];
+ api -> db [label="restricted runtime + commands"];
+ db -> publisher [label="committed outbox"];
+ publisher -> broker [label="confirmed publication"];
+ broker -> worker [label="manual acknowledgement"];
+ worker -> db [label="inbox + settlement transaction", constraint=false];
+ scheduler -> db [label="occurrences + commands"];
+ dispatch -> db [label="claim / record attempts"];
+ dispatch -> receiver [label="bounded signed HTTP"];
+ receiver -> db [label="sandbox receipts", constraint=false];
+ lab [label="Separate opt-in laboratory\nOwn project, data, credentials and ports\nNot a normal product dependency", style="rounded,dashed,filled", fillcolor="#fff4dd", color="#bd8d35"];
+ {rank=same; api; lab;}
+}

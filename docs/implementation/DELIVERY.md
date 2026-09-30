@@ -1,3 +1,17 @@
+# Current delivery checkpoint
+
+Repository: azerish25-ux/transaction-reliability-lab; single main branch.
+UI observation fix `514552db900ea561b3ae8d20c2cc856a4d78321e` is remote-confirmed.
+Its eight component tests and frontend verification pass; actual Chromium launch
+was blocked by the executor's socket restriction. Publication did not rerun the
+isolated fault workflow. Product source `d8d3656` has independently retained
+[exact-source evidence](../evidence/product-d8d3656.md), while its lab gate failed.
+
+See the [reviewer guide](../PORTFOLIO.md) and [current progress](PROGRESS.md).
+Overall delivery remains INCOMPLETE / NO_GO; no final video/release is claimed.
+
+## Historical records retain their original source scope
+
 # Delivery record — P08F verified
 
 ## P08F verified delivery

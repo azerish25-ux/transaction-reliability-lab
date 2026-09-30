@@ -1,0 +1,29 @@
+digraph ER {
+ graph [rankdir=LR, bgcolor="#f7f5ef", pad="0.35", label="Financial data relationships\nSelected relationships; migrations remain the complete schema authority", labelloc=t, fontsize=20, fontname="DejaVu Sans"];
+ node [shape=record, style=filled, fillcolor=white, color="#bed0d8", fontname="DejaVu Sans", fontsize=11, margin="0.16,0.1"];
+ edge [color="#347080", fontname="DejaVu Sans", fontsize=10];
+ users [label="app_users|id · role · enabled"];
+ accounts [label="accounts|id · owner_id · currency · kind"];
+ balances [label="account_balances|account_id PK/FK|posted_minor · reserved_minor · version"];
+ journals [label="journals|id · operation_id UNIQUE|kind · currency"];
+ entries [label="journal_entries|journal_id · account_id|currency · side · amount_minor"];
+ payments [label="payments|id · actor/source/destination|state · journal_id|refunded_minor · reversed · version"];
+ holds [label="holds|payment_id PK/FK|account_id · amount_minor · state"];
+ adjustments [label="adjustments|id · payment_id · journal_id|kind · amount_minor · actor_id"];
+ replay [label="idempotency_records|actor + kind + parent + key|fingerprint · status · response · operation"];
+ outbox [label="outbox_events|event_id · aggregate_id · version|payload · lease · published_at"];
+ inbox [label="consumer_inbox|consumer + event_id|durable deduplication"];
+ users -> accounts [label="owns many"];
+ accounts -> balances [label="one"];
+ accounts -> entries [label="many"];
+ journals -> entries [label="balanced posting sides"];
+ users -> payments [label="actor"];
+ accounts -> payments [label="source / destination"];
+ payments -> holds [label="one reservation"];
+ payments -> journals [label="optional settlement"];
+ payments -> adjustments [label="compensations"];
+ adjustments -> journals [label="one new journal"];
+ users -> replay [label="owner-scoped"];
+ payments -> outbox [label="versioned events",style=dashed];
+ outbox -> inbox [label="event identity, logical link",style=dashed];
+}

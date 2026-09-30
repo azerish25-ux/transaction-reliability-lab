@@ -1,28 +1,27 @@
 # Bad Penny
 ## Financial Transaction Reliability Laboratory
 
-**Synthetic money only. P01-P08F retain verified development milestones. P09A has exact-source VERIFIED_PASS evidence. The full product remains INCOMPLETE / NO_GO.**
+A compact synthetic-money application for studying reliable transfers, asynchronous
+payments, reservations, schedules, signed webhooks and independent investigation.
+The engineering emphasis is correct outcomes across browser, API, PostgreSQL and
+RabbitMQ, with evidence tied to the exact tested source.
 
-Bad Penny is a compact transaction system for investigating duplicate intent, uncertain outcomes, concurrent spending, accounting invariants and asynchronous recovery across the browser, API, PostgreSQL and RabbitMQ. It is not a bank, payment processor, compliance product or production-ready financial service.
+**Product P01–P08F: verified on `d8d3656`. Full project: INCOMPLETE / NO_GO.**
+The product job passed 165 Java unit, 140 real integration, 186 client and 147
+browser tests. The same run's isolated laboratory gate failed; a later UI
+observation repair is not yet a live campaign pass. No real money, banking
+integration, compliance certification or production-financial readiness is claimed.
 
-The latest verified product milestone adds **administrator transaction search, ledger detail, financial audit history, independent reconciliation and failed-work investigation**. Customer account, transfer, payment, adjustment, schedule and webhook journeys remain covered by the regression campaign.
+- [Reviewer guide](docs/PORTFOLIO.md)
+- [Architecture, ER, state and sequence diagrams](docs/architecture/DIAGRAMS.md)
+- [Exact-source product evidence and real screenshots](docs/evidence/product-d8d3656.md)
+- [Current progress and remaining scope](docs/implementation/PROGRESS.md)
+- [Full implementation contract](docs/implementation/MASTER_SPEC.md)
 
-P09A's isolated F01/D02 laboratory is now delivered and undergoing real-stack integration. Recent corrections address guardian startup, loopback console networking and evidence integrity; they are not a completed live-experiment pass. See the [current integration checkpoint](docs/implementation/P09A_INTEGRATION.md) and [progress](docs/implementation/PROGRESS.md). Full release-isolation G12 remains open.
-
-Verified P08F source: `8802f8b20c9bf3996d19ba90e7be26fd123b7580`; permanent **P08F verification** run `36511855593`, including **Required P08F gate**. [Executed evidence](docs/evidence/p08f-8802f8b.md), [machine-readable provenance](docs/evidence/p08f-8802f8b.json), [progress](docs/implementation/PROGRESS.md), [full-product release gates](docs/implementation/RELEASE_READINESS.md).
-
-## P09A hardening delivery
-
-The recovered hardening adds live-lease checks around fault activation and
-acknowledgement, recorded-input and JUnit consistency checks, lifecycle artifact
-validation, bounded nested-archive inspection, and stricter proxy target read-back.
-The saved source `724b055067e53a06eaf7b16affda3131d324d0ac` passed **215 component
-tests** (116 original, 47 concurrent, 52 new). Those results are historical
-component evidence, not a live-stack or same-candidate pass for this integration.
-Newer browser fixes, workflow configuration and retained CI evidence on `main`
-are preserved. See the [runbook](lab-support/p09a/README.md),
-[hardening review](lab-support/p09a/INTEGRATION_REVIEW.md) and
-[current progress](docs/implementation/PROGRESS.md). Global G12 remains open.
+Run the ordinary local topology with `./scripts/lab up`. Representative reliability
+stories include resolving a lost response with the original key, safely processing
+redelivery after a worker restart, and independently reconciling immutable posting
+history. Each evidence record identifies what actually ran; diagrams are explanatory.
 
 ## Run the base topology
 
@@ -71,7 +70,7 @@ This activates the additive schedule/webhook schema, two schedule workers, two w
 
 **Webhooks:** manage approved subscriptions, enable/disable, deliberately rotate signing secrets, inspect delivery/attempt history and request eligible audited retries. Secrets are transient and first-disclosure-only; ordinary reads and command replays do not reveal them. A lost secret response requires resolving the original command before a deliberate new rotation. Webhook failure never changes settled money or blocks payment workers.
 
-## Administrator investigation — P08F VERIFIED_PASS
+## Administrator investigation — historical P08F VERIFIED_PASS
 
 Sign in as the fictional administrator. Navigation includes **Transactions**, **Audit history**, **Reconciliation** and **Failed work**, alongside **Adjustments**.
 
@@ -96,7 +95,7 @@ The administrator contract is `/api/v1/openapi/p08f-ui.json`. Earlier scoped con
 
 See [original implementation contract](docs/implementation/MASTER_SPEC.md), [P08F requirements](docs/implementation/P08F_REQUIREMENTS.json), [administrator architecture decision](docs/architecture/adr/0023-p08f-administrator-investigation.md), [financial boundary](docs/architecture/FINANCIAL_BOUNDARY.md), [testing strategy](docs/testing/STRATEGY.md), [evidence index](docs/evidence/INDEX.md) and [delivery record](docs/implementation/DELIVERY.md). Historical evidence retains its own tested source and scope.
 
-**P09A verification is closed for source `1d7c443`**: [same-source product/lab evidence](docs/evidence/p09a-1d7c443.md). The other seven faults and 23 seeded defects remain open; F02/D06 is the next expansion after that pass. P10 contracts/security/performance/restore and complete CI lanes, and P11 final exploratory evidence, diagrams, video and release delivery remain open. No public hosting, full-product accessibility conformance, security certification or production-financial readiness is claimed.
+**P09A verification is closed for source `1d7c443`**: [same-source product/lab evidence](docs/evidence/p09a-1d7c443.md). F01/F02 and D01/D02/D06 implementations are present; six other faults and 21 other seeded defects remain open. The current isolated campaign still needs successful end-to-end verification. P10 contracts/security/performance/restore and complete CI lanes, and P11 final exploratory evidence, diagrams, video and release delivery remain open. No public hosting, full-product accessibility conformance, security certification or production-financial readiness is claimed.
 
 Useful commands:
 
