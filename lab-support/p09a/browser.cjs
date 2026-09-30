@@ -79,6 +79,17 @@ fs.mkdirSync(output, {recursive: true});
     assert.equal(duplicate.phases.duplicate.observations.routedPublications, 2);
     tests.push({id: 'ADMIN_BROWSER_EXECUTES_REAL_F02', status: 'PASS'});
 
+    stage = 'D06_OPEN_CONFIRMATION';
+    await page.getByRole('button', {name: 'Run D06', exact: true}).click();
+    await expect(dialog).toBeVisible();
+    await dialog.getByRole('button', {name: 'Confirm', exact: true}).click();
+    stage = 'D06_AWAIT_REAL_VERDICT';
+    await expect(page.locator('#verdict')).toHaveText(/^DETECTED · /, {timeout: 180000});
+    const duplicateDefect = JSON.parse(await page.locator('#evidence').textContent());
+    assert.equal(duplicateDefect.scenario, 'D06');
+    assert.equal(duplicateDefect.phases.mutant.assertion.id, 'D06_DUPLICATE_FINANCIAL_EFFECT');
+    tests.push({id: 'ADMIN_BROWSER_EXECUTES_REAL_D06', status: 'PASS'});
+
     stage = 'RESPONSIVE_SCREENSHOTS';
     await page.screenshot({path: path.join(output, 'desktop.png'), fullPage: true});
     await page.setViewportSize({width: 390, height: 844});
@@ -116,7 +127,7 @@ fs.mkdirSync(output, {recursive: true});
     throw error;
   } finally {
     fs.writeFileSync(path.join(output, 'results.json'), JSON.stringify({sourceSha: values.LEDGER_LAB_SOURCE,
-      scope: 'REAL_BROWSER_LIVE_LAB', tests, expectedTests: 9, complete: tests.length === 9 && failure === null,
+      scope: 'REAL_BROWSER_LIVE_LAB', tests, expectedTests: 10, complete: tests.length === 10 && failure === null,
       failure}, null, 2));
     await context.close(); await browser.close();
   }

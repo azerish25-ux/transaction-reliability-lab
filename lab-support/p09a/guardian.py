@@ -33,6 +33,23 @@ def mutate_definition(original: str) -> str:
     return original.replace(CLAUSE, MUTANT, 1)
 
 
+SETTLEMENT_FUNCTION = 'ledger.settle_event(uuid,uuid,uuid)'
+SETTLEMENT_MARKER = "INSERT INTO ledger.consumer_inbox(consumer,event_id) VALUES('payment-settler-v1',p_event) ON CONFLICT DO NOTHING;"
+SETTLEMENT_CUT = """IF p.state='SETTLED' THEN
+  -- D06 protection cut: treat a repeated settled operation as a fresh posting.
+  PERFORM ledger._post(gen_random_uuid(),'PAYMENT',p.source_id,p.destination_id,p.amount_minor,p.currency);
+  RETURN p.state;
+ END IF;
+ """
+
+
+def mutate_settlement(original: str) -> str:
+    if (original.count(SETTLEMENT_MARKER) != 1 or SETTLEMENT_CUT in original
+            or not original.startswith('CREATE OR REPLACE FUNCTION ledger.settle_event(')):
+        raise LabError('D06_MUTATION_TARGET_NOT_UNIQUE')
+    return original.replace(SETTLEMENT_MARKER, SETTLEMENT_CUT + SETTLEMENT_MARKER, 1)
+
+
 class Driver:
     def __init__(self, settings: Settings):
         self.oracle = Oracle(settings)
@@ -51,7 +68,7 @@ class Driver:
             validate_proxy_target(value)
         return value
 
-    def definition(self, mutate: bool) -> dict[str, Any]:
+    def definition(self, mutate: bool | str) -> dict[str, Any]:
         with self.oracle.connection(owner=True) as conn:
             original, recorded_hash = conn.execute('SELECT original_definition,original_sha256 '
                                                    'FROM p09a_guard.instance WHERE singleton=1 FOR UPDATE').fetchone()
@@ -62,14 +79,31 @@ class Driver:
             if current not in {original, variant}:
                 # Never overwrite an unrecognized concurrent change.
                 raise LabError('D02_UNRECOGNIZED_DATABASE_CHANGE', 503)
-            desired = variant if mutate else original
+            desired = variant if mutate is True else original
             if current != desired:
                 conn.execute(desired, prepare=False)
             observed = conn.execute('SELECT pg_get_functiondef(%s::regprocedure)', (FUNCTION,)).fetchone()[0]
             if observed != desired:
                 raise LabError('D02_DEFINITION_READBACK_FAILED', 503)
+            settlement_original, settlement_hash = conn.execute(
+                'SELECT original_definition,original_sha256 FROM p09a_guard.settlement_original WHERE singleton=1 FOR UPDATE').fetchone()
+            if digest(settlement_original.encode()) != settlement_hash:
+                raise LabError('D06_BACKUP_INTEGRITY_FAILURE')
+            settlement_variant = mutate_settlement(settlement_original)
+            settlement_current = conn.execute('SELECT pg_get_functiondef(%s::regprocedure)', (SETTLEMENT_FUNCTION,)).fetchone()[0]
+            if settlement_current not in {settlement_original, settlement_variant}:
+                raise LabError('D06_UNRECOGNIZED_DATABASE_CHANGE')
+            settlement_desired = settlement_variant if mutate == 'D06' else settlement_original
+            if settlement_current != settlement_desired:
+                conn.execute(settlement_desired, prepare=False)
+            settlement_observed = conn.execute('SELECT pg_get_functiondef(%s::regprocedure)', (SETTLEMENT_FUNCTION,)).fetchone()[0]
+            if settlement_observed != settlement_desired:
+                raise LabError('D06_DEFINITION_READBACK_FAILED')
         return {'originalFunctionSha256': recorded_hash, 'currentFunctionSha256': digest(observed.encode()),
-                'mutantFunctionSha256': digest(variant.encode())}
+                'mutantFunctionSha256': digest(variant.encode()),
+                'settlementOriginalSha256': settlement_hash,
+                'settlementCurrentSha256': digest(settlement_observed.encode()),
+                'settlementMutantSha256': digest(settlement_variant.encode())}
 
     def reset(self) -> dict[str, Any]:
         # Reset network first even when schema validation subsequently fails.
@@ -89,12 +123,14 @@ class Driver:
         return proof
 
     def activate(self, mode: str) -> dict[str, Any]:
-        if mode not in {'D02', 'F01_LATENCY', 'F01_DISCONNECT'}:
+        if mode not in {'D02', 'D06', 'F01_LATENCY', 'F01_DISCONNECT'}:
             raise LabError('INVALID_FAULT')
         # Recheck the actual target immediately before any external change.
         validate_proxy_target(self.proxy())
         if mode == 'D02':
             proof = self.definition(True)
+        elif mode == 'D06':
+            proof = self.definition('D06')
         elif mode == 'F01_LATENCY':
             self.proxy('POST', '/toxics', {'name': TOXIC_NAME, 'type': 'latency', 'stream': 'downstream',
                                           'toxicity': 1.0, 'attributes': {'latency': 250, 'jitter': 0}})

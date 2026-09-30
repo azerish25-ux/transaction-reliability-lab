@@ -54,6 +54,9 @@ class Runner:
                 'runId': run['id'], 'scenario': run['scenario'], 'seed': run['seed']}
 
     def execute(self, run: dict[str, Any]) -> dict[str, Any]:
+        if run['scenario'] == 'D06':
+            from duplicate_defect import execute_d06
+            return execute_d06(self, run)
         if run['scenario'] == 'F02':
             from broker_experiment import execute_f02
             return execute_f02(self, run)

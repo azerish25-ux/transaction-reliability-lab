@@ -73,7 +73,19 @@
       "testId": "F02_SAME_EVENT_ONE_EFFECT",
       "scope": "REAL_HTTP_POSTGRES_RABBITMQ",
       "status": "IMPLEMENTED_UNVERIFIED"
+    },
+    "D06": {
+      "category": "defect",
+      "title": "Duplicate-message financial effect",
+      "risk": "A retry is mistaken for fresh economic intent and spends money again.",
+      "mechanism": "In disposable settle_event only, cut inbox/state guards on settled replay and assign a fresh journal operation identity. The real broker sends the identical event twice; the unchanged independent before/after ledger oracle detects extra debits.",
+      "affectedSymbol": "ledger.settle_event(uuid,uuid,uuid)",
+      "target": "disposable-postgres",
+      "testId": "D06_SAME_OPERATION_ONE_EFFECT",
+      "expectedAssertion": "D06_DUPLICATE_FINANCIAL_EFFECT",
+      "scope": "REAL_HTTP_POSTGRES_RABBITMQ",
+      "status": "IMPLEMENTED_UNVERIFIED"
     }
   },
-  "notice": "Implementation is not executed verification. Six faults and 23 defects remain open."
+  "notice": "Only exact-source evidence counts. Six faults and 22 other defects remain open."
 }

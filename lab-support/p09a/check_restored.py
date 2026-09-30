@@ -32,9 +32,12 @@ def main():
             observed = driver.proxy()
             with driver.oracle.connection(owner=True) as conn:
                 from clients import FUNCTION
+                from guardian import SETTLEMENT_FUNCTION
                 expected = conn.execute('SELECT original_definition FROM p09a_guard.instance WHERE singleton=1').fetchone()[0]
                 current = conn.execute('SELECT pg_get_functiondef(%s::regprocedure)', (FUNCTION,)).fetchone()[0]
-            if current != expected or observed.get('enabled') is not True or observed.get('toxics'):
+                settlement_expected = conn.execute('SELECT original_definition FROM p09a_guard.settlement_original WHERE singleton=1').fetchone()[0]
+                settlement_current = conn.execute('SELECT pg_get_functiondef(%s::regprocedure)', (SETTLEMENT_FUNCTION,)).fetchone()[0]
+            if settlement_current != settlement_expected or current != expected or observed.get('enabled') is not True or observed.get('toxics'):
                 raise LabError('TEARDOWN_READBACK_FAILED')
             print(json.dumps({'restored': True, 'instanceId': settings.instance, 'sourceSha': settings.source}))
             return

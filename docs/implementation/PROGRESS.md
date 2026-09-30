@@ -1,3 +1,25 @@
+# D06 duplicate-message protection cut — IMPLEMENTED_UNVERIFIED
+
+D06 is now an explicitly guarded mutation of the disposable settlement function.
+For already settled replay only, the variant bypasses inbox/state protection and
+uses a fresh journal operation identity. This documents all defenses intentionally
+cut; ordinary migrations and normal release source are unchanged. A guardian
+backup/hash/read-back and bounded lease restore the exact original function.
+External teardown independently verifies both mutated functions.
+
+The same real broker/independent SQL test runs against baseline, mutant and restored
+code using identical economic intent/seed and fresh phase-local payment fixtures.
+It detects extra source debits/destination credits and two additional journals,
+retaining the actual failing mutant JUnit. Raw snapshots and hashes, identical
+message bytes, acknowledgements, code hashes and exact deltas are mandatory.
+Mutant synthetic postings remain in the isolated disposable database as evidence;
+restoring code never claims to repair or reverse those transactions.
+
+258 component tests pass locally. This does not establish a live D06 detection.
+F02 predecessor b278e3d passed its isolated real-stack lab job, including browser
+and restoration; same-source product CI is still running. The full project
+remains INCOMPLETE / NO_GO, with six faults and 22 other defects plus P10/P11 open.
+
 # F02 real-broker expansion — IMPLEMENTED_UNVERIFIED
 
 The isolated topology now includes its own RabbitMQ and normal payment worker.

@@ -28,6 +28,16 @@ SELECT instance_id=:'instance_id' AS matched FROM p09a_guard.instance WHERE sing
  \echo 'Refusing a different lab instance'
  \quit 2
 \endif
+CREATE TABLE IF NOT EXISTS p09a_guard.settlement_original (
+ singleton integer PRIMARY KEY CHECK(singleton=1),
+ original_definition text NOT NULL,
+ original_sha256 text NOT NULL CHECK(original_sha256 ~ '^[a-f0-9]{64}$')
+);
+INSERT INTO p09a_guard.settlement_original
+ SELECT 1,definition,encode(extensions.digest(convert_to(definition,'UTF8'),'sha256'),'hex')
+ FROM (SELECT pg_get_functiondef('ledger.settle_event(uuid,uuid,uuid)'::regprocedure) definition) f
+ ON CONFLICT(singleton) DO NOTHING;
+REVOKE ALL ON p09a_guard.settlement_original FROM PUBLIC,ledger_runtime;
 REVOKE ALL ON p09a_guard.instance FROM PUBLIC,ledger_runtime;
 GRANT USAGE ON SCHEMA p09a_guard TO ledger_runtime;
 GRANT SELECT(singleton,instance_id) ON p09a_guard.instance TO ledger_runtime;
