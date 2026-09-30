@@ -34,7 +34,7 @@ npm --prefix frontend ci
 npm --prefix frontend run verify
 PACT_DO_NOT_TRACK=true npm --prefix frontend run test:pact
 PACT_DO_NOT_TRACK=true npm --prefix frontend run test:pact:sensitivity
-pact_do_not_track=true ./mvnw -B -ntp -f backend/pom.xml -Pcontracts -Dit.test=PactProviderIT verify
+pact_do_not_track=true ./mvnw -B -ntp -f backend/pom.xml -Pcontracts -Dit.test=PactProviderIT,PaymentMessageProviderIT verify
 ```
 
 Consumer generation recreates only its own generated Pact to avoid stale merged
@@ -67,10 +67,36 @@ Local results on 2026-09-30:
 ## Scope still missing
 
 These five HTTP interactions are an initial slice, not full P10 completion.
-Payment/transfer/schedule/webhook HTTP contracts, the actual asynchronous
-publisher/worker message contract, sender/receiver signature contract, live
+Payment/transfer/schedule/webhook HTTP contracts, sender/receiver signature contract, live
 provider results, performance/migration/restore evidence and other P10 requirements
 remain open. Existing integration tests do not substitute for those claims.
 
 Implementation references: [Pact JS consumer tests](https://docs.pact.io/implementation_guides/javascript/docs/consumer)
 and [Pact JVM JUnit 5](https://docs.pact.io/implementation_guides/jvm/provider/junit5).
+
+## Asynchronous payment message slice (2026-09-30)
+
+`PaymentMessageConsumerTest` generates a genuine V3 Pact and feeds its bytes to
+`ReliableEventConsumers.settle`, the actual Rabbit listener method. It asserts the
+parsed identity/state, settlement collaborator call and acknowledgement, with no
+unexpected failed-work or retry collaborator calls. `PaymentMessageProviderIT`
+uses Pact JVM `MessageTestTarget` to verify the actual `OutboxPublisher.publishDue`
+serialization captured at the broker transport boundary against that Pact.
+
+Both local runs passed (one consumer and one provider interaction, zero failures
+or skips). These focused contract tests mock SQL/broker collaborators; they do not
+prove database settlement, redelivery, or RabbitMQ behavior. Existing live
+integration acceptance remains separate. No process-death provider or active
+fault mode is loaded. Test-only subclass mocks avoid requiring JVM instrumentation
+attachment in this environment.
+
+Run consumer generation before message provider verification:
+
+```sh
+pact_do_not_track=true ./mvnw -B -ntp -f backend/pom.xml -Pcontracts -Dtest=PaymentMessageConsumerTest test
+pact_do_not_track=true ./mvnw -B -ntp -f backend/pom.xml -Pcontracts -Dtest=PaymentMessageProviderIT test
+```
+
+The manual workflow includes generation in its unit-test phase and provider
+verification in its selected integration phase. Its archive also includes
+`backend/target/pacts/`.

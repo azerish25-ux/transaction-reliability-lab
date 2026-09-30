@@ -1,3 +1,7 @@
+## 2026-09-30 — Actual publisher/worker Pact message boundary
+
+Added a genuine Pact JVM asynchronous consumer through the real Rabbit listener method and message-provider verification through the real outbox serializer. Both focused local interactions passed without skips. SQL and broker transport are isolated collaborators, so this proves message compatibility only, not live settlement/reliability. The ordinary manual workflow now includes this contract pair. Full project and live HTTP provider acceptance remain pending; see [CONTRACTS.md](CONTRACTS.md).
+
 ## 2026-09-30 — P10 real Pact HTTP contract slice
 
 Implemented actual-client Pact JS consumer generation (five interactions), Pact JVM verification sources for the real normal Spring API with PostgreSQL-backed provider states and real session/CSRF setup, and an independent manual-only contract workflow. Local consumer generation and contract-profile package compilation passed. Live provider acceptance is pending Docker/hosted execution; the synthetic schema-sensitivity script was blocked by Pact JS local-provider proxy handling. See [CONTRACTS.md](CONTRACTS.md) for exact scope, commands and run button. This is partial P10 implementation, not P10 acceptance or full-project readiness. No restricted lab workflow was triggered.

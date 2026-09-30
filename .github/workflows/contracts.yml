@@ -35,7 +35,7 @@ jobs:
           npm --prefix frontend run test:pact
           npm --prefix frontend run test:pact:sensitivity
       - name: Verify contracts against ordinary Spring API and PostgreSQL
-        run: ./mvnw -B -ntp -f backend/pom.xml -Pcontracts -Dit.test=PactProviderIT verify
+        run: ./mvnw -B -ntp -f backend/pom.xml -Pcontracts -Dit.test=PactProviderIT,PaymentMessageProviderIT verify
       - name: Retain source-bound contract evidence
         if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
@@ -50,3 +50,4 @@ jobs:
             backend/target/failsafe-reports/
             backend/target/surefire-reports/
             backend/target/pact-evidence/
+            backend/target/pacts/
