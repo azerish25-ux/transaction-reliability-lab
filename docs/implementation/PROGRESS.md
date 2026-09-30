@@ -1,3 +1,7 @@
+## 2026-09-30 — P10 real Pact HTTP contract slice
+
+Implemented actual-client Pact JS consumer generation (five interactions), Pact JVM verification sources for the real normal Spring API with PostgreSQL-backed provider states and real session/CSRF setup, and an independent manual-only contract workflow. Local consumer generation and contract-profile package compilation passed. Live provider acceptance is pending Docker/hosted execution; the synthetic schema-sensitivity script was blocked by Pact JS local-provider proxy handling. See [CONTRACTS.md](CONTRACTS.md) for exact scope, commands and run button. This is partial P10 implementation, not P10 acceptance or full-project readiness. No restricted lab workflow was triggered.
+
 ## 2026-09-30 — Product display branding
 
 Updated the customer/admin display name, document titles and synthetic-identity copy to Bad Penny, with BP brand marks. Existing LG public references, session-cookie names and API compatibility remain unchanged. `npm --prefix frontend run verify` passed (type checks, all 186 existing client cases and production build). Fresh live browser acceptance remains outstanding; this commit does not change the overall NO_GO verdict. Publication uses `[skip ci]` to avoid starting the restricted coupled lab workflow.
