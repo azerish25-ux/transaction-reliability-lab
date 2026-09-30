@@ -17,11 +17,16 @@ def override(hold_ms: int) -> None:
     compose('up', '-d', '--no-deps', '--wait', 'controller', overlay=overlay, timeout=180)
 
 
-def wait_for(client: LabClient, predicate, seconds: int = 45):
+def wait_for(client: LabClient, predicate, seconds: int = 45, run_id: str | None = None):
     deadline = time.monotonic() + seconds
     while time.monotonic() < deadline:
         value = client.call('GET', '/lab/api/runs', expected=200).json()
         if predicate(value): return value
+        if run_id:
+            finished = next((r for r in value['runs'] if r['id'] == run_id and r.get('result')), None)
+            if finished:
+                collect_result(finished['result'], load_environment(), strict=False)
+                raise LabError('LIFECYCLE_RUN_FINISHED_BEFORE_CHECKPOINT')
         time.sleep(.1)
     raise TimeoutError('LIFECYCLE_CHECKPOINT_TIMEOUT')
 
@@ -38,7 +43,7 @@ def main() -> None:
         override(2000)
         client = LabClient(values); client.login(values['LEDGER_DEMO_PASSWORD'])
         run = submit(client)
-        wait_for(client, lambda value: value['health']['fault'] == 'D02')
+        wait_for(client, lambda value: value['health']['fault'] == 'D02', run_id=run['id'])
         compose('kill', '-s', 'SIGKILL', 'controller')
         running = compose('ps', '--status', 'running', '-q', 'controller', capture=True).stdout.strip()
         require(not running, 'CONTROLLER_ACTUALLY_TERMINATED', '', running)
@@ -56,7 +61,7 @@ def main() -> None:
         override(21000)  # Deliberately outlast the fixed twenty-second lease, not the run deadline.
         client = LabClient(values); client.login(values['LEDGER_DEMO_PASSWORD'])
         run = submit(client)
-        wait_for(client, lambda value: value['health']['fault'] == 'D02')
+        wait_for(client, lambda value: value['health']['fault'] == 'D02', run_id=run['id'])
         wait_for(client, lambda value: value['health']['fault'] == 'NONE', seconds=30)
         wait_for(client, lambda value: any(r['id'] == run['id'] and r['result'] for r in value['runs']), seconds=30)
         expired = client.call('GET', '/lab/api/runs/' + run['id'], expected=200).json()

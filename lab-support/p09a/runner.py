@@ -17,9 +17,32 @@ class Runner:
     def __init__(self, settings: Settings, store: Store):
         self.settings, self.store = settings, store
         self.oracle = Oracle(settings)
+        self.fixture_session = None
         self.checkpoint_ms = int(os.environ.get('LEDGER_LAB_TEST_CHECKPOINT_MS', '0'))
         if not 0 <= self.checkpoint_ms <= 21000:
             raise LabError('INVALID_LAB_TEST_CHECKPOINT')
+
+    def fixture_api(self, host: str = 'control-api') -> Api:
+        """Reuse an in-memory fixture session without weakening normal auth budgets.
+
+        Every new experiment validates the session through the real protected API.
+        Only an explicit 401 permits one fresh login; dependency failures fail closed.
+        No cookie or CSRF material enters artifacts or persistent experiment state.
+        """
+        if self.fixture_session is None:
+            self.fixture_session = Api('control-api')
+            self.fixture_session.login('alice@example.test', os.environ['LEDGER_DEMO_PASSWORD'])
+        else:
+            response = self.fixture_session.call('GET', '/api/v1/auth/me')
+            if response.status == 401:
+                self.fixture_session = Api('control-api')
+                self.fixture_session.login('alice@example.test', os.environ['LEDGER_DEMO_PASSWORD'])
+            elif response.status != 200:
+                raise LabError('FIXTURE_SESSION_VALIDATION_FAILED')
+        api = Api(host)
+        api.cookies = dict(self.fixture_session.cookies)
+        api.csrf_header, api.csrf_token = self.fixture_session.csrf_header, self.fixture_session.csrf_token
+        return api
 
     def wait(self, generation: int, mode: str, timeout: float = 15) -> dict[str, Any]:
         deadline = time.monotonic() + timeout
@@ -146,7 +169,7 @@ class Runner:
 
         try:
             self.store.check_run(run_id)
-            control.login('alice@example.test', os.environ['LEDGER_DEMO_PASSWORD'])
+            control = self.fixture_api()
             api.cookies = dict(control.cookies)
             api.csrf_header, api.csrf_token = control.csrf_header, control.csrf_token
             case: Callable[[dict[str, Any]], None] = d02 if scenario == 'D02' else original

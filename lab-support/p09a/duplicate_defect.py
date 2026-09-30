@@ -89,7 +89,7 @@ def execute_d06(runner, run):
         require(after['sha256'] == before['sha256'], 'D06_GLOBAL_REPLAY_UNCHANGED', before['sha256'], after['sha256'])
 
     try:
-        check(); api.login('alice@example.test', os.environ['LEDGER_DEMO_PASSWORD'])
+        check(); api = runner.fixture_api()
         phases['baseline'] = run_case('D06_SAME_OPERATION_ONE_EFFECT', lambda o: phase(o, 'baseline'), input_hash)
         if phases['baseline']['status'] == 'PASS':
             result['activation'] = runner.activate(run_id, 'D06')

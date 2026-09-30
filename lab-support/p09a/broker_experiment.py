@@ -119,7 +119,7 @@ def execute_f02(runner, run):
 
     try:
         check()
-        api.login('alice@example.test', os.environ['LEDGER_DEMO_PASSWORD'])
+        api = runner.fixture_api()
         response = api.call('POST', '/api/v1/payments', intent, inputs['key'])
         require(response.status == 202, 'F02_PAYMENT_ACCEPTED', 202, response.status)
         operation = valid_uuid(response.json()['id'])

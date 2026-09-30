@@ -1,3 +1,21 @@
+# Catalogue authentication-budget correction — IMPLEMENTED_UNVERIFIED
+
+D06's real broker experiment detected the intended duplicate-money assertion on
+7424a1b (run 36654638819); F01/F02 and D02 also passed their real experiments and
+the four browser journeys completed. The final lifecycle expiry test then timed
+out before activation. The expanded campaign attempts eleven Alice logins inside
+the unchanged ten-per-five-minute identity budget: four CLI runs, four browser
+runs, one customer-denial login and two lifecycle runs.
+
+The experiment worker now reuses its fixture session in memory, verifies it via
+actual /auth/me before each experiment, and reauthenticates once only on explicit
+401. Dependency errors and rate limits never trigger credential retry. No auth
+limit is raised and no credentials enter saved state/evidence. Lifecycle waits
+now retain a premature terminal report and fail immediately instead of hiding
+its cause behind a generic timeout. 264 local component tests pass; the corrected
+same-source live campaign is still required. The previous failure is not counted
+as a completed P09 milestone. All remaining scope stays open.
+
 # G12 receiver isolation repair — IMPLEMENTED_UNVERIFIED
 
 A further release review found active delay/status/accept-then-fail webhook modes
