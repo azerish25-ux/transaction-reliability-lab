@@ -17,7 +17,7 @@ MAX_XML = 2 * 1024 * 1024
 MAX_PNG = 32 * 1024 * 1024
 MAX_PIXELS = 32 * 1024 * 1024
 MAX_DECODED = 128 * 1024 * 1024
-SERVICES = {'postgres', 'toxiproxy', 'api', 'control-api', 'controller', 'guardian'}
+SERVICES = {'postgres', 'toxiproxy', 'api', 'control-api', 'controller', 'guardian', 'rabbitmq', 'payment-worker'}
 
 
 class EvidenceIntegrityError(ValueError):

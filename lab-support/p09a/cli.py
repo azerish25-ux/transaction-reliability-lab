@@ -31,8 +31,8 @@ ENV_FILE = STATE / 'runtime.env'
 EVIDENCE = ROOT / '.evidence/p09a'
 REQUIRED = {'LEDGER_LAB_INSTANCE', 'LEDGER_LAB_DATABASE', 'LEDGER_LAB_SOURCE', 'LEDGER_LAB_SOURCE_DIRTY',
             'LEDGER_LAB_PORT', 'POSTGRES_SUPERUSER_PASSWORD', 'LEDGER_OWNER_PASSWORD', 'LEDGER_RUNTIME_PASSWORD',
-            'LEDGER_AUTH_KEY', 'LEDGER_DEMO_PASSWORD', 'LEDGER_LAB_CSRF_KEY'}
-SERVICES = ('postgres', 'toxiproxy', 'api', 'control-api', 'controller', 'guardian')
+            'LEDGER_AUTH_KEY', 'LEDGER_DEMO_PASSWORD', 'LEDGER_LAB_CSRF_KEY', 'LEDGER_LAB_BROKER_PASSWORD'}
+SERVICES = ('postgres', 'toxiproxy', 'api', 'control-api', 'controller', 'guardian', 'rabbitmq', 'payment-worker')
 
 
 def execute(command: list[str], *, capture: bool = False, timeout: int = 1200,
@@ -178,7 +178,7 @@ def up() -> dict[str, str]:
     compose('config', '--quiet')
     compose('up', '-d', '--build', '--wait', 'postgres', 'toxiproxy', 'api', 'control-api')
     compose('run', '--rm', 'seed')
-    compose('up', '-d', '--build', '--wait', 'controller', 'guardian')
+    compose('up', '-d', '--build', '--wait', 'rabbitmq', 'payment-worker', 'controller', 'guardian')
     client = LabClient(values)
     client.call('GET', '/healthz', expected=200)
     EVIDENCE.mkdir(parents=True, exist_ok=True)
@@ -323,11 +323,11 @@ def verify(lab_only: bool = False) -> int:
         values = up()
         compose('run', '--rm', '--no-deps', '--entrypoint', 'sh', 'api', '-ec',
                 'test ! -e /app/LAB_ONLY_BUILD && test ! -e /app/guardian.py && test ! -e /app/server.py')
-        results = [experiment('F01', values), experiment('D02', values)]
+        results = [experiment('F01', values), experiment('D02', values), experiment('F02', values)]
         execute(['node', 'lab-support/p09a/browser.cjs'], timeout=420)
         execute([sys.executable, 'lab-support/p09a/lifecycle.py'], timeout=180)
         (EVIDENCE / 'summary.json').write_text(json.dumps({'sourceSha': values['LEDGER_LAB_SOURCE'],
-            'implementedFaultsVerified': 1, 'validDefectsDetected': 1, 'requiredFaults': 8, 'requiredDefects': 24,
+            'implementedFaultsVerified': 2, 'validDefectsDetected': 1, 'requiredFaults': 8, 'requiredDefects': 24,
             'completeP09': False, 'runs': [{'id': r['runId'], 'scenario': r['scenario'], 'verdict': r['verdict']} for r in results]}, indent=2) + '\n')
         execute([sys.executable, 'scripts/assert-p09a-evidence'])
         return 0
@@ -342,7 +342,7 @@ def main() -> int:
     sub.add_parser('up'); sub.add_parser('status'); sub.add_parser('verify'); sub.add_parser('verify-lab')
     stopped = sub.add_parser('down'); stopped.add_argument('--reset-data', action='store_true')
     defect = sub.add_parser('defect'); defect.add_argument('id', choices=['D02'])
-    resilience = sub.add_parser('resilience'); resilience.add_argument('id', choices=['F01'])
+    resilience = sub.add_parser('resilience'); resilience.add_argument('id', choices=['F01', 'F02'])
     all_defects = sub.add_parser('defects'); all_defects.add_argument('--all', required=True, action='store_true')
     args = parser.parse_args()
     try:

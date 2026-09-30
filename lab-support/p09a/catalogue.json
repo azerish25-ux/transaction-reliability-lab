@@ -5,8 +5,42 @@
   "maxFaultSeconds": 20,
   "maxExperimentSeconds": 150,
   "seed": 74021,
-  "requiredFaults": ["F01", "F02", "F03", "F04", "F05", "F06", "F07", "F08"],
-  "requiredDefects": ["D01", "D02", "D03", "D04", "D05", "D06", "D07", "D08", "D09", "D10", "D11", "D12", "D13", "D14", "D15", "D16", "D17", "D18", "D19", "D20", "D21", "D22", "D23", "D24"],
+  "requiredFaults": [
+    "F01",
+    "F02",
+    "F03",
+    "F04",
+    "F05",
+    "F06",
+    "F07",
+    "F08"
+  ],
+  "requiredDefects": [
+    "D01",
+    "D02",
+    "D03",
+    "D04",
+    "D05",
+    "D06",
+    "D07",
+    "D08",
+    "D09",
+    "D10",
+    "D11",
+    "D12",
+    "D13",
+    "D14",
+    "D15",
+    "D16",
+    "D17",
+    "D18",
+    "D19",
+    "D20",
+    "D21",
+    "D22",
+    "D23",
+    "D24"
+  ],
   "implemented": {
     "F01": {
       "category": "resilience",
@@ -29,7 +63,17 @@
       "expectedAssertion": "D02_CHANGED_RECIPIENT_REJECTED",
       "scope": "REAL_HTTP_POSTGRES",
       "status": "IMPLEMENTED_UNVERIFIED"
+    },
+    "F02": {
+      "category": "resilience",
+      "title": "RabbitMQ duplicate delivery",
+      "risk": "Redelivery must not post settled money again.",
+      "mechanism": "Publish the identical persisted payment-request envelope twice through the isolated real broker, observe consumer acknowledgements, and compare independent financial snapshots.",
+      "target": "disposable-rabbitmq",
+      "testId": "F02_SAME_EVENT_ONE_EFFECT",
+      "scope": "REAL_HTTP_POSTGRES_RABBITMQ",
+      "status": "IMPLEMENTED_UNVERIFIED"
     }
   },
-  "notice": "A listed implementation is not an executed detection. Only valid source-bound evidence counts. The remaining 30 scenarios are NOT_STARTED."
+  "notice": "Implementation is not executed verification. Six faults and 23 defects remain open."
 }

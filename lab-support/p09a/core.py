@@ -127,7 +127,7 @@ class Store:
               PRAGMA journal_mode=WAL;
               CREATE TABLE IF NOT EXISTS runs (
                 id TEXT PRIMARY KEY, request_id TEXT NOT NULL, actor TEXT NOT NULL,
-                scenario TEXT NOT NULL CHECK(scenario IN ('F01','D02')),
+                scenario TEXT NOT NULL CHECK(scenario IN ('F01','D02','F02')),
                 seed INTEGER NOT NULL, created REAL NOT NULL, deadline REAL NOT NULL,
                 status TEXT NOT NULL, cancelled INTEGER NOT NULL DEFAULT 0,
                 result TEXT, UNIQUE(actor, request_id));
@@ -183,7 +183,7 @@ class Store:
 
     def submit(self, actor: str, request_id: str, scenario: str, seed: int = SEED) -> dict[str, Any]:
         valid_uuid(actor); valid_uuid(request_id)
-        if scenario not in {'F01', 'D02'} or type(seed) is not int or seed != SEED:
+        if scenario not in {'F01', 'D02', 'F02'} or type(seed) is not int or seed != SEED:
             raise LabError('UNIMPLEMENTED_SCENARIO_OR_SEED', 422)
         now = time.time()
         with self.db(write=True) as db:
@@ -424,6 +424,9 @@ def validate_result(result: dict[str, Any], source: str | None = None) -> None:
                 or activation.get('originalFunctionSha256') != cleanup['originalFunctionSha256']
                 or mutant_hash == cleanup['originalFunctionSha256'] or activation.get('mode') != 'D02'):
             raise LabError('EVIDENCE_ACTIVATION_MISSING')
+    elif result.get('scenario') == 'F02':
+        from broker_experiment import validate_f02
+        validate_f02(result)
     elif result.get('scenario') == 'F01':
         if (set(phases) != {'baseline', 'latency', 'disruption', 'restored'}
                 or any(p.get('status') != 'PASS' for p in phases.values()) or result.get('verdict') != 'PASSED'):

@@ -67,7 +67,7 @@ class Api:
 
     def call(self, method: str, path: str, payload: Any = None, key: str | None = None) -> Response:
         if path not in {'/api/v1/auth/csrf', '/api/v1/auth/login', '/api/v1/auth/me',
-                        '/api/v1/accounts', '/api/v1/transfers'}:
+                        '/api/v1/accounts', '/api/v1/transfers', '/api/v1/payments'}:
             raise LabError('API_PATH_NOT_ALLOWLISTED')
         headers = {'Cookie': '; '.join(k + '=' + v for k, v in self.cookies.items())}
         if payload is not None:

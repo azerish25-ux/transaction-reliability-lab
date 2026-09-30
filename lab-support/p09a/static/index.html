@@ -31,7 +31,11 @@
 <p>A scoped SQL variant omits the idempotency fingerprint rejection. The unchanged test must detect the wrong accepted replay.</p>
 <dl><div><dt>Sequence</dt><dd>Baseline → mutant → restored baseline</dd></div><div><dt>Detection</dt><dd>Expected HTTP 409, not a setup failure</dd></div></dl>
 <button type="button" class="run" data-scenario="D02">Run D02</button></article>
-</div><p class="muted">F02–F08 and the other 23 seeded defects are not implemented in P09A. Two working entries do not complete the 32-scenario mandate.</p></section>
+<article class="panel"><span class="eyebrow">F02 / BROKER FAULT</span><h3>Duplicate broker delivery</h3>
+<p>The identical persisted payment event is published twice to real RabbitMQ. Acknowledged deliveries must leave one settlement and unchanged balances.</p>
+<dl><div><dt>Mechanism</dt><dd>Same message identity → real consumer → PostgreSQL</dd></div><div><dt>Target</dt><dd>Disposable RabbitMQ and payment worker only</dd></div></dl>
+<button type="button" class="run" data-scenario="F02">Run F02</button></article>
+</div><p class="muted">F03–F08 and the other 23 seeded defects are not implemented in P09A. Three implemented entries do not complete the 32-scenario mandate.</p></section>
 <section class="panel" aria-labelledby="run-title"><div class="section-heading"><h2 id="run-title">Run history and evidence</h2>
 <button id="refresh" type="button" class="secondary">Refresh</button></div>
 <p id="empty">No experiment has been recorded for this instance.</p><div id="runs" class="run-list"></div>

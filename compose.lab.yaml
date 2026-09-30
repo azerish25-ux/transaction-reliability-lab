@@ -124,6 +124,45 @@ services:
       control-api: {condition: service_healthy}
     security_opt: ["no-new-privileges:true"]
 
+  rabbitmq:
+    image: rabbitmq:4.3.5-management-alpine
+    environment:
+      RABBITMQ_DEFAULT_USER: lab
+      RABBITMQ_DEFAULT_PASS: ${LEDGER_LAB_BROKER_PASSWORD:?required}
+      RABBITMQ_DEFAULT_VHOST: /p09a
+    networks: [lab]
+    security_opt: ["no-new-privileges:true"]
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 3s
+      timeout: 5s
+      retries: 40
+
+  payment-worker:
+    <<: *security
+    build:
+      context: .
+      dockerfile: infra/docker/Dockerfile.backend
+    environment:
+      <<: *sandbox
+      LEDGER_DATABASE_URL: jdbc:postgresql://postgres:5432/${LEDGER_LAB_DATABASE:?required}
+      LEDGER_PROCESS_NAME: LedgerGuard-Lab-Payment-Worker
+      LEDGER_FLYWAY_ENABLED: "false"
+      LEDGER_MESSAGING_ENABLED: "true"
+      LEDGER_PAYMENT_WORKER_ENABLED: "true"
+      LEDGER_RABBIT_HOST: rabbitmq
+      LEDGER_RABBIT_USER: lab
+      LEDGER_RABBIT_PASSWORD: ${LEDGER_LAB_BROKER_PASSWORD:?required}
+      LEDGER_RABBIT_VHOST: /p09a
+    depends_on:
+      control-api: {condition: service_healthy}
+      rabbitmq: {condition: service_healthy}
+    healthcheck:
+      test: ["CMD", "curl", "--fail", "--silent", "http://127.0.0.1:8080/actuator/health/readiness"]
+      interval: 3s
+      timeout: 3s
+      retries: 45
+
   controller:
     <<: *security
     # Docker needs a non-internal bridge to materialize the loopback publication.
@@ -137,6 +176,7 @@ services:
       LEDGER_RUNTIME_PASSWORD: ${LEDGER_RUNTIME_PASSWORD:?required}
       LEDGER_DEMO_PASSWORD: ${LEDGER_DEMO_PASSWORD:?required}
       LEDGER_LAB_CSRF_KEY: ${LEDGER_LAB_CSRF_KEY:?required}
+      LEDGER_LAB_BROKER_PASSWORD: ${LEDGER_LAB_BROKER_PASSWORD:?required}
     volumes: [state:/state]
     ports:
       - "127.0.0.1:${LEDGER_LAB_PORT:-8090}:8090"

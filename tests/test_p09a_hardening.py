@@ -57,6 +57,21 @@ def complete_evidence(scenario='D02'):
             'latency': {'proxy': {'enabled': True, 'toxics': [{'type': 'latency', 'stream': 'downstream',
                                                             'attributes': {'latency': 250}}]}},
             'disruption': {'proxy': {'enabled': False}}}
+    elif scenario == 'F02':
+        value.update(scenario='F02', verdict='PASSED', scope='REAL_HTTP_POSTGRES_RABBITMQ')
+        event, operation, journal = str(uuid.uuid4()), str(uuid.uuid4()), str(uuid.uuid4())
+        value['activation'] = {'broker': 'rabbitmq', 'vhost': '/p09a', 'exchange': 'ledgerguard.events.v1',
+                               'eventId': event, 'operationId': operation, 'eventSha256': HASH}
+        value['phases'] = {}
+        for name, count in [('baseline', 1), ('duplicate', 2), ('restored', 1)]:
+            value['phases'][name] = phase()
+            value['phases'][name].update(testId='F02_SAME_EVENT_ONE_EFFECT',
+                inputSha256=digest(canonical(value['input']).encode()),
+                observations={'eventId': event, 'operationId': operation, 'eventSha256': HASH,
+                              'publicationHashes': [HASH] * count, 'routedPublications': count,
+                              'acknowledgementsBefore': 10, 'acknowledgementsAfter': 10 + count,
+                              'state': 'SETTLED', 'journalId': journal, 'journalCount': 1, 'inboxCount': 1,
+                              'reconciliation': {'sha256': HASH, 'balanceDiscrepancies': 0, 'journalDiscrepancies': 0}})
     return value
 
 
@@ -225,14 +240,14 @@ class ArtifactGateTests(unittest.TestCase):
         self.root = Path(self.temp.name)
         self.base = self.root / '.evidence/p09a'
         self.base.mkdir(parents=True)
-        self.values = [complete_evidence('F01'), complete_evidence()]
+        self.values = [complete_evidence('F01'), complete_evidence(), complete_evidence('F02')]
         for value in self.values: self.write_run(value)
         self.write('summary.json', {'sourceSha': SOURCE, 'completeP09': False,
-                   'implementedFaultsVerified': 1, 'validDefectsDetected': 1,
+                   'implementedFaultsVerified': 2, 'validDefectsDetected': 1,
                    'requiredFaults': 8, 'requiredDefects': 24,
                    'runs': [{'id': v['runId'], 'scenario': v['scenario'], 'verdict': v['verdict']} for v in self.values]})
         browser_ids = ['UNAUTHENTICATED_LAB_DENIED', 'ADMIN_COMMAND_REQUIRES_CSRF',
-                       'ADMIN_BROWSER_EXECUTES_REAL_F01', 'ADMIN_BROWSER_EXECUTES_REAL_D02',
+                       'ADMIN_BROWSER_EXECUTES_REAL_F01', 'ADMIN_BROWSER_EXECUTES_REAL_D02', 'ADMIN_BROWSER_EXECUTES_REAL_F02',
                        'MOBILE_NO_HORIZONTAL_OVERFLOW', 'KEYBOARD_FOCUS_SURVIVES_POLL',
                        'AUTHENTICATED_CUSTOMER_LAB_DENIED', 'NO_BROWSER_PAGE_ERRORS']
         self.write('browser/results.json', {'sourceSha': SOURCE, 'scope': 'REAL_BROWSER_LIVE_LAB',
@@ -257,7 +272,7 @@ class ArtifactGateTests(unittest.TestCase):
                    'normalFrontendSha256': {'index.html': digest(b'synthetic frontend fixture')}})
         (self.root / 'compose.lab.yaml').write_text('synthetic topology fixture')
         self.write('images.json', {'sourceSha': SOURCE, 'dirtySource': False, 'instanceId': INSTANCE,
-                   'imageIds': {s: 'sha256:' + HASH for s in ('postgres', 'toxiproxy', 'api', 'control-api', 'controller', 'guardian')},
+                   'imageIds': {s: 'sha256:' + HASH for s in ('postgres', 'toxiproxy', 'api', 'control-api', 'controller', 'guardian', 'rabbitmq', 'payment-worker')},
                    'composeSha256': digest(b'synthetic topology fixture')})
 
     def tearDown(self): self.temp.cleanup()

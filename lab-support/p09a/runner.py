@@ -54,6 +54,9 @@ class Runner:
                 'runId': run['id'], 'scenario': run['scenario'], 'seed': run['seed']}
 
     def execute(self, run: dict[str, Any]) -> dict[str, Any]:
+        if run['scenario'] == 'F02':
+            from broker_experiment import execute_f02
+            return execute_f02(self, run)
         run_id, scenario = run['id'], run['scenario']
         result: dict[str, Any] = {
             **self.result_identity(run),

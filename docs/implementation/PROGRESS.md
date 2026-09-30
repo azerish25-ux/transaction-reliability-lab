@@ -1,3 +1,22 @@
+# F02 real-broker expansion — IMPLEMENTED_UNVERIFIED
+
+The isolated topology now includes its own RabbitMQ and normal payment worker.
+F02 reads the actual durable payment event, publishes identical bytes and message
+identity through the real broker twice, waits for queue acknowledgements, and
+checks one immutable settlement/inbox plus unchanged independent financial
+snapshots. Baseline and restored delivery use the same event. The ADMIN console,
+CLI, browser campaign, complete evidence validator and image manifest include
+F02. All targets are fixed; no broker credential or arbitrary publish endpoint
+is exposed by the console. Cancellation/deadline checks bound every publication
+and polling loop. There is no persistent F02 mutation to reset.
+
+244 local component tests pass, including 14 new broker/provenance negatives.
+These are component evidence, not a live F02 pass. The next exact-source CI must
+execute the actual broker and browser journey before F02 can be VERIFIED_PASS.
+G12 predecessor f1c8235 passed 162 Java unit tests, both normal and verification
+Maven packaging and normal-artifact scanning locally; its live CI is ongoing.
+D06, the remaining faults/defects, P10/P11 and global G12 closure remain open.
+
 # G12 process-death artifact separation — IMPLEMENTED_UNVERIFIED
 
 Active JVM termination code now lives only in the explicit Maven `verification`
