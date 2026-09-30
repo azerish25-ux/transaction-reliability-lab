@@ -1,0 +1,21 @@
+{
+  "cleanup": {
+    "currentFunctionSha256": "52afdd5287a88fd6074188c69b399cd17088ba78079cb6b9a019edab512ff50d",
+    "mutantFunctionSha256": "ef542f3007c6168d006420f566f7349fa46c469c2a854758b7dc589c894c872e",
+    "originalFunctionSha256": "52afdd5287a88fd6074188c69b399cd17088ba78079cb6b9a019edab512ff50d",
+    "proxyEnabled": true,
+    "restored": true,
+    "toxics": []
+  },
+  "dirtySource": false,
+  "finishedAt": "2026-09-29T15:29:17.222160+00:00",
+  "instanceId": "699a0b2330b34414ba3420b9c467e73a",
+  "phases": {},
+  "reason": "CONTROLLER_RESTART_INTERRUPTED_EXPERIMENT",
+  "runId": "950c7dfb-eb20-4b3f-a857-de97d5271425",
+  "scenario": "D02",
+  "schemaVersion": 1,
+  "seed": 74021,
+  "sourceSha": "1d7c443c7537c1a647e60c583832beef3be1de63",
+  "verdict": "CANCELLED"
+}

@@ -1,0 +1,14 @@
+{
+  "sourceSha": "1d7c443c7537c1a647e60c583832beef3be1de63",
+  "dirtySource": false,
+  "instanceId": "699a0b2330b34414ba3420b9c467e73a",
+  "composeSha256": "77f7fc10fbbfa915199615d7e5fce1bb7f1c6ad61472cceec0e43a2040adfed1",
+  "imageIds": {
+    "postgres": "sha256:248efd5e58cd743f2a0e0daec8ea4649e5580145ec2a12e2345bc710d4a77201",
+    "toxiproxy": "sha256:3edf5d14625b9aa8ad71d5dd084da1f8a0eb46ee749457549ae91d29d96546aa",
+    "api": "sha256:7fbc7c6b5531fc0598aa842ea68e00c2fcc77dfce330fed7cccd312d972b3585",
+    "control-api": "sha256:7fbc7c6b5531fc0598aa842ea68e00c2fcc77dfce330fed7cccd312d972b3585",
+    "controller": "sha256:2f95a4b188534e6a7f955e4cc1ec9e4a0719d47846637711a6741f64aae0af59",
+    "guardian": "sha256:2f95a4b188534e6a7f955e4cc1ec9e4a0719d47846637711a6741f64aae0af59"
+  }
+}

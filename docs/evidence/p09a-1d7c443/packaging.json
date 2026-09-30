@@ -1,0 +1,17 @@
+{
+  "scope": "P09A_SPECIFIC_EXCLUSION_ONLY",
+  "sourceSha": "1d7c443c7537c1a647e60c583832beef3be1de63",
+  "dirtySource": false,
+  "normalJarSha256": "52ce8dd6722897448be0b5b17186cd9a811256e448a3e3c057e9a03b547e2a17",
+  "normalFrontendSha256": {
+    "assets/index-BRkjH8M4.js": "0ec91acce837c9982470d55676aa4d07b0efd9b1672a9e68b2e832408eded1cb",
+    "assets/index-CLetaG4L.css": "d183553c4d5002a5c4dfa6fe04a0a30f7c884f2826222ac1526942d76ad87937",
+    "index.html": "8219d2dc5c3209334e4d849f450bdf1560bd732fdb002a28e8c254dcd4fcf5bd"
+  },
+  "jarEntriesInspected": 21184,
+  "archivesInspected": 62,
+  "frontendArchivesInspected": 0,
+  "frontendFilesInspected": 3,
+  "excluded": true,
+  "globalG12Complete": false
+}

@@ -1,0 +1,16 @@
+{
+  "sourceSha": "1d7c443c7537c1a647e60c583832beef3be1de63",
+  "scope": "REAL_CONTROLLER_CRASH_AND_EXPIRY",
+  "tests": [
+    {
+      "id": "CONTROLLER_SIGKILL_GUARDIAN_RECOVERY",
+      "status": "PASS",
+      "runId": "950c7dfb-eb20-4b3f-a857-de97d5271425"
+    },
+    {
+      "id": "REAL_MUTANT_AUTOMATIC_EXPIRY",
+      "status": "PASS",
+      "runId": "72359b7a-8e62-4512-810d-03eded9bbbc3"
+    }
+  ]
+}

@@ -1,3 +1,29 @@
+# P09A exact-source verification — VERIFIED_PASS
+
+Synthetic money only. Full product remains **INCOMPLETE / NO_GO**.
+
+Tested source: `1d7c443c7537c1a647e60c583832beef3be1de63`.
+[Run 36589948377](https://github.com/azerish25-ux/transaction-reliability-lab/actions/runs/36589948377)
+passed the product campaign, isolated laboratory, Required P08F gate and Required
+P09A gate on that same source. The downloaded lab artifact 11043667085 matched
+GitHub's SHA-256 digest. Its original files are retained without rewriting.
+
+- F01 actual HTTP/PostgreSQL/Toxiproxy baseline, injected fault and restoration passed
+- D02 actual HTTP/PostgreSQL baseline, intended mutant assertion and restoration detected the seeded defect
+- Eight browser and authorization checks passed
+- Controller SIGKILL recovery and automatic mutant expiry passed
+- Scoped P09A packaging exclusion passed; **global G12 remains open**
+
+[Provenance](p09a-1d7c443/provenance.json), [summary](p09a-1d7c443/summary.json),
+[browser](p09a-1d7c443/browser/results.json), [lifecycle](p09a-1d7c443/lifecycle.json).
+The expected failing mutant JUnit is preserved, not counted as a product failure
+or rewritten to pass. Screenshot integrity does not establish visual approval.
+
+This evidence closes P09A only. F02–F08, D01/D03–D24, P10, P11 and G12 remain open.
+Next work is expanded fault/defect coverage and release-artifact isolation.
+
+## Earlier checkpoints retain their original scope
+
 # P09A recovery evidence repair — IMPLEMENTED_UNVERIFIED
 
 Overall product: **INCOMPLETE / NO_GO**. This change addresses the confirmed

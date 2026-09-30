@@ -1,0 +1,41 @@
+{
+  "sourceSha": "1d7c443c7537c1a647e60c583832beef3be1de63",
+  "scope": "REAL_BROWSER_LIVE_LAB",
+  "tests": [
+    {
+      "id": "UNAUTHENTICATED_LAB_DENIED",
+      "status": "PASS"
+    },
+    {
+      "id": "ADMIN_COMMAND_REQUIRES_CSRF",
+      "status": "PASS"
+    },
+    {
+      "id": "ADMIN_BROWSER_EXECUTES_REAL_F01",
+      "status": "PASS"
+    },
+    {
+      "id": "ADMIN_BROWSER_EXECUTES_REAL_D02",
+      "status": "PASS"
+    },
+    {
+      "id": "MOBILE_NO_HORIZONTAL_OVERFLOW",
+      "status": "PASS"
+    },
+    {
+      "id": "KEYBOARD_FOCUS_SURVIVES_POLL",
+      "status": "PASS"
+    },
+    {
+      "id": "AUTHENTICATED_CUSTOMER_LAB_DENIED",
+      "status": "PASS"
+    },
+    {
+      "id": "NO_BROWSER_PAGE_ERRORS",
+      "status": "PASS"
+    }
+  ],
+  "expectedTests": 8,
+  "complete": true,
+  "failure": null
+}

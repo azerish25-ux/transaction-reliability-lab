@@ -1,0 +1,380 @@
+{
+  "sourceSha": "1d7c443c7537c1a647e60c583832beef3be1de63",
+  "runId": 36589948377,
+  "jobs": [
+    {
+      "id": 109480123675,
+      "run_id": 36589948377,
+      "workflow_name": "Bad Penny P08F verification",
+      "head_branch": "main",
+      "run_url": "https://api.github.com/repos/azerish25-ux/transaction-reliability-lab/actions/runs/36589948377",
+      "run_attempt": 1,
+      "node_id": "CR_kwDOUsFr-M8AAAAZfYYdGw",
+      "head_sha": "1d7c443c7537c1a647e60c583832beef3be1de63",
+      "url": "https://api.github.com/repos/azerish25-ux/transaction-reliability-lab/actions/jobs/109480123675",
+      "html_url": "https://github.com/azerish25-ux/transaction-reliability-lab/actions/runs/36589948377/job/109480123675",
+      "status": "completed",
+      "conclusion": "success",
+      "created_at": "2026-09-29T15:24:29Z",
+      "started_at": "2026-09-29T15:24:31Z",
+      "completed_at": "2026-09-29T15:46:09Z",
+      "name": "Build, administrator investigation, browser accessibility and financial invariants",
+      "steps": [
+        {
+          "name": "Set up job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 1,
+          "started_at": "2026-09-29T15:24:32Z",
+          "completed_at": "2026-09-29T15:24:34Z"
+        },
+        {
+          "name": "Check out candidate",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 2,
+          "started_at": "2026-09-29T15:24:34Z",
+          "completed_at": "2026-09-29T15:24:35Z"
+        },
+        {
+          "name": "Configure Java 21",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 3,
+          "started_at": "2026-09-29T15:24:35Z",
+          "completed_at": "2026-09-29T15:24:38Z"
+        },
+        {
+          "name": "Configure Node 22",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 4,
+          "started_at": "2026-09-29T15:24:38Z",
+          "completed_at": "2026-09-29T15:24:40Z"
+        },
+        {
+          "name": "Prepare deterministic tools",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 5,
+          "started_at": "2026-09-29T15:24:40Z",
+          "completed_at": "2026-09-29T15:24:40Z"
+        },
+        {
+          "name": "Execute the shared CLI and CI P01-P08F campaign",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 6,
+          "started_at": "2026-09-29T15:24:40Z",
+          "completed_at": "2026-09-29T15:46:04Z"
+        },
+        {
+          "name": "Collect diagnostic logs after an interrupted job",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 7,
+          "started_at": "2026-09-29T15:46:04Z",
+          "completed_at": "2026-09-29T15:46:04Z"
+        },
+        {
+          "name": "Stop scoped services after an interrupted job",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 8,
+          "started_at": "2026-09-29T15:46:04Z",
+          "completed_at": "2026-09-29T15:46:04Z"
+        },
+        {
+          "name": "Publish verification evidence",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 9,
+          "started_at": "2026-09-29T15:46:04Z",
+          "completed_at": "2026-09-29T15:46:06Z"
+        },
+        {
+          "name": "Post Configure Node 22",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 16,
+          "started_at": "2026-09-29T15:46:06Z",
+          "completed_at": "2026-09-29T15:46:06Z"
+        },
+        {
+          "name": "Post Configure Java 21",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 17,
+          "started_at": "2026-09-29T15:46:06Z",
+          "completed_at": "2026-09-29T15:46:06Z"
+        },
+        {
+          "name": "Post Check out candidate",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 18,
+          "started_at": "2026-09-29T15:46:06Z",
+          "completed_at": "2026-09-29T15:46:07Z"
+        },
+        {
+          "name": "Complete job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 19,
+          "started_at": "2026-09-29T15:46:07Z",
+          "completed_at": "2026-09-29T15:46:07Z"
+        }
+      ],
+      "check_run_url": "https://api.github.com/repos/azerish25-ux/transaction-reliability-lab/check-runs/109480123675",
+      "labels": [
+        "ubuntu-latest"
+      ],
+      "runner_id": 1000004471,
+      "runner_name": "GitHub Actions 1000004471",
+      "runner_group_id": 0,
+      "runner_group_name": "GitHub Actions"
+    },
+    {
+      "id": 109480123922,
+      "run_id": 36589948377,
+      "workflow_name": "Bad Penny P08F verification",
+      "head_branch": "main",
+      "run_url": "https://api.github.com/repos/azerish25-ux/transaction-reliability-lab/actions/runs/36589948377",
+      "run_attempt": 1,
+      "node_id": "CR_kwDOUsFr-M8AAAAZfYYeEg",
+      "head_sha": "1d7c443c7537c1a647e60c583832beef3be1de63",
+      "url": "https://api.github.com/repos/azerish25-ux/transaction-reliability-lab/actions/jobs/109480123922",
+      "html_url": "https://github.com/azerish25-ux/transaction-reliability-lab/actions/runs/36589948377/job/109480123922",
+      "status": "completed",
+      "conclusion": "success",
+      "created_at": "2026-09-29T15:24:29Z",
+      "started_at": "2026-09-29T15:24:31Z",
+      "completed_at": "2026-09-29T15:30:03Z",
+      "name": "Isolated P09A lab, live faults, defect detection and restoration",
+      "steps": [
+        {
+          "name": "Set up job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 1,
+          "started_at": "2026-09-29T15:24:32Z",
+          "completed_at": "2026-09-29T15:24:34Z"
+        },
+        {
+          "name": "Check out the same immutable candidate",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 2,
+          "started_at": "2026-09-29T15:24:34Z",
+          "completed_at": "2026-09-29T15:24:36Z"
+        },
+        {
+          "name": "Configure Java 21",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 3,
+          "started_at": "2026-09-29T15:24:36Z",
+          "completed_at": "2026-09-29T15:24:38Z"
+        },
+        {
+          "name": "Configure Node 22",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 4,
+          "started_at": "2026-09-29T15:24:38Z",
+          "completed_at": "2026-09-29T15:24:40Z"
+        },
+        {
+          "name": "Execute isolated lab verification on the same candidate",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 5,
+          "started_at": "2026-09-29T15:24:40Z",
+          "completed_at": "2026-09-29T15:29:59Z"
+        },
+        {
+          "name": "Ensure scoped lab teardown, including cancelled jobs",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 6,
+          "started_at": "2026-09-29T15:29:59Z",
+          "completed_at": "2026-09-29T15:30:00Z"
+        },
+        {
+          "name": "Publish only curated P09A evidence, never runtime secrets or raw traces",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 7,
+          "started_at": "2026-09-29T15:30:00Z",
+          "completed_at": "2026-09-29T15:30:01Z"
+        },
+        {
+          "name": "Post Configure Node 22",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 12,
+          "started_at": "2026-09-29T15:30:01Z",
+          "completed_at": "2026-09-29T15:30:01Z"
+        },
+        {
+          "name": "Post Configure Java 21",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 13,
+          "started_at": "2026-09-29T15:30:01Z",
+          "completed_at": "2026-09-29T15:30:01Z"
+        },
+        {
+          "name": "Post Check out the same immutable candidate",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 14,
+          "started_at": "2026-09-29T15:30:01Z",
+          "completed_at": "2026-09-29T15:30:01Z"
+        },
+        {
+          "name": "Complete job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 15,
+          "started_at": "2026-09-29T15:30:01Z",
+          "completed_at": "2026-09-29T15:30:01Z"
+        }
+      ],
+      "check_run_url": "https://api.github.com/repos/azerish25-ux/transaction-reliability-lab/check-runs/109480123922",
+      "labels": [
+        "ubuntu-latest"
+      ],
+      "runner_id": 1000004472,
+      "runner_name": "GitHub Actions 1000004472",
+      "runner_group_id": 0,
+      "runner_group_name": "GitHub Actions"
+    },
+    {
+      "id": 109489635574,
+      "run_id": 36589948377,
+      "workflow_name": "Bad Penny P08F verification",
+      "head_branch": "main",
+      "run_url": "https://api.github.com/repos/azerish25-ux/transaction-reliability-lab/actions/runs/36589948377",
+      "run_attempt": 1,
+      "node_id": "CR_kwDOUsFr-M8AAAAZfhdA9g",
+      "head_sha": "1d7c443c7537c1a647e60c583832beef3be1de63",
+      "url": "https://api.github.com/repos/azerish25-ux/transaction-reliability-lab/actions/jobs/109489635574",
+      "html_url": "https://github.com/azerish25-ux/transaction-reliability-lab/actions/runs/36589948377/job/109489635574",
+      "status": "completed",
+      "conclusion": "success",
+      "created_at": "2026-09-29T15:46:10Z",
+      "started_at": "2026-09-29T15:46:13Z",
+      "completed_at": "2026-09-29T15:46:17Z",
+      "name": "Required P09A gate",
+      "steps": [
+        {
+          "name": "Set up job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 1,
+          "started_at": "2026-09-29T15:46:14Z",
+          "completed_at": "2026-09-29T15:46:14Z"
+        },
+        {
+          "name": "Require both normal product and isolated laboratory verification",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 2,
+          "started_at": "2026-09-29T15:46:14Z",
+          "completed_at": "2026-09-29T15:46:14Z"
+        },
+        {
+          "name": "Complete job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 3,
+          "started_at": "2026-09-29T15:46:14Z",
+          "completed_at": "2026-09-29T15:46:14Z"
+        }
+      ],
+      "check_run_url": "https://api.github.com/repos/azerish25-ux/transaction-reliability-lab/check-runs/109489635574",
+      "labels": [
+        "ubuntu-latest"
+      ],
+      "runner_id": 1000004526,
+      "runner_name": "GitHub Actions 1000004526",
+      "runner_group_id": 0,
+      "runner_group_name": "GitHub Actions"
+    },
+    {
+      "id": 109489635716,
+      "run_id": 36589948377,
+      "workflow_name": "Bad Penny P08F verification",
+      "head_branch": "main",
+      "run_url": "https://api.github.com/repos/azerish25-ux/transaction-reliability-lab/actions/runs/36589948377",
+      "run_attempt": 1,
+      "node_id": "CR_kwDOUsFr-M8AAAAZfhdBhA",
+      "head_sha": "1d7c443c7537c1a647e60c583832beef3be1de63",
+      "url": "https://api.github.com/repos/azerish25-ux/transaction-reliability-lab/actions/jobs/109489635716",
+      "html_url": "https://github.com/azerish25-ux/transaction-reliability-lab/actions/runs/36589948377/job/109489635716",
+      "status": "completed",
+      "conclusion": "success",
+      "created_at": "2026-09-29T15:46:10Z",
+      "started_at": "2026-09-29T15:46:12Z",
+      "completed_at": "2026-09-29T15:46:16Z",
+      "name": "Required P08F gate",
+      "steps": [
+        {
+          "name": "Set up job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 1,
+          "started_at": "2026-09-29T15:46:13Z",
+          "completed_at": "2026-09-29T15:46:13Z"
+        },
+        {
+          "name": "Require every mandatory P08F job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 2,
+          "started_at": "2026-09-29T15:46:13Z",
+          "completed_at": "2026-09-29T15:46:13Z"
+        },
+        {
+          "name": "Complete job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 3,
+          "started_at": "2026-09-29T15:46:13Z",
+          "completed_at": "2026-09-29T15:46:13Z"
+        }
+      ],
+      "check_run_url": "https://api.github.com/repos/azerish25-ux/transaction-reliability-lab/check-runs/109489635716",
+      "labels": [
+        "ubuntu-latest"
+      ],
+      "runner_id": 1000004527,
+      "runner_name": "GitHub Actions 1000004527",
+      "runner_group_id": 0,
+      "runner_group_name": "GitHub Actions"
+    }
+  ],
+  "artifact": {
+    "id": 11043667085,
+    "node_id": "MDg6QXJ0aWZhY3QxMTA0MzY2NzA4NQ==",
+    "name": "ledgerguard-p09a-evidence-1d7c443c7537c1a647e60c583832beef3be1de63",
+    "size_in_bytes": 549952,
+    "url": "https://api.github.com/repos/azerish25-ux/transaction-reliability-lab/actions/artifacts/11043667085",
+    "archive_download_url": "https://api.github.com/repos/azerish25-ux/transaction-reliability-lab/actions/artifacts/11043667085/zip",
+    "expired": false,
+    "digest": "sha256:db991ee76a15e6f0b45ac25390513c6740808400653e336770bc3b307c4992e0",
+    "created_at": "2026-09-29T15:30:01Z",
+    "updated_at": "2026-09-29T15:30:01Z",
+    "expires_at": "2026-10-13T15:30:00Z",
+    "workflow_run": {
+      "id": 36589948377,
+      "repository_id": 1388407800,
+      "head_repository_id": 1388407800,
+      "head_branch": "main",
+      "head_sha": "1d7c443c7537c1a647e60c583832beef3be1de63"
+    }
+  },
+  "downloadDigestVerified": true,
+  "fullProductStatus": "INCOMPLETE_NO_GO"
+}

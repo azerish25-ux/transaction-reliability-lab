@@ -1,7 +1,7 @@
 # Bad Penny
 ## Financial Transaction Reliability Laboratory
 
-**Synthetic money only. P01-P08F retain verified development milestones. P09A is IMPLEMENTED_UNVERIFIED. The full product remains INCOMPLETE / NO_GO.**
+**Synthetic money only. P01-P08F retain verified development milestones. P09A has exact-source VERIFIED_PASS evidence. The full product remains INCOMPLETE / NO_GO.**
 
 Bad Penny is a compact transaction system for investigating duplicate intent, uncertain outcomes, concurrent spending, accounting invariants and asynchronous recovery across the browser, API, PostgreSQL and RabbitMQ. It is not a bank, payment processor, compliance product or production-ready financial service.
 
@@ -96,7 +96,7 @@ The administrator contract is `/api/v1/openapi/p08f-ui.json`. Earlier scoped con
 
 See [original implementation contract](docs/implementation/MASTER_SPEC.md), [P08F requirements](docs/implementation/P08F_REQUIREMENTS.json), [administrator architecture decision](docs/architecture/adr/0023-p08f-administrator-investigation.md), [financial boundary](docs/architecture/FINANCIAL_BOUNDARY.md), [testing strategy](docs/testing/STRATEGY.md), [evidence index](docs/evidence/INDEX.md) and [delivery record](docs/implementation/DELIVERY.md). Historical evidence retains its own tested source and scope.
 
-**Next is P09A verification closure**, not rebuilding its F01/D02 implementation. Run `./scripts/lab test p09a`, resolve real integration failures and require same-source product and lab success. The other seven faults and 23 seeded defects remain open; F02/D06 is the next expansion after that pass. P10 contracts/security/performance/restore and complete CI lanes, and P11 final exploratory evidence, diagrams, video and release delivery remain open. No public hosting, full-product accessibility conformance, security certification or production-financial readiness is claimed.
+**P09A verification is closed for source `1d7c443`**: [same-source product/lab evidence](docs/evidence/p09a-1d7c443.md). The other seven faults and 23 seeded defects remain open; F02/D06 is the next expansion after that pass. P10 contracts/security/performance/restore and complete CI lanes, and P11 final exploratory evidence, diagrams, video and release delivery remain open. No public hosting, full-product accessibility conformance, security certification or production-financial readiness is claimed.
 
 Useful commands:
 

@@ -1,0 +1,20 @@
+{
+  "sourceSha": "1d7c443c7537c1a647e60c583832beef3be1de63",
+  "implementedFaultsVerified": 1,
+  "validDefectsDetected": 1,
+  "requiredFaults": 8,
+  "requiredDefects": 24,
+  "completeP09": false,
+  "runs": [
+    {
+      "id": "31bb98a7-71d9-4c18-9996-e60a52d4dd57",
+      "scenario": "F01",
+      "verdict": "PASSED"
+    },
+    {
+      "id": "89ee5f38-a44d-42fd-9718-cae0ba3dcb03",
+      "scenario": "D02",
+      "verdict": "DETECTED"
+    }
+  ]
+}
