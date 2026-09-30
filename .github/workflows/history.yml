@@ -1,0 +1,35 @@
+name: Bad Penny ordinary reference-history fixture
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  reference-history:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+      - uses: actions/setup-java@b6effb05e454b25005698d916606bdc6ffcbf961
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: maven
+          cache-dependency-path: backend/pom.xml
+      - name: Validate and generate reference history
+        run: |
+          python3 -m unittest discover -s tests/performance -v
+          ./scripts/generate-performance-history
+      - name: Post through protected commands and independently reconcile
+        run: ./mvnw -B -ntp -f backend/pom.xml -Pdataset -Dit.test=HistoricalDatasetIT verify
+      - name: Retain non-secret source-bound fixture evidence
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: bad-penny-history-${{ github.sha }}
+          include-hidden-files: true
+          if-no-files-found: error
+          retention-days: 14
+          path: |
+            .evidence/performance-history/manifest.json
+            backend/target/dataset-evidence/
+            backend/target/failsafe-reports/TEST-lab.ledgerguard.HistoricalDatasetIT.xml

@@ -1,0 +1,87 @@
+#!/usr/bin/env python3
+"""Generate, but never execute, synthetic pre-measurement SQL and its manifest."""
+import argparse
+import hashlib
+import json
+from pathlib import Path
+import uuid
+
+NAMESPACE = uuid.UUID('ce91e60d-4cad-48c1-a814-8251656787bb')
+DATABASE = 'ledgerguard_performance'
+
+
+def identity(kind, index):
+    return str(uuid.uuid5(NAMESPACE, f'{kind}:{index}'))
+
+
+def plan(customers=100, journals=100000):
+    if type(customers) is not int or not 100 <= customers <= 1000:
+        raise ValueError('Reference history requires 100..1000 customers')
+    if type(journals) is not int or not 100000 <= journals <= 1000000:
+        raise ValueError('Reference history requires 100000..1000000 journals')
+    accounts = customers * 2
+    return {'formatVersion': 1, 'scope': 'synthetic pre-measurement fixture, not a benchmark result',
+            'database': DATABASE, 'customers': customers, 'walletAccounts': accounts,
+            'fundingAssets': 1, 'journals': journals, 'fundingJournals': accounts,
+            'transferJournals': journals - accounts, 'currency': 'CAD',
+            'initialWalletMinor': '1000000000', 'transferMinor': '1',
+            'timestampPolicy': 'Actual insertion timestamps; no immutable history is backdated',
+            'runtimeExecuted': False, 'measuredPerformance': None}
+
+
+def sql(config):
+    n = config['customers']; accounts = config['walletAccounts']; total = config['transferJournals']
+    lines = [r'\set ON_ERROR_STOP on', r'\set QUIET on',
+             '-- Generated synthetic fixture. Only a fresh dedicated benchmark database is accepted.',
+             'DO $guard$ BEGIN',
+             f" IF current_database() <> '{DATABASE}' OR current_user <> 'ledger_owner' THEN RAISE EXCEPTION 'DEDICATED_PERFORMANCE_DATABASE_REQUIRED'; END IF;",
+             " IF EXISTS (SELECT 1 FROM ledger.app_users) OR EXISTS (SELECT 1 FROM ledger.journals) OR EXISTS (SELECT 1 FROM ledger.accounts) THEN RAISE EXCEPTION 'FRESH_DATABASE_REQUIRED'; END IF;",
+             'END $guard$;', r'\getenv performance_password LEDGER_PERF_PASSWORD',
+             'BEGIN;', 'CREATE TEMP TABLE fixture_password(hash text NOT NULL) ON COMMIT DROP;',
+             "INSERT INTO fixture_password SELECT extensions.crypt(:'performance_password',extensions.gen_salt('bf',12));",
+             # psql interpolation occurs outside dollar-quoted PL/pgSQL bodies.
+             "SELECT 1 / CASE WHEN length(:'performance_password') >= 16 THEN 1 ELSE 0 END AS valid_fixture_password;"]
+    for i in range(n):
+        lines.append(f"INSERT INTO ledger.app_users(id,email,password_hash,display_name,role) SELECT '{identity('user',i)}','perf{i:04d}@example.test',hash,'Synthetic customer {i}','CUSTOMER' FROM fixture_password;")
+    asset = identity('asset',0)
+    lines.append(f"INSERT INTO ledger.accounts(id,public_ref,label,currency,kind) VALUES('{asset}','LG-{asset.replace('-','')}','Synthetic benchmark funding','CAD','SANDBOX_FUNDING_ASSET');")
+    for i in range(accounts):
+        account = identity('wallet',i)
+        lines.append(f"INSERT INTO ledger.accounts(id,owner_id,public_ref,label,currency,kind) VALUES('{account}','{identity('user',i//2)}','LG-{account.replace('-','')}','Synthetic wallet {i}','CAD','WALLET_LIABILITY');")
+    lines.append('INSERT INTO ledger.account_balances(account_id) SELECT id FROM ledger.accounts;')
+    for i in range(accounts):
+        lines.append(f"SELECT ledger._post('{identity('funding',i)}','FUNDING','{asset}','{identity('wallet',i)}',1000000000,'CAD');")
+    lines.extend(['SET CONSTRAINTS ALL IMMEDIATE;', 'COMMIT;'])
+    # Every business transfer traverses the existing protected command, including
+    # balance locking, immutable journal, outbox, audit and idempotency recording.
+    for batch in range(0,total,1000):
+        lines.extend(['BEGIN;', 'DO $batch$ DECLARE r record; i integer; source_id uuid; target_ref text; actor uuid; BEGIN',
+                      f' FOR i IN {batch}..{min(total,batch+1000)-1} LOOP',
+                      f"  SELECT id,owner_id INTO STRICT source_id,actor FROM ledger.accounts WHERE label='Synthetic wallet ' || ((i % {accounts})::text);",
+                      f"  SELECT public_ref INTO STRICT target_ref FROM ledger.accounts WHERE label='Synthetic wallet ' || ((CASE WHEN (i % {accounts}) % 2=0 THEN (i % {accounts})+1 ELSE (i % {accounts})-1 END)::text);",
+                      "  SELECT * INTO STRICT r FROM ledger.execute_command(actor,'TRANSFER',NULL,'perf-history-' || lpad(i::text,10,'0'),jsonb_build_object('sourceId',source_id,'recipientRef',target_ref,'amountMinor','1','currency','CAD'),gen_random_uuid());",
+                      "  IF r.http_status IS DISTINCT FROM 201 OR r.replayed IS DISTINCT FROM false OR (r.body->>'state') IS DISTINCT FROM 'SETTLED' THEN RAISE EXCEPTION 'HISTORY_COMMAND_NOT_SETTLED index=% status=%',i,r.http_status; END IF;",
+                      ' END LOOP;', 'END $batch$;', 'SET CONSTRAINTS ALL IMMEDIATE;', 'COMMIT;'])
+    lines.extend(['DO $counts$ BEGIN',
+                  f" IF (SELECT count(*) FROM ledger.app_users)<>{n} OR (SELECT count(*) FROM ledger.accounts WHERE kind='WALLET_LIABILITY')<>{accounts} OR (SELECT count(*) FROM ledger.journals)<>{config['journals']} THEN RAISE EXCEPTION 'HISTORY_COUNT_MISMATCH'; END IF;",
+                  'END $counts$;',
+                  '-- Execute tests/database/reconcile.sql separately and retain its real result.',
+                  "SELECT count(*) AS journals FROM ledger.journals;", ''])
+    return '\n'.join(lines)
+
+
+def main():
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument('--customers',type=int,default=100)
+    parser.add_argument('--journals',type=int,default=100000)
+    parser.add_argument('--output',type=Path,default=Path('.evidence/performance-history'))
+    args = parser.parse_args(); config = plan(args.customers,args.journals)
+    content = sql(config); args.output.mkdir(parents=True,exist_ok=True)
+    (args.output/'history.sql').write_text(content)
+    config['sqlSha256'] = hashlib.sha256(content.encode()).hexdigest()
+    (args.output/'manifest.json').write_text(json.dumps(config,indent=2)+'\n')
+    print(f"Generated {args.output/'history.sql'}; NOT EXECUTED, no performance result")
+
+
+if __name__ == '__main__':
+    main()

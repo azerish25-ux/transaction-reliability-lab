@@ -1,3 +1,7 @@
+## 2026-09-30 — Reference history and disposable restore implementation
+
+Added a reproducible minimum reference-history generator (100 customers, 200 wallets, 100000 protected journals), six passing deterministic generator tests, and a compiling ordinary PostgreSQL integration test for real counts/reconciliation plus backup/restore fingerprints, audit continuity and old-key replay. Dataset-profile Java unit suite passed (165 cases). Live SQL loading/restore has not run because Docker is unavailable; no benchmark or migration-upgrade acceptance is claimed. Independent manual `history.yml` workflow retains only non-secret evidence. See [PERFORMANCE_HISTORY.md](PERFORMANCE_HISTORY.md). Full project remains NO_GO.
+
 ## 2026-09-30 — Webhook wire and incompatible-schema contracts
 
 Verified the real sender wire builder against the real receiver signature/body boundary with deterministic synthetic fixtures. Extracted only wire construction; destination validation, delivery and persistence behavior remain intact. Replaced the proxy-dependent sensitivity diagnostic with genuine in-memory Pact JVM matching of the actual generated consumer contract. It accepts the compatible response and rejects numeric money in place of a decimal string. Both focused tests passed; the final combined run passed 168 Java unit/contract cases, one real message-provider interaction, five Pact JS interactions, 186 existing client cases, type checks and the frontend build. Live PostgreSQL provider and hosted acceptance remain pending; no full-project GO claim.
