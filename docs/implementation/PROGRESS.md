@@ -1,3 +1,21 @@
+# D01 duplicate-idempotency experiment — IMPLEMENTED_UNVERIFIED
+
+The disposable command-function variant remaps the incoming key to a fresh
+identity before the normal command logic. Identical replay therefore creates a
+second actual transfer/journal. The unchanged three-phase HTTP/SQL oracle requires
+one returned operation and no additional economic effect; detection additionally
+requires raw independently hashed balances to show exactly one extra debit/credit
+and journal. A mere changed response ID or setup error cannot count. Guardian
+allowlists, backup/read-back, same-seed fixtures, ADMIN/browser control and retained
+failing JUnit are integrated. Normal financial code/migrations remain unchanged.
+
+274 local component tests pass, including ten new mutation/evidence regressions.
+Actual baseline/mutant/restoration execution and same-source product/lab gates
+remain required. Six faults, 21 other defects, P10/P11 remain open. Continue fixing
+live CI before making milestone claims; never convert component fixtures to live
+evidence. Mutant synthetic postings are retained in the disposable instance and
+are not described as repaired by code restoration.
+
 # Catalogue authentication-budget correction — IMPLEMENTED_UNVERIFIED
 
 D06's real broker experiment detected the intended duplicate-money assertion on

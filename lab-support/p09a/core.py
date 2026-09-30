@@ -21,7 +21,7 @@ HERE = Path(__file__).resolve().parent
 ACTIVE = ('QUEUED', 'RUNNING', 'CLEANING')
 FINAL = {'PASSED', 'FAILED', 'DETECTED', 'SURVIVED', 'INVALID_EXPERIMENT',
          'BASELINE_FAILED', 'CLEANUP_FAILED', 'CANCELLED'}
-MODES = {'NONE', 'F01_LATENCY', 'F01_DISCONNECT', 'D02', 'D06'}
+MODES = {'NONE', 'F01_LATENCY', 'F01_DISCONNECT', 'D01', 'D02', 'D06'}
 FAULT_SECONDS = 20
 RUN_SECONDS = 150
 SEED = 74021
@@ -127,7 +127,7 @@ class Store:
               PRAGMA journal_mode=WAL;
               CREATE TABLE IF NOT EXISTS runs (
                 id TEXT PRIMARY KEY, request_id TEXT NOT NULL, actor TEXT NOT NULL,
-                scenario TEXT NOT NULL CHECK(scenario IN ('F01','D02','F02','D06')),
+                scenario TEXT NOT NULL CHECK(scenario IN ('F01','D02','F02','D06','D01')),
                 seed INTEGER NOT NULL, created REAL NOT NULL, deadline REAL NOT NULL,
                 status TEXT NOT NULL, cancelled INTEGER NOT NULL DEFAULT 0,
                 result TEXT, UNIQUE(actor, request_id));
@@ -183,7 +183,7 @@ class Store:
 
     def submit(self, actor: str, request_id: str, scenario: str, seed: int = SEED) -> dict[str, Any]:
         valid_uuid(actor); valid_uuid(request_id)
-        if scenario not in {'F01', 'D02', 'F02', 'D06'} or type(seed) is not int or seed != SEED:
+        if scenario not in {'F01', 'D02', 'F02', 'D06', 'D01'} or type(seed) is not int or seed != SEED:
             raise LabError('UNIMPLEMENTED_SCENARIO_OR_SEED', 422)
         now = time.time()
         with self.db(write=True) as db:
@@ -253,7 +253,7 @@ class Store:
             now = time.time()
             row = db.execute('SELECT * FROM runs WHERE id=?', (run_id,)).fetchone()
             self._require_running(row, now)
-            if (mode.startswith('F01') and row['scenario'] != 'F01') or (mode in {'D02', 'D06'} and row['scenario'] != mode):
+            if (mode.startswith('F01') and row['scenario'] != 'F01') or (mode in {'D01', 'D02', 'D06'} and row['scenario'] != mode):
                 raise LabError('FAULT_SCOPE_MISMATCH')
             lease = db.execute('SELECT * FROM lease WHERE id=1').fetchone()
             if (lease['desired'] != 'NONE' or lease['applied'] != 'NONE'
@@ -424,6 +424,9 @@ def validate_result(result: dict[str, Any], source: str | None = None) -> None:
                 or activation.get('originalFunctionSha256') != cleanup['originalFunctionSha256']
                 or mutant_hash == cleanup['originalFunctionSha256'] or activation.get('mode') != 'D02'):
             raise LabError('EVIDENCE_ACTIVATION_MISSING')
+    elif result.get('scenario') == 'D01':
+        from duplicate_command import validate_d01
+        validate_d01(result)
     elif result.get('scenario') == 'D06':
         from duplicate_defect import validate_d06
         validate_d06(result)

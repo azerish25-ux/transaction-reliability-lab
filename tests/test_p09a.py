@@ -136,7 +136,7 @@ class StateTests(unittest.TestCase):
         with self.assertRaisesRegex(LabError, 'LAB_NOT_READY'): self.submit()
 
     def test_unimplemented_scenario_rejected(self):
-        with self.assertRaisesRegex(LabError, 'UNIMPLEMENTED'): self.submit('D01')
+        with self.assertRaisesRegex(LabError, 'UNIMPLEMENTED'): self.submit('D24')
 
     def test_unknown_seed_rejected(self):
         with self.assertRaisesRegex(LabError, 'UNIMPLEMENTED'):

@@ -323,11 +323,11 @@ def verify(lab_only: bool = False) -> int:
         values = up()
         compose('run', '--rm', '--no-deps', '--entrypoint', 'sh', 'api', '-ec',
                 'test ! -e /app/LAB_ONLY_BUILD && test ! -e /app/guardian.py && test ! -e /app/server.py')
-        results = [experiment('F01', values), experiment('D02', values), experiment('F02', values), experiment('D06', values)]
+        results = [experiment('F01', values), experiment('D02', values), experiment('F02', values), experiment('D06', values), experiment('D01', values)]
         execute(['node', 'lab-support/p09a/browser.cjs'], timeout=420)
         execute([sys.executable, 'lab-support/p09a/lifecycle.py'], timeout=180)
         (EVIDENCE / 'summary.json').write_text(json.dumps({'sourceSha': values['LEDGER_LAB_SOURCE'],
-            'implementedFaultsVerified': 2, 'validDefectsDetected': 2, 'requiredFaults': 8, 'requiredDefects': 24,
+            'implementedFaultsVerified': 2, 'validDefectsDetected': 3, 'requiredFaults': 8, 'requiredDefects': 24,
             'completeP09': False, 'runs': [{'id': r['runId'], 'scenario': r['scenario'], 'verdict': r['verdict']} for r in results]}, indent=2) + '\n')
         execute([sys.executable, 'scripts/assert-p09a-evidence'])
         return 0
@@ -341,13 +341,13 @@ def main() -> int:
     sub = parser.add_subparsers(dest='command', required=True)
     sub.add_parser('up'); sub.add_parser('status'); sub.add_parser('verify'); sub.add_parser('verify-lab')
     stopped = sub.add_parser('down'); stopped.add_argument('--reset-data', action='store_true')
-    defect = sub.add_parser('defect'); defect.add_argument('id', choices=['D02', 'D06'])
+    defect = sub.add_parser('defect'); defect.add_argument('id', choices=['D01', 'D02', 'D06'])
     resilience = sub.add_parser('resilience'); resilience.add_argument('id', choices=['F01', 'F02'])
     all_defects = sub.add_parser('defects'); all_defects.add_argument('--all', required=True, action='store_true')
     args = parser.parse_args()
     try:
         if args.command == 'defects':
-            print('INCOMPLETE: only D02/D06 are implemented; 22 required defects remain NOT_STARTED.', file=sys.stderr)
+            print('INCOMPLETE: only D01/D02/D06 are implemented; 21 required defects remain NOT_STARTED.', file=sys.stderr)
             return 2
         if args.command == 'up': up()
         elif args.command == 'down': down(args.reset_data)

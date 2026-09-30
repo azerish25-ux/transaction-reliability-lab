@@ -33,6 +33,17 @@ def mutate_definition(original: str) -> str:
     return original.replace(CLAUSE, MUTANT, 1)
 
 
+COMMAND_ACTOR_MARKER = ' SELECT * INTO actor FROM ledger.app_users WHERE id=p_actor AND enabled;'
+DUPLICATE_KEY_CUT = " p_key:=p_key||':'||gen_random_uuid()::text;\n"
+
+
+def mutate_duplicate_command(original: str) -> str:
+    if (original.count(COMMAND_ACTOR_MARKER) != 1 or DUPLICATE_KEY_CUT in original
+            or not original.startswith('CREATE OR REPLACE FUNCTION ledger.execute_command(')):
+        raise LabError('D01_MUTATION_TARGET_NOT_UNIQUE')
+    return original.replace(COMMAND_ACTOR_MARKER, DUPLICATE_KEY_CUT + COMMAND_ACTOR_MARKER, 1)
+
+
 SETTLEMENT_FUNCTION = 'ledger.settle_event(uuid,uuid,uuid)'
 SETTLEMENT_MARKER = "INSERT INTO ledger.consumer_inbox(consumer,event_id) VALUES('payment-settler-v1',p_event) ON CONFLICT DO NOTHING;"
 SETTLEMENT_CUT = """IF p.state='SETTLED' THEN
@@ -75,11 +86,12 @@ class Driver:
             if digest(original.encode()) != recorded_hash:
                 raise LabError('D02_BACKUP_INTEGRITY_FAILURE', 503)
             variant = mutate_definition(original)
+            duplicate_variant = mutate_duplicate_command(original)
             current = conn.execute('SELECT pg_get_functiondef(%s::regprocedure)', (FUNCTION,)).fetchone()[0]
-            if current not in {original, variant}:
+            if current not in {original, variant, duplicate_variant}:
                 # Never overwrite an unrecognized concurrent change.
                 raise LabError('D02_UNRECOGNIZED_DATABASE_CHANGE', 503)
-            desired = variant if mutate is True else original
+            desired = duplicate_variant if mutate == 'D01' else (variant if mutate is True else original)
             if current != desired:
                 conn.execute(desired, prepare=False)
             observed = conn.execute('SELECT pg_get_functiondef(%s::regprocedure)', (FUNCTION,)).fetchone()[0]
@@ -101,6 +113,7 @@ class Driver:
                 raise LabError('D06_DEFINITION_READBACK_FAILED')
         return {'originalFunctionSha256': recorded_hash, 'currentFunctionSha256': digest(observed.encode()),
                 'mutantFunctionSha256': digest(variant.encode()),
+                'duplicateCommandMutantSha256': digest(duplicate_variant.encode()),
                 'settlementOriginalSha256': settlement_hash,
                 'settlementCurrentSha256': digest(settlement_observed.encode()),
                 'settlementMutantSha256': digest(settlement_variant.encode())}
@@ -123,12 +136,14 @@ class Driver:
         return proof
 
     def activate(self, mode: str) -> dict[str, Any]:
-        if mode not in {'D02', 'D06', 'F01_LATENCY', 'F01_DISCONNECT'}:
+        if mode not in {'D01', 'D02', 'D06', 'F01_LATENCY', 'F01_DISCONNECT'}:
             raise LabError('INVALID_FAULT')
         # Recheck the actual target immediately before any external change.
         validate_proxy_target(self.proxy())
         if mode == 'D02':
             proof = self.definition(True)
+        elif mode == 'D01':
+            proof = self.definition('D01')
         elif mode == 'D06':
             proof = self.definition('D06')
         elif mode == 'F01_LATENCY':

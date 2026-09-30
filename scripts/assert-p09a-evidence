@@ -47,9 +47,9 @@ def verify():
     summary = load(BASE / 'summary.json')
     if (summary['sourceSha'] != source or summary['completeP09'] is not False
             or summary.get('requiredFaults') != 8 or summary.get('requiredDefects') != 24
-            or summary['implementedFaultsVerified'] != 2 or summary['validDefectsDetected'] != 2
-            or len(summary['runs']) != 4 or {r['scenario'] for r in summary['runs']} != {'F01', 'D02', 'F02', 'D06'}
-            or len({r['id'] for r in summary['runs']}) != 4):
+            or summary['implementedFaultsVerified'] != 2 or summary['validDefectsDetected'] != 3
+            or len(summary['runs']) != 5 or {r['scenario'] for r in summary['runs']} != {'F01', 'D02', 'F02', 'D06', 'D01'}
+            or len({r['id'] for r in summary['runs']}) != 5):
         raise LabError('EVIDENCE_SUMMARY_INVALID')
     instances = set()
     for run in summary['runs']:
@@ -58,11 +58,11 @@ def verify():
         instances.add(value['instanceId'])
     browser = load(BASE / 'browser/results.json')
     expected_browser = {'UNAUTHENTICATED_LAB_DENIED', 'ADMIN_COMMAND_REQUIRES_CSRF',
-                        'ADMIN_BROWSER_EXECUTES_REAL_F01', 'ADMIN_BROWSER_EXECUTES_REAL_D02', 'ADMIN_BROWSER_EXECUTES_REAL_F02', 'ADMIN_BROWSER_EXECUTES_REAL_D06',
+                        'ADMIN_BROWSER_EXECUTES_REAL_F01', 'ADMIN_BROWSER_EXECUTES_REAL_D02', 'ADMIN_BROWSER_EXECUTES_REAL_F02', 'ADMIN_BROWSER_EXECUTES_REAL_D06', 'ADMIN_BROWSER_EXECUTES_REAL_D01',
                         'MOBILE_NO_HORIZONTAL_OVERFLOW', 'KEYBOARD_FOCUS_SURVIVES_POLL',
                         'AUTHENTICATED_CUSTOMER_LAB_DENIED', 'NO_BROWSER_PAGE_ERRORS'}
     if (browser['sourceSha'] != source or browser['scope'] != 'REAL_BROWSER_LIVE_LAB'
-            or browser.get('complete') is not True or len(browser['tests']) != 10
+            or browser.get('complete') is not True or len(browser['tests']) != 11
             or {t['id'] for t in browser['tests']} != expected_browser
             or any(t['status'] != 'PASS' for t in browser['tests'])):
         raise LabError('EVIDENCE_BROWSER_INCOMPLETE')
@@ -90,7 +90,7 @@ def verify():
         raise LabError('EVIDENCE_NORMAL_PACKAGING_INVALID')
     images = load(BASE / 'images.json')
     validate_images(images, source, digest((ROOT / 'compose.lab.yaml').read_bytes()), instances)
-    print('P09A evidence validated: F01/F02=2/8, D02/D06=2/24; full P09 remains INCOMPLETE.')
+    print('P09A evidence validated: F01/F02=2/8, D01/D02/D06=3/24; full P09 remains INCOMPLETE.')
 
 
 if __name__ == '__main__':

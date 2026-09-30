@@ -99,6 +99,29 @@ def complete_evidence(scenario='D02'):
                             'duplicateJournalDelta': 2 if name == 'mutant' else 0, 'before': before, 'after': after})
             if name == 'mutant': item.update(status='ASSERTION_FAILURE', assertion={
                 'id': 'D06_DUPLICATE_FINANCIAL_EFFECT', 'expected': '0', 'actual': '60'})
+    elif scenario == 'D01':
+        from clients import SOURCE as ACCOUNT, DESTINATION
+        value.update(scenario='D01', verdict='DETECTED', scope='REAL_HTTP_POSTGRES')
+        value['activation'] = {'mode': 'D01', 'originalFunctionSha256': value['cleanup']['originalFunctionSha256'],
+                               'currentFunctionSha256': 'd' * 64, 'duplicateCommandMutantSha256': 'd' * 64}
+        value['phases'] = {}
+        for name in ('baseline', 'mutant', 'restored'):
+            original = str(uuid.uuid4()); replay = str(uuid.uuid4()) if name == 'mutant' else original
+            before = {'balances': [[ACCOUNT, '1000'], [DESTINATION, '0']], 'counts': [0,1,2],
+                      'balanceDiscrepancies': 0, 'journalDiscrepancies': 0}
+            after = copy.deepcopy(before)
+            if name == 'mutant':
+                after['balances'] = [[ACCOUNT, '970'], [DESTINATION, '30']]
+                after['counts'] = [0,2,4]
+            for snapshot in (before, after): snapshot['sha256'] = digest(canonical(snapshot).encode())
+            item = phase(); value['phases'][name] = item
+            item.update(testId='D01_SAME_KEY_ONE_EFFECT', inputSha256=digest(canonical(value['input']).encode()),
+                        observations={'commandKey': value['input']['key'] + ':' + name,
+                            'originalOperation': original, 'replayedOperation': replay,
+                            'originalStatus': 201, 'replayStatus': 201,
+                            'replayJournalDelta': 1 if name == 'mutant' else 0, 'before': before, 'after': after})
+            if name == 'mutant': item.update(status='ASSERTION_FAILURE', assertion={
+                'id': 'D01_REPLAY_ONE_OPERATION', 'expected': original, 'actual': replay})
     return value
 
 
@@ -267,14 +290,14 @@ class ArtifactGateTests(unittest.TestCase):
         self.root = Path(self.temp.name)
         self.base = self.root / '.evidence/p09a'
         self.base.mkdir(parents=True)
-        self.values = [complete_evidence('F01'), complete_evidence(), complete_evidence('F02'), complete_evidence('D06')]
+        self.values = [complete_evidence('F01'), complete_evidence(), complete_evidence('F02'), complete_evidence('D06'), complete_evidence('D01')]
         for value in self.values: self.write_run(value)
         self.write('summary.json', {'sourceSha': SOURCE, 'completeP09': False,
-                   'implementedFaultsVerified': 2, 'validDefectsDetected': 2,
+                   'implementedFaultsVerified': 2, 'validDefectsDetected': 3,
                    'requiredFaults': 8, 'requiredDefects': 24,
                    'runs': [{'id': v['runId'], 'scenario': v['scenario'], 'verdict': v['verdict']} for v in self.values]})
         browser_ids = ['UNAUTHENTICATED_LAB_DENIED', 'ADMIN_COMMAND_REQUIRES_CSRF',
-                       'ADMIN_BROWSER_EXECUTES_REAL_F01', 'ADMIN_BROWSER_EXECUTES_REAL_D02', 'ADMIN_BROWSER_EXECUTES_REAL_F02', 'ADMIN_BROWSER_EXECUTES_REAL_D06',
+                       'ADMIN_BROWSER_EXECUTES_REAL_F01', 'ADMIN_BROWSER_EXECUTES_REAL_D02', 'ADMIN_BROWSER_EXECUTES_REAL_F02', 'ADMIN_BROWSER_EXECUTES_REAL_D06', 'ADMIN_BROWSER_EXECUTES_REAL_D01',
                        'MOBILE_NO_HORIZONTAL_OVERFLOW', 'KEYBOARD_FOCUS_SURVIVES_POLL',
                        'AUTHENTICATED_CUSTOMER_LAB_DENIED', 'NO_BROWSER_PAGE_ERRORS']
         self.write('browser/results.json', {'sourceSha': SOURCE, 'scope': 'REAL_BROWSER_LIVE_LAB',

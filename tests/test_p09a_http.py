@@ -92,7 +92,7 @@ class ConsoleHttpTests(unittest.TestCase):
 
     def test_admin_catalogue_available(self):
         status, content, _ = self.request()
-        self.assertEqual(status, 200); self.assertEqual(set(json.loads(content)['implemented']), {'F01', 'D02', 'F02', 'D06'})
+        self.assertEqual(status, 200); self.assertEqual(set(json.loads(content)['implemented']), {'F01', 'D02', 'F02', 'D06', 'D01'})
 
     def test_command_missing_csrf_denied(self):
         self.assertEqual(self.request('POST', '/lab/api/runs', self.command())[0], 403)
@@ -127,7 +127,7 @@ class ConsoleHttpTests(unittest.TestCase):
         self.assertEqual(status, 403)
 
     def test_unimplemented_scenario_http_rejected(self):
-        command = {**self.command(), 'scenario': 'D01'}
+        command = {**self.command(), 'scenario': 'D24'}
         self.assertEqual(self.request('POST', '/lab/api/runs', command, signed=True)[0], 422)
 
     def test_reset_requires_confirmation(self):

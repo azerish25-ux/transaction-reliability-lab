@@ -85,7 +85,19 @@
       "expectedAssertion": "D06_DUPLICATE_FINANCIAL_EFFECT",
       "scope": "REAL_HTTP_POSTGRES_RABBITMQ",
       "status": "IMPLEMENTED_UNVERIFIED"
+    },
+    "D01": {
+      "category": "defect",
+      "title": "Same-key replay creates fresh operation",
+      "risk": "Retry after uncertainty spends money a second time.",
+      "mechanism": "The isolated command function remaps each incoming key to a new identity. Identical HTTP replay then creates another transfer and journal, detected by unchanged operation-identity and independent balance oracles.",
+      "affectedSymbol": "ledger.execute_command(uuid,text,uuid,text,jsonb,uuid)",
+      "target": "disposable-postgres",
+      "testId": "D01_SAME_KEY_ONE_EFFECT",
+      "expectedAssertion": "D01_REPLAY_ONE_OPERATION",
+      "scope": "REAL_HTTP_POSTGRES",
+      "status": "IMPLEMENTED_UNVERIFIED"
     }
   },
-  "notice": "Only exact-source evidence counts. Six faults and 22 other defects remain open."
+  "notice": "Exact-source evidence required. Six faults and 21 other defects remain open."
 }
