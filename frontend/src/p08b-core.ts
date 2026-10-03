@@ -24,6 +24,11 @@ export function amountToMinor(input: string, currency: Currency): string {
   return parseAmount(input.trim(), currency);
 }
 
+/** References are case-insensitive; normalization preserves the uppercase LG prefix. */
+export function isSameWalletReference(left: string, right: string): boolean {
+  return left.trim().toLowerCase() === right.trim().toLowerCase();
+}
+
 export function isTerminalPaymentState(state: PaymentState): boolean {
   return state === 'SETTLED' || state === 'FAILED' || state === 'CANCELLED';
 }

@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState, type ChangeEvent, type FormEvent } fr
 import { OutcomeUnknown, normalizePaymentIntent, normalizeTransferIntent, type Account, type Intent, type Page, type PaymentRecord, type TransferRecord } from './api.js';
 import { formatInstant, formatMoney, shortReference } from './format.js';
 import { type Currency } from './money.js';
-import { amountToMinor, intentKindLabel, intentRecoveryPath, isTerminalPaymentState, paymentPollDelay, paymentStateLabel } from './p08b-core.js';
+import { amountToMinor, intentKindLabel, intentRecoveryPath, isSameWalletReference, isTerminalPaymentState, paymentPollDelay, paymentStateLabel } from './p08b-core.js';
 import { useSession } from './session.js';
 import { ConfirmDialog, EmptyState, Link, LoadingState, OutcomeUnknownPanel, ProblemPanel, ProductShell, StatusBadge, unresolved, usePageTitle, useStoredIntent, type ProductNavigate } from './product-ui.js';
 import { PaymentAdjustmentsPanel } from './p08c-ui.js';
@@ -68,7 +68,7 @@ function TransferCreatePage({ navigate }: { navigate: ProductNavigate }): JSX.El
         const amountMinor = amountToMinor(amount, source.currency);
         if (BigInt(amountMinor) > BigInt(source.availableMinor)) errors.amount = 'The amount exceeds the displayed available balance.';
         intent = normalizeTransferIntent({ sourceId: source.id, recipientRef, amountMinor, currency: source.currency });
-        if (intent.recipientRef === source.publicRef.toLowerCase()) errors.recipientRef = 'Choose a different recipient wallet.';
+        if (isSameWalletReference(intent.recipientRef, source.publicRef)) errors.recipientRef = 'Choose a different recipient wallet.';
       } catch {
         if (!recipientRef.trim().match(/^LG-[0-9a-f]{32}$/i)) errors.recipientRef = 'Use a reference in the format LG- followed by 32 hexadecimal characters.';
         if (!amount.trim()) errors.amount = 'Enter a positive amount.';
@@ -210,7 +210,7 @@ function PaymentCreatePage({ navigate }: { navigate: ProductNavigate }): JSX.Ele
         const amountMinor = amountToMinor(amount, source.currency);
         if (BigInt(amountMinor) > BigInt(source.availableMinor)) errors.amount = 'The amount exceeds the displayed available balance.';
         intent = normalizePaymentIntent({ sourceId: source.id, recipientRef, amountMinor, currency: source.currency });
-        if (intent.recipientRef === source.publicRef.toLowerCase()) errors.recipientRef = 'Choose a different recipient wallet.';
+        if (isSameWalletReference(intent.recipientRef, source.publicRef)) errors.recipientRef = 'Choose a different recipient wallet.';
       } catch {
         if (!recipientRef.trim().match(/^LG-[0-9a-f]{32}$/i)) errors.recipientRef = 'Use a reference in the format LG- followed by 32 hexadecimal characters.';
         if (!amount.trim()) errors.amount = 'Enter a positive amount.';

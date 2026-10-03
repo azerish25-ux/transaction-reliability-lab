@@ -85,12 +85,12 @@ export function LoadingState({ label = 'Loading authoritative records' }: { labe
 }
 
 export function EmptyState({ title, message, action }: { title: string; message: string; action?: ReactNode }): JSX.Element {
-  return <section className="empty-state"><div className="empty-mark" aria-hidden="true">LG</div><h2>{title}</h2><p>{message}</p>{action}</section>;
+  return <section className="empty-state"><div className="empty-mark" aria-hidden="true">BP</div><h2>{title}</h2><p>{message}</p>{action}</section>;
 }
 
-export function Link({ href, navigate, className, children, ariaLabel }: PropsWithChildren<{ href: string; navigate: ProductNavigate; className?: string; ariaLabel?: string }>): JSX.Element {
-  return <a href={href} className={className} aria-label={ariaLabel} onClick={(event: MouseEvent<HTMLAnchorElement>) => {
-    if (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+export function Link({ href, navigate, className, children, ariaLabel, current }: PropsWithChildren<{ href: string; navigate: ProductNavigate; className?: string; ariaLabel?: string; current?: boolean }>): JSX.Element {
+  return <a href={href} className={className} aria-label={ariaLabel} aria-current={current ? 'page' : undefined} onClick={(event: MouseEvent<HTMLAnchorElement>) => {
+    if (event.defaultPrevented || event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
     event.preventDefault();
     navigate(href);
   }}>{children}</a>;
@@ -173,6 +173,13 @@ export function ProductShell({ navigate, children }: PropsWithChildren<{ navigat
     }
   };
   const customer = session.user?.role === 'CUSTOMER';
+  const path = window.location.pathname.replace(/\/$/, '') || '/';
+  const isCurrent = (href: string): boolean => {
+    if (href === '/') return path === '/' || (customer && path.startsWith('/accounts/'));
+    if (href === '/transfers/new') return path.startsWith('/transfers/');
+    if (href === '/admin/adjustments' && path.startsWith('/admin/payments/')) return true;
+    return path === href || path.startsWith(`${href}/`);
+  };
   const showGlobalIntent = unresolved(current) && window.location.pathname !== intentRecoveryPath(current);
   return (
     <div className="app-shell p08b-shell">
@@ -180,24 +187,25 @@ export function ProductShell({ navigate, children }: PropsWithChildren<{ navigat
       <SyntheticNotice />
       <header className="site-header">
         <Brand navigate={navigate} />
-        <nav aria-label="Primary navigation">
-          <Link href="/" navigate={navigate} className="nav-link">Dashboard</Link>
-          {customer && <Link href="/transfers/new" navigate={navigate} className="nav-link">Transfer</Link>}
-          {customer && <Link href="/payments" navigate={navigate} className="nav-link">Payments</Link>}
-          {customer && <Link href="/schedules" navigate={navigate} className="nav-link">Schedules</Link>}
-          {!customer && <Link href="/admin/adjustments" navigate={navigate} className="nav-link">Adjustments</Link>}
+        <div className="session-controls"><span className="session-identity"><span className="session-role">{customer ? 'Customer workspace' : 'Administrator workspace'}</span>{session.user?.displayName}</span>
           <button className="button button-quiet" type="button" onClick={() => void logout()} disabled={loggingOut}>{loggingOut ? 'Signing out…' : 'Sign out'}</button>
-        </nav>
+        </div>
       </header>
+      <nav className="workspace-navigation" aria-label="Primary navigation">
+        {(customer ? [
+          ['/', 'Dashboard', '01'], ['/transfers/new', 'Transfer', '02'], ['/payments', 'Payments', '03'], ['/schedules', 'Schedules', '04'], ['/webhooks', 'Webhooks', '05']
+        ] : [['/', 'Dashboard', '01'], ['/admin/adjustments', 'Adjustments', '02']]).map(([href, label, number]) =>
+          <Link key={href} href={href!} navigate={navigate} className="nav-link" current={isCurrent(href!)}><span className="nav-number" aria-hidden="true">{number}</span>{label}</Link>)}
+      </nav>
       {session.user?.role === 'ADMIN' && <nav className="admin-navigation" aria-label="Administrator investigation">
         {([['transactions','Transactions'],['audit','Audit history'],['reconciliation','Reconciliation'],['failed-work','Failed work']] as const).map(([route,label]) =>
-          <Link key={route} href={`/admin/${route}`} navigate={navigate} className="nav-link">{label}</Link>)}
+          <Link key={route} href={`/admin/${route}`} navigate={navigate} className="nav-link" current={isCurrent(`/admin/${route}`)}>{label}</Link>)}
       </nav>}
       {failure !== undefined && <div className="shell-problem"><ProblemPanel failure={failure} /></div>}
       {intentFailure !== undefined && <div className="shell-problem"><ProblemPanel failure={new Error("Saved instruction cannot be read. Financial actions are blocked; do not clear browser storage while an outcome is unresolved.")} /></div>}
       {showGlobalIntent && current && <div className="intent-banner-wrap"><UnresolvedBanner record={current} navigate={navigate} /></div>}
       <main id="main-content" tabIndex={-1}>{children}</main>
-      <footer className="site-footer"><span>{customer ? 'Customer financial workflows' : 'Administrator investigation'}</span><span>Receipts and states come from PostgreSQL through the protected API.</span></footer>
+      <footer className="site-footer"><span><strong>Bad Penny</strong> · Built to leave a paper trail</span><span>Receipts and states come from PostgreSQL through the protected API.</span></footer>
     </div>
   );
 }

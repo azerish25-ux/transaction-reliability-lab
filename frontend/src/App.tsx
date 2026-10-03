@@ -1,4 +1,4 @@
-import { UnresolvedBanner, unresolved, useStoredIntent } from './product-ui.js';
+import { ProductShell } from './product-ui.js';
 import {
   useCallback,
   useEffect,
@@ -133,7 +133,7 @@ function LoadingState({ label = 'Loading authoritative records' }: { label?: str
 function EmptyState({ title, message, action }: { title: string; message: string; action?: ReactNode }): JSX.Element {
   return (
     <section className="empty-state">
-      <div className="empty-mark" aria-hidden="true">LG</div>
+      <div className="empty-mark" aria-hidden="true">BP</div>
       <h2>{title}</h2>
       <p>{message}</p>
       {action}
@@ -161,43 +161,7 @@ function Brand({ navigate }: { navigate: Navigate }): JSX.Element {
 }
 
 function ProductFrame({ navigate, children }: PropsWithChildren<{ navigate: Navigate }>): JSX.Element {
-  const session = useSession();
-  const { current: preservedIntent } = useStoredIntent();
-  const [loggingOut, setLoggingOut] = useState(false);
-  const [logoutError, setLogoutError] = useState<unknown>();
-  const logout = async () => {
-    setLoggingOut(true);
-    setLogoutError(undefined);
-    try {
-      await session.logout();
-      navigate('/login', true);
-    } catch (failure) {
-      setLogoutError(failure);
-      setLoggingOut(false);
-    }
-  };
-  return (
-    <div className="app-shell">
-      <a className="skip-link" href="#main-content">Skip to main content</a>
-      <SyntheticNotice />
-      <header className="site-header">
-        <Brand navigate={navigate} />
-        <nav aria-label="Primary navigation">
-          <Link to="/" navigate={navigate} className="nav-link">Dashboard</Link>
-          <button className="button button-quiet" type="button" onClick={() => void logout()} disabled={loggingOut}>
-            {loggingOut ? 'Signing out…' : 'Sign out'}
-          </button>
-        </nav>
-      </header>
-      {logoutError !== undefined && <div className="shell-problem"><ProblemPanel failure={logoutError} /></div>}
-      {unresolved(preservedIntent) && <div className="intent-banner-wrap"><UnresolvedBanner record={preservedIntent} navigate={(path, options) => navigate(path, options?.replace)} /></div>}
-      <main id="main-content" tabIndex={-1}>{children}</main>
-      <footer className="site-footer">
-        <span>P08A product interface</span>
-        <span>Authoritative records come from PostgreSQL through the protected API.</span>
-      </footer>
-    </div>
-  );
+  return <ProductShell navigate={(path, options) => navigate(path, options?.replace)}>{children}</ProductShell>;
 }
 
 function AnonymousFrame({ navigate, children }: PropsWithChildren<{ navigate: Navigate }>): JSX.Element {
@@ -209,8 +173,14 @@ function AnonymousFrame({ navigate, children }: PropsWithChildren<{ navigate: Na
       <main id="main-content" tabIndex={-1} className="auth-main">
         <section className="auth-story" aria-labelledby="auth-story-title">
           <p className="eyebrow">Financial correctness, made inspectable</p>
-          <h1 id="auth-story-title">Every balance should have an explanation.</h1>
-          <p>Bad Penny exposes the records behind each synthetic transaction: posted money, active reservations, immutable operation references and independently reconciled journals.</p>
+          <h1 id="auth-story-title">Every penny.<br /><em>Accounted for.</em></h1>
+          <p>A small money laboratory for the moments when software gets messy. Follow a transfer, inspect both sides, and see why a retry should never spend twice.</p>
+          <div className="ledger-illustration" aria-label="Illustration of a balanced synthetic transfer, not live account data">
+            <div className="ledger-illustration-heading"><span>THE DOUBLE-ENTRY PRINCIPLE</span><span>ILLUSTRATION / CAD</span></div>
+            <div><span>Sending wallet</span><strong>− 25.00</strong></div>
+            <div><span>Receiving wallet</span><strong>+ 25.00</strong></div>
+            <div className="ledger-illustration-total"><span>Net change in money</span><strong>0.00</strong></div>
+          </div>
           <dl className="trust-list">
             <div><dt>Exact</dt><dd>Integer minor units, never floating point.</dd></div>
             <div><dt>Durable</dt><dd>Replay-safe commands and crash recovery.</dd></div>
@@ -411,7 +381,7 @@ function AccountCard({ account, navigate }: { account: Account; navigate: Naviga
         <Balance label="Reserved" amount={account.reservedMinor} currency={account.currency} />
       </dl>
       <div className="account-meta">
-        <div><span>Recipient reference</span><code title={account.publicRef}>{shortReference(account.publicRef)}</code></div>
+        <div className="wallet-reference"><span>Recipient reference</span><code>{account.publicRef}</code><CopyReference value={account.publicRef} /></div>
         <div><span>Balance version</span><strong>{account.version}</strong></div>
         <div><span>Last changed</span><time dateTime={account.updatedAt}>{formatInstant(account.updatedAt)}</time></div>
       </div>
@@ -499,15 +469,6 @@ function DashboardPage({ navigate }: { navigate: Navigate }): JSX.Element {
   }, [session]);
   useEffect(() => { void load(); }, [load]);
 
-  if (session.user?.role === 'ADMIN') {
-    return (
-      <ProductFrame navigate={navigate}>
-        <div className="page page-narrow">
-          <EmptyState title="Administrator interface is a later P08 slice" message="This P08A increment delivers the complete customer authentication and account-history journey without pretending that unfinished administrator tools exist." />
-        </div>
-      </ProductFrame>
-    );
-  }
 
   const addAccount = (account: Account) => {
     setAccounts(current => [account, ...current]);
@@ -519,13 +480,13 @@ function DashboardPage({ navigate }: { navigate: Navigate }): JSX.Element {
       <div className="page">
         <header className="page-heading dashboard-heading">
           <div>
-            <p className="eyebrow">Customer dashboard</p>
+            <p className="eyebrow">Your ledger / Overview</p>
             <h1>Welcome, {session.user?.displayName}</h1>
             <p>Available money is posted money minus active reservations. Every value below comes from the authoritative ledger store.</p>
           </div>
-          <button className="button button-secondary" type="button" onClick={() => void load()} disabled={loading}>Refresh balances</button>
+          <div className="dashboard-actions"><Link to="/transfers/new" navigate={navigate} className="button button-primary">Make a transfer <span aria-hidden="true">↗</span></Link><button className="button button-secondary" type="button" onClick={() => void load()} disabled={loading}>Refresh balances</button></div>
         </header>
-        <div className="live-region" aria-live="polite">{announcement}</div>
+        <div className="sr-only" aria-live="polite">{announcement}</div>
         {updated && <p className="freshness">Last refreshed <time dateTime={updated}>{formatInstant(updated)}</time></p>}
         {failure !== undefined && <ProblemPanel failure={failure} />}
         {loading ? <LoadingState /> : accounts.length ? (
@@ -709,7 +670,7 @@ function TransactionDetailPage({ accountId, journalId, navigate }: { accountId: 
 
 function NotFoundPage({ navigate }: { navigate: Navigate }): JSX.Element {
   usePageTitle('Page not found');
-  return <ProductFrame navigate={navigate}><div className="page page-narrow"><EmptyState title="Page not found" message="The requested interface route is not part of the delivered product slice." action={<Link to="/" navigate={navigate} className="button button-primary">Return to dashboard</Link>} /></div></ProductFrame>;
+  return <ProductFrame navigate={navigate}><div className="page page-narrow"><EmptyState title="Page not found" message="This page could not be found. Your existing records and saved instructions have not changed." action={<Link to="/" navigate={navigate} className="button button-primary">Return to dashboard</Link>} /></div></ProductFrame>;
 }
 
 export default function App(): JSX.Element {

@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent, type ReactNode } from 'react';
-import { createPortal } from 'react-dom';
 import { ApiError, type Page } from './api.js';
 import type { WebhookEndpoint, WebhookDelivery, WebhookDeliveryDetail } from './webhook-api.js';
 import { useSession } from './session.js';
@@ -11,28 +10,6 @@ import './p08e.css';
 const CHANGED = 'ledgerguard:webhook-command-changed';
 const LABELS: Record<WebhookDelivery['state'], string> = { PENDING: 'Waiting to send', IN_FLIGHT: 'Attempt in progress', DELIVERED: 'Delivered', FAILED: 'Delivery failed' };
 const OUTCOMES = { DELIVERED: 'Delivered', RETRY_SCHEDULED: 'Retry scheduled', PERMANENT_FAILURE: 'Permanent response failure', EXHAUSTED: 'Retry budget exhausted', LEASE_EXPIRED: 'Dispatcher lease expired' };
-
-/** The existing page shells keep their own navigation; this link follows shell replacement. */
-export function P08ENavigation({ navigate }: { navigate: ProductNavigate }): JSX.Element | null {
-  const session = useSession();
-  const [mount, setMount] = useState<HTMLElement | null>(null);
-  useEffect(() => {
-    if (session.status !== 'AUTHENTICATED' || session.user?.role !== 'CUSTOMER') { setMount(null); return; }
-    let owned: HTMLElement | undefined;
-    const attach = () => {
-      if (owned?.isConnected) return;
-      const nav = document.querySelector<HTMLElement>('.site-header nav');
-      if (!nav) return;
-      owned = document.createElement('span'); owned.className = 'p08e-navigation';
-      nav.insertBefore(owned, nav.lastElementChild); setMount(owned);
-    };
-    attach(); const observer = new MutationObserver(attach);
-    observer.observe(document.body, { childList: true, subtree: true });
-    return () => { observer.disconnect(); owned?.remove(); };
-  }, [session.status, session.user?.id]);
-  return mount && session.status === 'AUTHENTICATED' && session.user?.role === 'CUSTOMER'
-    ? createPortal(<Link href="/webhooks" navigate={navigate} className="nav-link">Webhooks</Link>, mount) : null;
-}
 
 function Failure({ failure, retry }: { failure: unknown; retry?: () => void }): JSX.Element {
   const code = failure instanceof ApiError ? failure.problem.code : undefined;

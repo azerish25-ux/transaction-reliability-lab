@@ -2,6 +2,8 @@
   "extends": "./tsconfig.app.json",
   "include": [
     "tests/e2e/**/*.ts",
-    "playwright.config.ts"
+    "playwright.config.ts",
+    "tests/presentation/**/*.ts",
+    "playwright.presentation.config.ts"
   ]
 }

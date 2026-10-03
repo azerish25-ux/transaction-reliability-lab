@@ -7,6 +7,7 @@ const {
   amountToMinor,
   intentRecoveryPath,
   isP08BPath,
+  isSameWalletReference,
   isTerminalPaymentState,
   paymentPollDelay,
   paymentStateLabel
@@ -31,6 +32,17 @@ const storage = () => {
     removeItem: key => values.delete(key)
   };
 };
+
+test('P08BTS09-same-wallet-validation-compares-canonical-and-entered-references', () => {
+  const { normalizeTransferIntent, normalizePaymentIntent } = require('../../.evidence/ts/api.js');
+  for (const normalize of [normalizeTransferIntent, normalizePaymentIntent]) {
+    for (const entered of [recipient, recipient.toLowerCase(), ` ${recipient.toLowerCase()} `]) {
+      const intent = normalize({ ...paymentIntent, recipientRef: entered });
+      assert.equal(isSameWalletReference(intent.recipientRef, recipient), true);
+      assert.equal(isSameWalletReference(intent.recipientRef, 'LG-30000000000000000000000000000001'), false);
+    }
+  }
+});
 
 test('P08BTS01-operation-specific-validation-precedes-persistence', async () => {
   const memory = storage();

@@ -1,0 +1,56 @@
+name: Bad Penny presentation regression
+
+# An additional UI-only gate; fixture tests never replace real financial E2E.
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  presentation:
+    name: Responsive UI, keyboard journeys and accessibility
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - uses: actions/setup-java@b6effb05e454b25005698d916606bdc6ffcbf961
+        with:
+          distribution: temurin
+          java-version: '21'
+      - name: Check the shipped client and ordinary financial core
+        run: |
+          npm --prefix frontend ci --ignore-scripts --no-audit --no-fund
+          npm --prefix frontend run verify
+          ./scripts/test-core
+      - name: Install Chromium from the locked Playwright package
+        working-directory: frontend
+        run: npx playwright install --with-deps chromium
+      - name: Exercise the real UI with explicit presentation-only API fixtures
+        run: npm --prefix frontend run test:presentation
+      - name: Record the exact candidate
+        if: always()
+        run: |
+          mkdir -p .evidence/presentation
+          git rev-parse HEAD > .evidence/presentation/source-sha.txt
+          printf '%s\n' 'UI/API-fixture evidence only. Not a real database, broker or financial E2E pass.' > .evidence/presentation/SCOPE.txt
+      - name: Retain source-bound screenshots and check results
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: bad-penny-presentation-${{ github.sha }}
+          include-hidden-files: true
+          if-no-files-found: error
+          retention-days: 14
+          path: |
+            .evidence/presentation/
+            .evidence/core/results.xml
+            .evidence/client/*.xml

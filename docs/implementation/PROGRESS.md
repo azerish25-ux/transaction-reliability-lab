@@ -1,3 +1,29 @@
+# 2026-10-03 product presentation checkpoint — IMPLEMENTED_UNVERIFIED
+
+Bad Penny now uses one shared navigation shell with explicit active destinations,
+route-change focus, consistent customer/administrator controls and no navigation
+portals or DOM observers. The copper/paper visual system emphasizes available
+money, reservation context and inspectable references. Wallet references can be
+read and copied on touch screens. A same-wallet comparison defect in both
+transfer/payment forms is corrected with case-insensitive reference comparison.
+
+Local TypeScript checks and 187 client cases pass. The production frontend build
+passes. The new presentation suite has 33 desktop/tablet/mobile browser cases,
+including keyboard dismissal, Back/Forward, auth, copy failure, 320-pixel layout,
+loading and error states, with axe checks and screenshot retention. Chromium
+could not start locally: `socket() failed: Operation not permitted`, also after
+one supported permission escalation. These attempted tests are **BLOCKED**, not
+passes or evidence of the UI defect. The Java runtime lacks `javac`, so ordinary
+core verification is delegated to the unchanged Java 21 CI toolchain.
+
+A separate presentation workflow adds fixture-based UI evidence; it does not
+replace or weaken any real PostgreSQL/RabbitMQ/product/lab gate. Visual acceptance
+requires actual screenshot inspection and a successful exact-source browser run.
+See [portfolio checklist](PORTFOLIO_CHECKLIST.md). Full project remains
+**INCOMPLETE / NO_GO**; F01–F08/D01–D24, P10 and P11 are not completed by UI work.
+
+## Earlier source-bound progress
+
 ## 2026-09-30 — Reference history and disposable restore implementation
 
 Added a reproducible minimum reference-history generator (100 customers, 200 wallets, 100000 protected journals), six passing deterministic generator tests, and a compiling ordinary PostgreSQL integration test for real counts/reconciliation plus backup/restore fingerprints, audit continuity and old-key replay. Dataset-profile Java unit suite passed (165 cases). Live SQL loading/restore has not run because Docker is unavailable; no benchmark or migration-upgrade acceptance is claimed. Independent manual `history.yml` workflow retains only non-secret evidence. See [PERFORMANCE_HISTORY.md](PERFORMANCE_HISTORY.md). Full project remains NO_GO.

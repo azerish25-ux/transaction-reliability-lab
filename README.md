@@ -13,6 +13,7 @@ observation repair is not yet a live campaign pass. No real money, banking
 integration, compliance certification or production-financial readiness is claimed.
 
 - [Reviewer guide](docs/PORTFOLIO.md)
+- [Portfolio presentation and completion checklist](docs/implementation/PORTFOLIO_CHECKLIST.md)
 - [Architecture, ER, state and sequence diagrams](docs/architecture/DIAGRAMS.md)
 - [Exact-source product evidence and real screenshots](docs/evidence/product-d8d3656.md)
 - [Current progress and remaining scope](docs/implementation/PROGRESS.md)
