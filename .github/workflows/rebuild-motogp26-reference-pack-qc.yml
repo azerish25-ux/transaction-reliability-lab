@@ -1,0 +1,56 @@
+name: Rebuild MotoGP 26 reference pack (QC)
+
+on:
+  push:
+    branches:
+      - artifact/motogp26-reference-pack
+    paths:
+      - tools/reference_pack/rebuild_motogp26_reference_pack_v3.py
+      - .github/workflows/rebuild-motogp26-reference-pack-qc.yml
+  workflow_dispatch:
+
+permissions:
+  actions: read
+  contents: read
+
+jobs:
+  rebuild:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 40
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v4
+
+      - name: Download previous reference artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: MotoGP26-PS5-100-Reference-Images
+          run-id: 38836560404
+          github-token: ${{ github.token }}
+          repository: azerish25-ux/transaction-reliability-lab
+          path: tools/reference_pack/previous
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install media and Python dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ffmpeg
+          python -m pip install --upgrade pip
+          python -m pip install requests pillow ImageHash
+
+      - name: Rebuild and verify 100-image pack
+        working-directory: tools/reference_pack
+        run: python rebuild_motogp26_reference_pack_v3.py
+
+      - name: Upload quality-controlled ZIP
+        uses: actions/upload-artifact@v4
+        with:
+          name: MotoGP26-PS5-100-Reference-Images-QC
+          path: tools/reference_pack/output_v3/MotoGP26_PS5_100_Reference_Images.zip
+          if-no-files-found: error
+          compression-level: 0
+          retention-days: 14
