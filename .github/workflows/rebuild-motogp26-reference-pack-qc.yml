@@ -6,6 +6,7 @@ on:
       - artifact/motogp26-reference-pack
     paths:
       - tools/reference_pack/rebuild_motogp26_reference_pack_v3.py
+      - tools/reference_pack/rebuild_motogp26_reference_pack_v4.py
       - .github/workflows/rebuild-motogp26-reference-pack-qc.yml
   workflow_dispatch:
 
@@ -44,7 +45,7 @@ jobs:
 
       - name: Rebuild and verify 100-image pack
         working-directory: tools/reference_pack
-        run: python rebuild_motogp26_reference_pack_v3.py
+        run: python rebuild_motogp26_reference_pack_v4.py
 
       - name: Upload quality-controlled ZIP
         uses: actions/upload-artifact@v4
