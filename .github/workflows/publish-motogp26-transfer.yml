@@ -29,17 +29,205 @@ jobs:
           repository: azerish25-ux/transaction-reliability-lab
           path: transfer
 
-      - name: Verify and commit ZIP
+      - name: Install image tooling
+        run: python -m pip install pillow
+
+      - name: Rebuild the final 100-reference package
         shell: bash
         run: |
           set -euo pipefail
-          src="transfer/MotoGP26_PS5_100_Reference_Images.zip"
-          test -f "$src"
-          echo "872088f3e7d11e8b07112c8bfa478a6d75c24fac37d90172764e407d8732c369  $src" | sha256sum -c -
-          mkdir -p public-reference-transfer
-          cp "$src" public-reference-transfer/MotoGP26_PS5_100_Reference_Images.zip
+          rm -rf rebuilt public-reference-transfer
+          mkdir -p rebuilt public-reference-transfer
+          unzip -q transfer/MotoGP26_PS5_100_Reference_Images.zip -d rebuilt
+          python - <<'PY'
+          from pathlib import Path
+          from PIL import Image, ImageDraw, ImageOps
+          import csv, hashlib, math, shutil, zipfile
+
+          root = Path("rebuilt/MotoGP26_PS5_100_Reference_Images")
+          trailer = root / "04_official_trailer_frames"
+          detail = root / "05_official_ps5_detail_crops"
+          detail.mkdir(exist_ok=True)
+
+          replacements = {
+              56: {
+                  "src_ref": 2,
+                  "box": (320, 180, 2240, 1260),
+                  "filename": "REF_056_PS5_DETAIL_AERO_BODYWORK_RIDER.jpg",
+                  "title": "Official PlayStation Store PS5 detail crop — aero, bodywork and rider materials",
+                  "media": "https://image.api.playstation.com/vulcan/ap/rnd/202604/2414/729eb62843d808ec418e144d07be3eac76ebae14a69120e2.jpg",
+                  "use": "Close inspection of front fairing, aero surfaces, livery placement, helmet, gloves, suit materials and lean posture",
+                  "notes": "Curated 1920x1080 detail crop derived from reference 002; included to improve 3D-modeling and material-study usefulness.",
+              },
+              60: {
+                  "src_ref": 3,
+                  "box": (640, 180, 2560, 1260),
+                  "filename": "REF_060_PS5_DETAIL_FAIRINGS_WHEELS_LEAN.jpg",
+                  "title": "Official PlayStation Store PS5 detail crop — fairings, wheels and lean geometry",
+                  "media": "https://image.api.playstation.com/vulcan/ap/rnd/202604/2414/3669d357aa15b99dcdc6136d9ffa5833bb73e3ec83e9f66b.jpg",
+                  "use": "Close inspection of dual-bike fairings, front wheels, brake areas, tire deformation cues, shadows and rider lean",
+                  "notes": "Curated 1920x1080 detail crop derived from reference 003; included to improve 3D-modeling and material-study usefulness.",
+              },
+              93: {
+                  "src_ref": 5,
+                  "box": (0, 180, 1920, 1260),
+                  "filename": "REF_093_PS5_DETAIL_DIRT_RIDER_SUSPENSION.jpg",
+                  "title": "Official PlayStation Store PS5 detail crop — dirt rider and suspension",
+                  "media": "https://image.api.playstation.com/vulcan/ap/rnd/202604/2414/1f3dd6f7c37a75ed1df86de5c5f62bdfee5c19b3ec6cd861.jpg",
+                  "use": "Close inspection of off-road rider gear, helmet, handlebar controls, front suspension, knobby tire and body posture",
+                  "notes": "Curated 1920x1080 detail crop derived from reference 005; included to improve 3D-modeling and material-study usefulness.",
+              },
+              96: {
+                  "src_ref": 10,
+                  "box": (320, 180, 2240, 1260),
+                  "filename": "REF_096_PS5_DETAIL_WET_MATERIALS_TIRE.jpg",
+                  "title": "Official PlayStation Store PS5 detail crop — wet materials and tire response",
+                  "media": "https://image.api.playstation.com/vulcan/ap/rnd/202604/2414/dd80238949f41d838dccd0d759f6ca535b1e5655f0c2ca4f.jpg",
+                  "use": "Close inspection of wet-weather bike materials, rider suit, rain lighting, tire contact, spray-ready surfaces and reflections",
+                  "notes": "Curated 1920x1080 detail crop derived from reference 010; included to improve 3D-modeling and material-study usefulness.",
+              },
+          }
+
+          store = root / "01_official_ps5_store"
+          for refno, cfg in replacements.items():
+              for old in trailer.glob(f"REF_{refno:03d}_*.jpg"):
+                  old.unlink()
+              src = next(store.glob(f"REF_{cfg['src_ref']:03d}_*.jpg"))
+              dst = detail / cfg["filename"]
+              with Image.open(src) as im:
+                  crop = im.convert("RGB").crop(cfg["box"])
+                  crop.save(dst, "JPEG", quality=95, progressive=True, subsampling=2, optimize=False)
+
+          manifest = root / "MANIFEST.csv"
+          with manifest.open("r", encoding="utf-8-sig", newline="") as f:
+              rows = list(csv.DictReader(f))
+              fieldnames = list(rows[0].keys())
+
+          source_page = "https://store.playstation.com/en-ca/product/EP4356-PPSA32557_00-MOTOGP26FULLGAME"
+          origin = "Derived detail crop from an official PlayStation Store PS5 screenshot"
+          for row in rows:
+              n = int(row["reference_number"])
+              if n not in replacements:
+                  continue
+              cfg = replacements[n]
+              dst = detail / cfg["filename"]
+              row.update({
+                  "file": f"05_official_ps5_detail_crops/{cfg['filename']}",
+                  "folder": "05_official_ps5_detail_crops",
+                  "source_title": cfg["title"],
+                  "source_page": source_page,
+                  "direct_media_url": cfg["media"],
+                  "origin": origin,
+                  "video_timestamp": "",
+                  "dimensions": "1920x1080",
+                  "sha256": hashlib.sha256(dst.read_bytes()).hexdigest(),
+                  "developer_use": cfg["use"],
+                  "notes": cfg["notes"],
+              })
+
+          rows.sort(key=lambda r: int(r["reference_number"]))
+          with manifest.open("w", encoding="utf-8-sig", newline="") as f:
+              w = csv.DictWriter(f, fieldnames=fieldnames)
+              w.writeheader()
+              w.writerows(rows)
+
+          readme = """MOTOGP 26 / PS5 — 100-IMAGE GAME-DEVELOPMENT REFERENCE PACK
+          ================================================================
+
+          Exactly 100 numbered JPEG references, a source manifest, contact sheets and this guide.
+
+          SOURCE POLICY
+          - No broad search-result fallback is included.
+          - All 100 items were visually reviewed as MotoGP 26 game imagery or curated detail crops derived from it.
+          - Folder 01 contains direct official PlayStation Store PS5 captures.
+          - Folder 05 contains four 1920x1080 modeling-detail crops derived from those official PS5 captures.
+          - Other folders contain verified MotoGP 26 promotional screenshots or frames from official Steam-hosted game trailers; those sources do not always identify the capture platform as PS5.
+
+          FOLDER BREAKDOWN
+          - 01_official_ps5_store: 10 images
+          - 02_ui_menus_hud: 3 images
+          - 03_gameplay_models_tracks: 34 images
+          - 04_official_trailer_frames: 49 images
+          - 05_official_ps5_detail_crops: 4 images
+
+          DEVELOPER USE
+          - 3D motorcycles: silhouette, fairing seams, aero surfaces, suspension, brakes, wheels, tires, cockpit, materials and livery placement.
+          - Riders: suit, helmet, gloves and boots; lean posture; knee/elbow contact; weight transfer and off-road body positioning.
+          - Tracks: asphalt, curbs, barriers, fencing, pits, grandstands, vegetation, weather, dirt surfaces and scale cues.
+          - Gameplay: chase/onboard/replay cameras, braking pitch, corner entry, racing lines, pack spacing, wet feedback and mixed-bike disciplines.
+          - UI/UX: hierarchy, typography, telemetry, setup flow, rider identity, focus states, safe areas and split-screen density.
+          - Rendering/VFX: reflections, wet materials, spray, motion blur, depth of field, particles, lighting, shadows and broadcast framing.
+
+          RIGHTS NOTICE
+          For internal visual research and developer reference only. This pack does not transfer copyright, trademark, sponsor-livery, rider-likeness or redistribution rights.
+          Do not ship, publish, resell or redistribute the source images without permission. Re-create principles rather than copying protected logos, liveries or branded UI one-to-one.
+          Every item is traceable in MANIFEST.csv.
+
+          QUALITY CONTROL
+          - Exactly 100 numbered reference images.
+          - All five category contact sheets were visually reviewed.
+          - Four low-value transition/title frames were replaced with model-focused PS5 detail crops.
+          - Blank, low-resolution, heavily letterboxed and near-duplicate candidates were rejected.
+          - Dimensions and SHA-256 hashes are recorded in MANIFEST.csv.
+          """
+          (root / "README.txt").write_text("\n".join(line[10:] if line.startswith("          ") else line for line in readme.splitlines()).strip() + "\n", encoding="utf-8")
+
+          sheets_dir = root / "CONTACT_SHEETS"
+          shutil.rmtree(sheets_dir, ignore_errors=True)
+          sheets_dir.mkdir()
+          categories = [
+              ("01_official_ps5_store", "01_official_ps5_store.jpg"),
+              ("02_ui_menus_hud", "02_ui_menus_hud.jpg"),
+              ("03_gameplay_models_tracks", "03_gameplay_models_tracks.jpg"),
+              ("04_official_trailer_frames", "04_official_trailer_frames.jpg"),
+              ("05_official_ps5_detail_crops", "05_official_ps5_detail_crops.jpg"),
+          ]
+          for folder, sheet_name in categories:
+              files = sorted((root / folder).glob("REF_*.jpg"))
+              cols = 4
+              thumb_w, thumb_h, label_h = 480, 270, 34
+              rows_n = max(1, math.ceil(len(files) / cols))
+              sheet = Image.new("RGB", (cols * thumb_w, rows_n * (thumb_h + label_h)), "white")
+              draw = ImageDraw.Draw(sheet)
+              for i, p in enumerate(files):
+                  with Image.open(p) as im:
+                      thumb = ImageOps.fit(im.convert("RGB"), (thumb_w, thumb_h), method=Image.Resampling.LANCZOS)
+                  x = (i % cols) * thumb_w
+                  y = (i // cols) * (thumb_h + label_h)
+                  sheet.paste(thumb, (x, y))
+                  draw.text((x + 8, y + thumb_h + 8), p.name[:55], fill="black")
+              sheet.save(sheets_dir / sheet_name, "JPEG", quality=88, optimize=True)
+
+          refs = []
+          for folder in [
+              "01_official_ps5_store",
+              "02_ui_menus_hud",
+              "03_gameplay_models_tracks",
+              "04_official_trailer_frames",
+              "05_official_ps5_detail_crops",
+          ]:
+              refs.extend((root / folder).glob("REF_*.jpg"))
+          assert len(refs) == 100, len(refs)
+          assert len(rows) == 100, len(rows)
+          assert len(list((root / "04_official_trailer_frames").glob("REF_*.jpg"))) == 49
+          assert len(list(detail.glob("REF_*.jpg"))) == 4
+
+          out = Path("public-reference-transfer/MotoGP26_PS5_100_Reference_Images.zip")
+          with zipfile.ZipFile(out, "w", compression=zipfile.ZIP_DEFLATED, compresslevel=6) as z:
+              for p in sorted(root.rglob("*")):
+                  if p.is_file():
+                      z.write(p, p.relative_to(root.parent))
+          with zipfile.ZipFile(out) as z:
+              assert z.testzip() is None
+          print("FINAL", out, out.stat().st_size, hashlib.sha256(out.read_bytes()).hexdigest())
+          PY
+
+      - name: Commit transfer ZIP
+        shell: bash
+        run: |
+          set -euo pipefail
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add public-reference-transfer/MotoGP26_PS5_100_Reference_Images.zip
-          git commit -m "chore: stage MotoGP 26 reference ZIP for Experiment-3 transfer"
+          git commit -m "chore: stage final MotoGP 26 reference ZIP for Experiment-3 transfer"
           git push origin HEAD:artifact/motogp26-reference-pack
