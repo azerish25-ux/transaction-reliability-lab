@@ -6,6 +6,7 @@ on:
       - artifact/motogp26-reference-pack
     paths:
       - tools/reference_pack/build_motogp26_reference_pack.py
+      - tools/reference_pack/build_motogp26_reference_pack_v2.py
       - .github/workflows/build-motogp26-reference-pack.yml
   workflow_dispatch:
 
@@ -33,11 +34,11 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y ffmpeg
           python -m pip install --upgrade pip
-          python -m pip install requests beautifulsoup4 pillow ImageHash yt-dlp
+          python -m pip install requests beautifulsoup4 pillow ImageHash
 
       - name: Build and verify pack
         working-directory: tools/reference_pack
-        run: python build_motogp26_reference_pack.py
+        run: python build_motogp26_reference_pack_v2.py
 
       - name: Upload ZIP
         uses: actions/upload-artifact@v4
