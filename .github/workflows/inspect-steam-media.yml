@@ -1,0 +1,26 @@
+name: Inspect MotoGP 26 Steam media
+
+on:
+  push:
+    branches:
+      - artifact/motogp26-reference-pack
+    paths:
+      - tools/reference_pack/inspect_steam_media.py
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  inspect:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m pip install requests
+      - name: Inspect media URLs
+        working-directory: tools/reference_pack
+        run: python inspect_steam_media.py
