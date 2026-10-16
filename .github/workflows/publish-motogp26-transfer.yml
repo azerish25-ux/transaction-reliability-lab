@@ -1,0 +1,45 @@
+name: Publish MotoGP 26 reference ZIP for transfer
+
+on:
+  push:
+    branches:
+      - artifact/motogp26-reference-pack
+    paths:
+      - .github/workflows/publish-motogp26-transfer.yml
+
+permissions:
+  contents: write
+  actions: read
+
+jobs:
+  publish:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout transfer branch
+        uses: actions/checkout@v4
+        with:
+          ref: artifact/motogp26-reference-pack
+
+      - name: Download verified QC artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: MotoGP26-PS5-100-Reference-Images-QC
+          run-id: 38838299625
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          repository: azerish25-ux/transaction-reliability-lab
+          path: transfer
+
+      - name: Verify and commit ZIP
+        shell: bash
+        run: |
+          set -euo pipefail
+          src="transfer/MotoGP26_PS5_100_Reference_Images.zip"
+          test -f "$src"
+          echo "872088f3e7d11e8b07112c8bfa478a6d75c24fac37d90172764e407d8732c369  $src" | sha256sum -c -
+          mkdir -p public-reference-transfer
+          cp "$src" public-reference-transfer/MotoGP26_PS5_100_Reference_Images.zip
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add public-reference-transfer/MotoGP26_PS5_100_Reference_Images.zip
+          git commit -m "chore: stage MotoGP 26 reference ZIP for Experiment-3 transfer"
+          git push origin HEAD:artifact/motogp26-reference-pack
